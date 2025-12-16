@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { telegramChannels, socialLinks, footerData } from './data/content';
+import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
 import { Share2 } from 'lucide-react';
@@ -26,10 +26,32 @@ const App: React.FC = () => {
         <header className={`pt-12 pb-8 text-center transition-all duration-700 transform ${loaded ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'}`}>
           <div className="inline-block relative">
              <div className="absolute inset-0 bg-sky-500/20 blur-xl rounded-full"></div>
-             <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-center mb-6">
-                <span className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-400">
-                  TT
-                </span>
+             
+             {/* Profile Picture Logic */}
+             <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-center mb-6 overflow-hidden">
+                {profileConfig.image ? (
+                  <img 
+                    src={profileConfig.image} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      e.currentTarget.style.display = 'none';
+                      const fallbackSpan = e.currentTarget.parentElement?.querySelector('span');
+                      if (fallbackSpan) fallbackSpan.style.display = 'block';
+                    }}
+                  />
+                ) : (
+                  <span className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-400">
+                    {profileConfig.initials}
+                  </span>
+                )}
+                {/* Ensure fallback span is hidden if image exists initially, but present in DOM just in case */}
+                {profileConfig.image && (
+                   <span className="hidden absolute text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-400">
+                     {profileConfig.initials}
+                   </span>
+                )}
              </div>
           </div>
           

@@ -1,5 +1,14 @@
 import { ChannelData, SocialData } from '../types';
 
+// اعدادات الصورة الشخصية
+// لتغيير الصورة، ضع ملف الصورة في مجلد public (أو assets) واكتب المسار هنا
+// مثال: image: '/my-photo.jpg'
+// إذا تركتها فارغة '' سيتم عرض الشعار الافتراضي (TT)
+export const profileConfig = {
+  image: '', // ضع مسار صورتك هنا، مثال: '/profile.jpg'
+  initials: 'TT'
+};
+
 export const telegramChannels: ChannelData[] = [
   {
     id: 'bot_requests',
