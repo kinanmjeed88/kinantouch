@@ -2,10 +2,10 @@ import { ChannelData, SocialData } from '../types';
 
 // اعدادات الصورة الشخصية
 // لتغيير الصورة، ضع ملف الصورة في مجلد public (أو assets) واكتب المسار هنا
-// مثال: image: '/my-photo.jpg'
+// مثال: image: 'my-photo.jpg'
 // إذا تركتها فارغة '' سيتم عرض الشعار الافتراضي (TT)
 export const profileConfig = {
-  image: '', // ضع مسار صورتك هنا، مثال: '/profile.jpg'
+  image: 'profile.jpg', // تم ضبطه ليقرأ ملف profile.jpg من مجلد public (بدون شرطة مائلة في البداية)
   initials: 'TT'
 };
 

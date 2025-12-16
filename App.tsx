@@ -6,6 +6,7 @@ import { Share2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [loaded, setLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     setLoaded(true);
@@ -29,28 +30,17 @@ const App: React.FC = () => {
              
              {/* Profile Picture Logic */}
              <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-center mb-6 overflow-hidden">
-                {profileConfig.image ? (
+                {profileConfig.image && !imageError ? (
                   <img 
                     src={profileConfig.image} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // Fallback if image fails to load
-                      e.currentTarget.style.display = 'none';
-                      const fallbackSpan = e.currentTarget.parentElement?.querySelector('span');
-                      if (fallbackSpan) fallbackSpan.style.display = 'block';
-                    }}
+                    onError={() => setImageError(true)}
                   />
                 ) : (
                   <span className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-400">
                     {profileConfig.initials}
                   </span>
-                )}
-                {/* Ensure fallback span is hidden if image exists initially, but present in DOM just in case */}
-                {profileConfig.image && (
-                   <span className="hidden absolute text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-400">
-                     {profileConfig.initials}
-                   </span>
                 )}
              </div>
           </div>
