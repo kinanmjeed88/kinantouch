@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const TelegramIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg viewBox="0 0 240 240" className={className} xmlns="http://www.w3.org/2000/svg" fill="none">
     <circle cx="120" cy="120" r="120" fill="#229ED9"/>

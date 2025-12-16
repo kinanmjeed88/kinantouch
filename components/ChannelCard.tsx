@@ -9,12 +9,10 @@ interface ChannelCardProps {
 }
 
 export const ChannelCard: React.FC<ChannelCardProps> = ({ channel, index }) => {
-  let IconComponent = TelegramIcon;
   let bgClass = "bg-sky-500/10";
   let iconClass = "w-8 h-8 drop-shadow-md";
 
   if (channel.iconType === 'ai') {
-    IconComponent = AIIcon;
     bgClass = "bg-violet-500/10";
     iconClass = "w-7 h-7 text-violet-400";
   } else if (channel.isFolder) {

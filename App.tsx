@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
-import { ShieldCheck, Share2 } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [loaded, setLoaded] = useState(false);
