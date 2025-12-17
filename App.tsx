@@ -42,7 +42,7 @@ const App: React.FC = () => {
       }
       return JSON.parse(cleaned);
     } catch (e) {
-      console.warn("فشل التحليل الأولي، محاولة استخراج JSON يدويًا...");
+      console.warn("JSON parsing failed, trying manual extraction...");
       const arrayStart = text.indexOf('[');
       const arrayEnd = text.lastIndexOf(']');
       if (arrayStart !== -1 && arrayEnd !== -1) {
@@ -53,21 +53,22 @@ const App: React.FC = () => {
       if (objectStart !== -1 && objectEnd !== -1) {
         try { return JSON.parse(text.substring(objectStart, objectEnd + 1)); } catch (err) {}
       }
-      throw new Error("فشل في تحليل البيانات المستلمة من الذكاء الاصطناعي.");
+      throw new Error("فشل في تحليل البيانات.");
     }
   };
 
   const getApiKey = () => {
-    // التحقق من المفتاح المحقون عبر Vite
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined' || apiKey === '') return null;
-    return apiKey;
+    // الطريقة الأضمن لجلب المفتاح في Vite هي import.meta.env
+    // تم إضافة fallback لـ process.env للتوافق مع إعدادات البناء السابقة
+    const key = (import.meta as any).env.VITE_API_KEY || (process as any).env.API_KEY;
+    if (!key || key === 'undefined' || key === 'null' || key === '') return null;
+    return key;
   };
 
   const fetchAINews = async () => {
     const apiKey = getApiKey();
     if (!apiKey) {
-      setNewsError("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub Secrets باسم VITE_API_KEY ثم أعد النشر.");
+      setNewsError("مفتاح API غير متوفر في نسخة الموقع الحالية. تأكد من إعداد VITE_API_KEY في GitHub ثم إعادة النشر.");
       setActiveToolView('ai-news');
       return;
     }
@@ -79,7 +80,7 @@ const App: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: "قم بإنشاء 10 منشورات متنوعة عن أحدث أخبار الذكاء الاصطناعي. لكل منشور: عنوان، وصف دقيق، ورابط حقيقي للأداة. أجب بتنسيق JSON حصراً.",
+        contents: "أعطني 10 أخبار أو أدوات ذكاء اصطناعي جديدة اليوم بتنسيق JSON: title, description, url باللغة العربية.",
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -101,12 +102,10 @@ const App: React.FC = () => {
       if (text) {
         const newsData = cleanAndParseJSON(text);
         setAiNews(newsData);
-      } else {
-        setNewsError("لم يتم استلام بيانات من الذكاء الاصطناعي.");
       }
     } catch (error: any) {
-      console.error("Error fetching news:", error);
-      setNewsError("خطأ في الاتصال بالخدمة. تأكد من صحة مفتاح VITE_API_KEY في GitHub.");
+      console.error("News Error:", error);
+      setNewsError("حدث خطأ أثناء جلب الأخبار. قد يكون المفتاح غير صالح أو انتهت صلاحيته.");
     } finally {
       setLoadingNews(false);
     }
@@ -115,8 +114,9 @@ const App: React.FC = () => {
   const handleComparePhones = async () => {
     if (!phone1 || !phone2) return;
     const apiKey = getApiKey();
+    
     if (!apiKey) {
-      alert("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub Secrets باسم VITE_API_KEY ثم أعد النشر.");
+      alert("مفتاح API غير موجود في إعدادات الموقع. يرجى مراجعة إعدادات VITE_API_KEY.");
       return;
     }
 
@@ -126,7 +126,7 @@ const App: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-pro-preview",
-        contents: `قارن بين هاتف ${phone1} وهاتف ${phone2} باللغة العربية. أجب بتنسيق JSON.`,
+        contents: `قارن بين هاتف ${phone1} وهاتف ${phone2} باللغة العربية. أجب بتنسيق JSON حصراً.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -157,9 +157,9 @@ const App: React.FC = () => {
         const result = cleanAndParseJSON(text);
         setComparisonResult(result);
       }
-    } catch (error) {
-      console.error("Error comparing phones:", error);
-      alert("حدث خطأ أثناء جلب المقارنة. تأكد من إعداد VITE_API_KEY.");
+    } catch (error: any) {
+      console.error("Comparison Error:", error);
+      alert("فشل جلب المقارنة. تأكد من أن المفتاح المستخدم VITE_API_KEY صحيح ولديه صلاحيات Gemini API.");
     } finally {
       setLoadingComparison(false);
     }
@@ -380,7 +380,7 @@ const App: React.FC = () => {
                   {loadingNews ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
                       <Loader2 className="w-10 h-10 text-sky-400 animate-spin" />
-                      <p className="text-slate-400 animate-pulse text-sm">جاري جلب 10 منشورات حصرية...</p>
+                      <p className="text-slate-400 animate-pulse text-sm">جاري جلب المنشورات...</p>
                     </div>
                   ) : newsError ? (
                     <div className="text-center py-10 space-y-4">

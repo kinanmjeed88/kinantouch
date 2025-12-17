@@ -6,20 +6,21 @@ import process from 'node:process';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
-  // الأولوية لـ VITE_API_KEY لبيئة الإنتاج
+  // الأولوية لـ VITE_API_KEY لبيئة الإنتاج، مع دعم الأسماء البديلة لضمان عدم الفشل
   const apiKey = env.VITE_API_KEY || process.env.VITE_API_KEY || env.API_KEY || process.env.API_KEY || "";
   
   return {
     plugins: [react()],
     base: '/kinantouch/', 
     define: {
+      // حقن المفتاح كمتغير عالمي متاح عبر process.env.API_KEY داخل التطبيق
       'process.env.API_KEY': JSON.stringify(apiKey)
     },
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: false,
-      minify: 'esbuild', // التأكد من عدم استخدام terser
+      minify: 'esbuild',
     },
     esbuild: {
       drop: mode === 'production' ? ['console', 'debugger'] : [],
