@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
@@ -62,6 +62,7 @@ const App: React.FC = () => {
       
       const text = response.text;
       if (text) {
+        // تنظيف الاستجابة من أي علامات Markdown قد تضاف تلقائياً
         const cleanJson = text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
         const newsData = JSON.parse(cleanJson);
         setAiNews(newsData);
