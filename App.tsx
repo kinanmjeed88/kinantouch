@@ -59,16 +59,17 @@ const App: React.FC = () => {
   };
 
   const getApiKey = () => {
-    // محاولة جلب المفتاح من عدة مصادر (Vite env أو process env)
-    const key = (import.meta as any).env?.VITE_API_KEY || process.env.API_KEY;
-    if (!key || key === 'undefined' || key === '') return null;
-    return key;
+    // الحصول على المفتاح مباشرة من Vite Environment Variables
+    // نستخدم process.env.API_KEY هنا لأنه يتم تعريفه في vite.config.ts وقت الـ build
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined' || apiKey === '') return null;
+    return apiKey;
   };
 
   const fetchAINews = async () => {
     const apiKey = getApiKey();
     if (!apiKey) {
-      setNewsError("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub باسم VITE_API_KEY في Secrets أو Variables وأعد النشر.");
+      setNewsError("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub Secrets باسم VITE_API_KEY ثم أعد النشر.");
       setActiveToolView('ai-news');
       return;
     }
@@ -107,7 +108,7 @@ const App: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Error fetching news:", error);
-      setNewsError("خطأ في الاتصال بالخدمة. تأكد من أن مفتاح VITE_API_KEY مضاف بشكل صحيح.");
+      setNewsError("خطأ في الاتصال بالخدمة. تأكد من أن مفتاح VITE_API_KEY مضاف بشكل صحيح في GitHub.");
     } finally {
       setLoadingNews(false);
     }
@@ -117,7 +118,7 @@ const App: React.FC = () => {
     if (!phone1 || !phone2) return;
     const apiKey = getApiKey();
     if (!apiKey) {
-      alert("مفتاح API غير متوفر. يرجى إضافته باسم VITE_API_KEY.");
+      alert("مفتاح API غير متوفر. يرجى إضافته باسم VITE_API_KEY في إعدادات GitHub.");
       return;
     }
 
@@ -160,7 +161,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Error comparing phones:", error);
-      alert("حدث خطأ أثناء جلب المقارنة.");
+      alert("حدث خطأ أثناء جلب المقارنة. تأكد من إعداد VITE_API_KEY.");
     } finally {
       setLoadingComparison(false);
     }
@@ -386,7 +387,7 @@ const App: React.FC = () => {
                   ) : newsError ? (
                     <div className="text-center py-10 space-y-4">
                       <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-                      <p className="text-slate-400 text-sm px-4">{newsError}</p>
+                      <p className="text-slate-400 text-sm px-4 whitespace-pre-line">{newsError}</p>
                       <button onClick={fetchAINews} className="text-sky-400 font-bold border-b border-sky-400 pb-1 text-sm">إعادة المحاولة</button>
                     </div>
                   ) : (
@@ -399,7 +400,6 @@ const App: React.FC = () => {
                             <button onClick={() => shareToPlatform(news, 'tg')} className="p-2 bg-sky-500/20 rounded-xl text-sky-400 hover:bg-sky-500 hover:text-white transition-all"><Send className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'fb')} className="p-2 bg-blue-600/20 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all"><Facebook className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'insta')} className="p-2 bg-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500 hover:text-white transition-all"><Instagram className="w-4 h-4" /></button>
-                            {/* إصلاح الخطأ البرمجي هنا (استخدام news بدلاً من item) */}
                             <button onClick={() => copyToClipboard(`${news.title}\n\n${news.description}\n\n${news.url}`)} className="p-2 bg-slate-700/50 rounded-xl text-slate-300 hover:bg-slate-600 transition-all"><Copy className="w-4 h-4" /></button>
                           </div>
                           <a href={news.url} target="_blank" rel="noopener noreferrer" className="bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-indigo-500 hover:text-white transition-all">
