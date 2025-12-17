@@ -34,11 +34,51 @@ const App: React.FC = () => {
     setLoaded(true);
   }, []);
 
+  // Helper function to clean JSON from Markdown blocks
+  const cleanAndParseJSON = (text: string) => {
+    try {
+      const cleaned = text.trim()
+        .replace(/^```json\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+      return JSON.parse(cleaned);
+    } catch (e) {
+      console.error("JSON Parse Error:", e);
+      // Fallback: try to find the first '{' and last '}'
+      const start = text.indexOf('[');
+      const end = text.lastIndexOf(']');
+      if (start !== -1 && end !== -1) {
+        try {
+          return JSON.parse(text.substring(start, end + 1));
+        } catch (innerError) {
+          throw new Error("Could not parse JSON even with substring logic");
+        }
+      }
+      const objStart = text.indexOf('{');
+      const objEnd = text.lastIndexOf('}');
+       if (objStart !== -1 && objEnd !== -1) {
+        try {
+          return JSON.parse(text.substring(objStart, objEnd + 1));
+        } catch (innerError) {
+          throw new Error("Could not parse JSON object even with substring logic");
+        }
+      }
+      throw e;
+    }
+  };
+
   const fetchAINews = async () => {
+    if (!process.env.API_KEY) {
+      setNewsError("مفتاح API غير متوفر. يرجى تهيئة الإعدادات.");
+      setActiveToolView('ai-news');
+      return;
+    }
+
     setLoadingNews(true);
     setNewsError(null);
     setActiveToolView('ai-news');
     try {
+      // Re-initialize for each request as per guidelines to avoid stale keys
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -62,16 +102,14 @@ const App: React.FC = () => {
       
       const text = response.text;
       if (text) {
-        // تنظيف الاستجابة من أي علامات Markdown قد تضاف تلقائياً
-        const cleanJson = text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
-        const newsData = JSON.parse(cleanJson);
+        const newsData = cleanAndParseJSON(text);
         setAiNews(newsData);
       } else {
-        setNewsError("لم يتم العثور على بيانات.");
+        setNewsError("لم يتم العثور على بيانات في استجابة الخادم.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching news:", error);
-      setNewsError("حدث خطأ أثناء جلب الأخبار. حاول مرة أخرى.");
+      setNewsError(error.message || "حدث خطأ أثناء جلب الأخبار. حاول مرة أخرى.");
     } finally {
       setLoadingNews(false);
     }
@@ -79,8 +117,14 @@ const App: React.FC = () => {
 
   const handleComparePhones = async () => {
     if (!phone1 || !phone2) return;
+    if (!process.env.API_KEY) {
+      alert("مفتاح API غير متوفر.");
+      return;
+    }
+
     setLoadingComparison(true);
     try {
+      // Re-initialize for each request as per guidelines
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: "gemini-3-pro-preview",
@@ -112,13 +156,12 @@ const App: React.FC = () => {
       
       const text = response.text;
       if (text) {
-        const cleanJson = text.trim().replace(/^```json\n?/, '').replace(/\n?```$/, '');
-        const result = JSON.parse(cleanJson);
+        const result = cleanAndParseJSON(text);
         setComparisonResult(result);
       }
     } catch (error) {
       console.error("Error comparing phones:", error);
-      alert("حدث خطأ في المقارنة.");
+      alert("حدث خطأ في المقارنة. تأكد من صحة أسماء الهواتف.");
     } finally {
       setLoadingComparison(false);
     }
@@ -255,7 +298,7 @@ const App: React.FC = () => {
                 <div className="space-y-3 pt-4 border-t border-slate-700/30">
                   <p className="text-sky-400 font-black text-sm mb-3 flex items-center gap-2">
                     <Search className="w-4 h-4" />
-                    طرق البحث المتاحة في قنوات التيليكرام والمناقشات:
+                    طرق البحث المتاحة في قنوات المناقشات في التيليكرام:
                   </p>
                   <ul className="space-y-3">
                     <li className="flex items-start gap-3 text-slate-300 text-xs leading-relaxed group">
@@ -357,6 +400,7 @@ const App: React.FC = () => {
                             <button onClick={() => shareToPlatform(news, 'tg')} className="p-2 bg-sky-500/20 rounded-xl text-sky-400 hover:bg-sky-500 hover:text-white transition-all"><Send className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'fb')} className="p-2 bg-blue-600/20 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all"><Facebook className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'insta')} className="p-2 bg-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500 hover:text-white transition-all"><Instagram className="w-4 h-4" /></button>
+                            {/* FIX: Use 'news.url' instead of the undefined 'item.url' */}
                             <button onClick={() => copyToClipboard(`${news.title}\n\n${news.description}\n\n${news.url}`)} className="p-2 bg-slate-700/50 rounded-xl text-slate-300 hover:bg-slate-600 transition-all"><Copy className="w-4 h-4" /></button>
                           </div>
                           <a href={news.url} target="_blank" rel="noopener noreferrer" className="bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-indigo-500 hover:text-white transition-all">
@@ -383,7 +427,6 @@ const App: React.FC = () => {
                   <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-4 backdrop-blur-sm shadow-2xl">
                     <h3 className="text-lg font-black text-center text-white mb-2">مقارنة المواصفات الذكية</h3>
                     <div className="space-y-4">
-                      {/* Inputs are stable inside the main component to prevent focus loss */}
                       <div className="relative">
                         <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                         <input 
