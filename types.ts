@@ -12,3 +12,21 @@ export interface SocialData {
   platform: 'Facebook' | 'Instagram' | 'TikTok' | 'YouTube';
   url: string;
 }
+
+export interface AINewsItem {
+  title: string;
+  description: string;
+  url: string;
+}
+
+export interface PhoneSpec {
+  feature: string;
+  phone1: string;
+  phone2: string;
+}
+
+export interface PhoneComparisonResult {
+  specs: PhoneSpec[];
+  verdict: string;
+  betterPhone: string;
+}
