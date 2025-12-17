@@ -34,7 +34,6 @@ const App: React.FC = () => {
     setLoaded(true);
   }, []);
 
-  // دالة محسنة لتحليل الـ JSON وتنظيفه من أي نصوص زائدة أو Markdown
   const cleanAndParseJSON = (text: string) => {
     try {
       let cleaned = text.trim();
@@ -59,8 +58,7 @@ const App: React.FC = () => {
   };
 
   const getApiKey = () => {
-    // الحصول على المفتاح مباشرة من Vite Environment Variables
-    // نستخدم process.env.API_KEY هنا لأنه يتم تعريفه في vite.config.ts وقت الـ build
+    // التحقق من المفتاح المحقون عبر Vite
     const apiKey = process.env.API_KEY;
     if (!apiKey || apiKey === 'undefined' || apiKey === '') return null;
     return apiKey;
@@ -108,7 +106,7 @@ const App: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Error fetching news:", error);
-      setNewsError("خطأ في الاتصال بالخدمة. تأكد من أن مفتاح VITE_API_KEY مضاف بشكل صحيح في GitHub.");
+      setNewsError("خطأ في الاتصال بالخدمة. تأكد من صحة مفتاح VITE_API_KEY في GitHub.");
     } finally {
       setLoadingNews(false);
     }
@@ -118,7 +116,7 @@ const App: React.FC = () => {
     if (!phone1 || !phone2) return;
     const apiKey = getApiKey();
     if (!apiKey) {
-      alert("مفتاح API غير متوفر. يرجى إضافته باسم VITE_API_KEY في إعدادات GitHub.");
+      alert("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub Secrets باسم VITE_API_KEY ثم أعد النشر.");
       return;
     }
 
