@@ -44,7 +44,6 @@ const App: React.FC = () => {
       return JSON.parse(cleaned);
     } catch (e) {
       console.warn("فشل التحليل الأولي، محاولة استخراج JSON يدويًا...");
-      // محاولة البحث عن بداية المصفوفة أو الكائن
       const arrayStart = text.indexOf('[');
       const arrayEnd = text.lastIndexOf(']');
       if (arrayStart !== -1 && arrayEnd !== -1) {
@@ -55,14 +54,21 @@ const App: React.FC = () => {
       if (objectStart !== -1 && objectEnd !== -1) {
         try { return JSON.parse(text.substring(objectStart, objectEnd + 1)); } catch (err) {}
       }
-      throw new Error("فشل في تحليل البيانات المستلمة.");
+      throw new Error("فشل في تحليل البيانات المستلمة من الذكاء الاصطناعي.");
     }
   };
 
+  const getApiKey = () => {
+    // محاولة جلب المفتاح من عدة مصادر محتملة في Vite
+    const key = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY;
+    if (!key || key === 'undefined' || key === '') return null;
+    return key;
+  };
+
   const fetchAINews = async () => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined') {
-      setNewsError("مفتاح API غير متوفر في إعدادات GitHub. يرجى التأكد من إضافة API_KEY.");
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      setNewsError("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub Secrets باسم API_KEY وإعادة النشر.");
       setActiveToolView('ai-news');
       return;
     }
@@ -97,11 +103,11 @@ const App: React.FC = () => {
         const newsData = cleanAndParseJSON(text);
         setAiNews(newsData);
       } else {
-        setNewsError("لم يتم استلام نص من الذكاء الاصطناعي.");
+        setNewsError("لم يتم استلام بيانات صحيحة.");
       }
     } catch (error: any) {
       console.error("Error fetching news:", error);
-      setNewsError(error.message || "حدث خطأ غير متوقع أثناء جلب الأخبار.");
+      setNewsError("حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.");
     } finally {
       setLoadingNews(false);
     }
@@ -109,9 +115,9 @@ const App: React.FC = () => {
 
   const handleComparePhones = async () => {
     if (!phone1 || !phone2) return;
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined') {
-      alert("خطأ: مفتاح API_KEY غير معرف في البيئة.");
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      alert("مفتاح API غير متوفر في إعدادات الموقع.");
       return;
     }
 
@@ -154,7 +160,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Error comparing phones:", error);
-      alert("حدث خطأ أثناء إجراء المقارنة. حاول لاحقاً.");
+      alert("حدث خطأ في جلب بيانات الهواتف. تأكد من كتابة الأسماء بشكل صحيح.");
     } finally {
       setLoadingComparison(false);
     }
@@ -380,7 +386,7 @@ const App: React.FC = () => {
                   ) : newsError ? (
                     <div className="text-center py-10 space-y-4">
                       <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-                      <p className="text-slate-400 text-sm px-6">{newsError}</p>
+                      <p className="text-slate-400 text-sm px-4">{newsError}</p>
                       <button onClick={fetchAINews} className="text-sky-400 font-bold border-b border-sky-400 pb-1 text-sm">إعادة المحاولة</button>
                     </div>
                   ) : (
@@ -393,6 +399,7 @@ const App: React.FC = () => {
                             <button onClick={() => shareToPlatform(news, 'tg')} className="p-2 bg-sky-500/20 rounded-xl text-sky-400 hover:bg-sky-500 hover:text-white transition-all"><Send className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'fb')} className="p-2 bg-blue-600/20 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all"><Facebook className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'insta')} className="p-2 bg-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500 hover:text-white transition-all"><Instagram className="w-4 h-4" /></button>
+                            {/* إصلاح المتغير المفقود هنا */}
                             <button onClick={() => copyToClipboard(`${news.title}\n\n${news.description}\n\n${news.url}`)} className="p-2 bg-slate-700/50 rounded-xl text-slate-300 hover:bg-slate-600 transition-all"><Copy className="w-4 h-4" /></button>
                           </div>
                           <a href={news.url} target="_blank" rel="noopener noreferrer" className="bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-indigo-500 hover:text-white transition-all">
