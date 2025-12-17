@@ -34,13 +34,13 @@ const App: React.FC = () => {
     setLoaded(true);
   }, []);
 
-  // دالة متطورة لتحليل الـ JSON وتنظيفه من أي نصوص زائدة
+  // دالة محسنة لتحليل الـ JSON وتنظيفه من أي نصوص زائدة أو Markdown
   const cleanAndParseJSON = (text: string) => {
     try {
-      const cleaned = text.trim()
-        .replace(/^```json\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
+      let cleaned = text.trim();
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+      }
       return JSON.parse(cleaned);
     } catch (e) {
       console.warn("فشل التحليل الأولي، محاولة استخراج JSON يدويًا...");
@@ -59,8 +59,8 @@ const App: React.FC = () => {
   };
 
   const getApiKey = () => {
-    // محاولة جلب المفتاح من عدة مصادر محتملة في Vite
-    const key = process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY;
+    // محاولة جلب المفتاح من عدة مصادر (Vite env أو process env)
+    const key = (import.meta as any).env?.VITE_API_KEY || process.env.API_KEY;
     if (!key || key === 'undefined' || key === '') return null;
     return key;
   };
@@ -68,7 +68,7 @@ const App: React.FC = () => {
   const fetchAINews = async () => {
     const apiKey = getApiKey();
     if (!apiKey) {
-      setNewsError("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub Secrets باسم API_KEY وإعادة النشر.");
+      setNewsError("مفتاح API غير متوفر. تأكد من إضافته إلى GitHub باسم VITE_API_KEY في Secrets أو Variables وأعد النشر.");
       setActiveToolView('ai-news');
       return;
     }
@@ -80,7 +80,7 @@ const App: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: "قم بإنشاء 10 منشورات متنوعة عن أحدث أخبار الذكاء الاصطناعي (أدوات جديدة، تحديثات نماذج). لكل منشور: عنوان جذاب، وصف من 4 أسطر دقيقة، ورابط حقيقي للأداة. أجب بتنسيق JSON حصراً.",
+        contents: "قم بإنشاء 10 منشورات متنوعة عن أحدث أخبار الذكاء الاصطناعي. لكل منشور: عنوان، وصف دقيق، ورابط حقيقي للأداة. أجب بتنسيق JSON حصراً.",
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -103,11 +103,11 @@ const App: React.FC = () => {
         const newsData = cleanAndParseJSON(text);
         setAiNews(newsData);
       } else {
-        setNewsError("لم يتم استلام بيانات صحيحة.");
+        setNewsError("لم يتم استلام بيانات من الذكاء الاصطناعي.");
       }
     } catch (error: any) {
       console.error("Error fetching news:", error);
-      setNewsError("حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.");
+      setNewsError("خطأ في الاتصال بالخدمة. تأكد من أن مفتاح VITE_API_KEY مضاف بشكل صحيح.");
     } finally {
       setLoadingNews(false);
     }
@@ -117,7 +117,7 @@ const App: React.FC = () => {
     if (!phone1 || !phone2) return;
     const apiKey = getApiKey();
     if (!apiKey) {
-      alert("مفتاح API غير متوفر في إعدادات الموقع.");
+      alert("مفتاح API غير متوفر. يرجى إضافته باسم VITE_API_KEY.");
       return;
     }
 
@@ -127,7 +127,7 @@ const App: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-pro-preview",
-        contents: `قارن بين هاتف ${phone1} وهاتف ${phone2} باللغة العربية. يجب أن تتضمن المقارنة: الشاشة، المعالج، الكاميرا، البطارية، السعر التقريبي. حدد الأفضل بناءً على المواقع التقنية الشهيرة مع ذكر السبب. أجب بتنسيق JSON.`,
+        contents: `قارن بين هاتف ${phone1} وهاتف ${phone2} باللغة العربية. أجب بتنسيق JSON.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -160,7 +160,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Error comparing phones:", error);
-      alert("حدث خطأ في جلب بيانات الهواتف. تأكد من كتابة الأسماء بشكل صحيح.");
+      alert("حدث خطأ أثناء جلب المقارنة.");
     } finally {
       setLoadingComparison(false);
     }
@@ -399,7 +399,7 @@ const App: React.FC = () => {
                             <button onClick={() => shareToPlatform(news, 'tg')} className="p-2 bg-sky-500/20 rounded-xl text-sky-400 hover:bg-sky-500 hover:text-white transition-all"><Send className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'fb')} className="p-2 bg-blue-600/20 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all"><Facebook className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'insta')} className="p-2 bg-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500 hover:text-white transition-all"><Instagram className="w-4 h-4" /></button>
-                            {/* إصلاح المتغير المفقود هنا */}
+                            {/* إصلاح الخطأ البرمجي هنا (استخدام news بدلاً من item) */}
                             <button onClick={() => copyToClipboard(`${news.title}\n\n${news.description}\n\n${news.url}`)} className="p-2 bg-slate-700/50 rounded-xl text-slate-300 hover:bg-slate-600 transition-all"><Copy className="w-4 h-4" /></button>
                           </div>
                           <a href={news.url} target="_blank" rel="noopener noreferrer" className="bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-indigo-500 hover:text-white transition-all">
