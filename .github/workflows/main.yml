@@ -1,4 +1,4 @@
-herename: Deploy Vite site to GitHub Pages
+name: Deploy Vite site to GitHub Pages
 
 on:
   push:
