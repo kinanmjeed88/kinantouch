@@ -208,78 +208,78 @@ const App: React.FC = () => {
           
           {activeTab === 'info' && (
             <div className="space-y-4 animate-fade-in text-left">
-              <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl space-y-5 backdrop-blur-sm shadow-xl">
+              <div className="bg-slate-800/40 border border-slate-700/50 p-4 rounded-3xl space-y-3.5 backdrop-blur-sm shadow-xl">
                 
-                {/* Header: Starting from Left */}
-                <div className="flex items-center gap-3 text-sky-400 mb-2">
-                  <Info className="w-7 h-7 flex-shrink-0" />
-                  <h2 className="font-black text-lg text-right w-full" dir="rtl">بخصوص بوت الطلبات على التيليكرام</h2>
+                {/* Header: Small title */}
+                <div className="flex items-center gap-2 text-sky-400 mb-0.5">
+                  <Info className="w-5 h-5 flex-shrink-0" />
+                  <h2 className="font-black text-sm text-right w-full" dir="rtl">بخصوص بوت الطلبات على التيليكرام</h2>
                 </div>
 
-                {/* Entry Button */}
+                {/* Entry Button: Smaller text */}
                 <a 
                   href="https://t.me/techtouchAI_bot" 
                   target="_blank" 
-                  className="flex items-center justify-center gap-2 w-full py-3.5 bg-sky-500 hover:bg-sky-400 text-white font-black rounded-2xl transition-all shadow-lg shadow-sky-500/20 active:scale-[0.98]"
+                  className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-black rounded-xl transition-all shadow-lg shadow-sky-500/20 active:scale-[0.98] text-[10px]"
                 >
-                  <ExternalLink className="w-5 h-5" />
+                  <ExternalLink className="w-3.5 h-3.5" />
                   <span>الدخول لبوت الطلبات</span>
                 </a>
                 
-                {/* Content Paragraphs */}
-                <div className="space-y-4">
-                  <p className="text-slate-300 text-sm leading-relaxed text-right pr-2 border-r-2 border-sky-500/30" dir="rtl">
+                {/* Content Paragraphs: Smaller text */}
+                <div className="space-y-2.5">
+                  <p className="text-slate-300 text-[10.5px] leading-relaxed text-right pr-2 border-r-2 border-sky-500/30" dir="rtl">
                     ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .✪
                   </p>
                   
-                  <p className="text-slate-200/90 text-sm leading-relaxed text-right pr-2 border-r-2 border-amber-500/30" dir="rtl">
+                  <p className="text-slate-200/90 text-[10.5px] leading-relaxed text-right pr-2 border-r-2 border-amber-500/30" dir="rtl">
                     لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .✪
                   </p>
                 </div>
 
-                {/* Highlighted Box */}
-                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex items-start gap-3">
-                  <MessageSquare className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-amber-200/90 text-xs text-right leading-relaxed flex-1 font-bold" dir="rtl">
+                {/* Highlighted Box: More compact */}
+                <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl flex items-start gap-2">
+                  <MessageSquare className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-amber-200/90 text-[10px] text-right leading-relaxed flex-1 font-bold" dir="rtl">
                     البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات
                   </p>
                 </div>
 
-                {/* Search Instructions List */}
-                <div className="space-y-4 pt-4 border-t border-slate-700/50">
-                  <div className="flex items-center gap-3 text-sky-400 mb-1">
-                    <Search className="w-6 h-6 flex-shrink-0" />
-                    <p className="font-black text-sm text-right w-full" dir="rtl">طرق البحث المتاحة في قنوات المناقشات في التيليكرام:</p>
+                {/* Search Instructions List: Compact */}
+                <div className="space-y-3 pt-3 border-t border-slate-700/50">
+                  <div className="flex items-center gap-2 text-sky-400 mb-0.5">
+                    <Search className="w-4.5 h-4.5 flex-shrink-0" />
+                    <p className="font-black text-[12px] text-right w-full" dir="rtl">طرق البحث المتاحة في قنوات المناقشات:</p>
                   </div>
                   
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-sm border border-slate-600/50">١</div>
-                      <p className="text-slate-300 text-xs leading-relaxed text-right flex-1 pt-1.5" dir="rtl">ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</p>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-2.5">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-[10px] border border-slate-600/50">١</div>
+                      <p className="text-slate-300 text-[10px] leading-relaxed text-right flex-1 pt-1" dir="rtl">ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</p>
                     </li>
-                    <li className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-sm border border-slate-600/50">٢</div>
-                      <p className="text-slate-300 text-xs leading-relaxed text-right flex-1 pt-1.5" dir="rtl">اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) باسم مضبوط (مثلاً: كاب كات).</p>
+                    <li className="flex items-start gap-2.5">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-[10px] border border-slate-600/50">٢</div>
+                      <p className="text-slate-300 text-[10px] leading-relaxed text-right flex-1 pt-1" dir="rtl">اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) باسم مضبوط (مثلاً: كاب كات).</p>
                     </li>
-                    <li className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-sm border border-slate-600/50">٣</div>
-                      <p className="text-slate-300 text-xs leading-relaxed text-right flex-1 pt-1.5" dir="rtl">استخدم أمر البحث بكتابة كلمة "بحث" متبوعة باسم التطبيق (مثلاً: بحث ياسين).</p>
+                    <li className="flex items-start gap-2.5">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-[10px] border border-slate-600/50">٣</div>
+                      <p className="text-slate-300 text-[10px] leading-relaxed text-right flex-1 pt-1" dir="rtl">استخدم أمر البحث بكتابة كلمة "بحث" متبوعة باسم التطبيق (مثلاً: بحث ياسين).</p>
                     </li>
-                    <li className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-sm border border-slate-600/50">٤</div>
-                      <p className="text-slate-300 text-xs leading-relaxed text-right flex-1 pt-1.5" dir="rtl">للاعلان في القناة تواصل من خلال البوت</p>
+                    <li className="flex items-start gap-2.5">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-700/50 flex items-center justify-center text-sky-400 font-black text-[10px] border border-slate-600/50">٤</div>
+                      <p className="text-slate-300 text-[10px] leading-relaxed text-right flex-1 pt-1" dir="rtl">للاعلان في القناة تواصل من خلال البوت</p>
                     </li>
                   </ul>
                 </div>
 
-                {/* Final Warning/Footer Box */}
-                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-start gap-3 mt-4">
-                  <AlertTriangle className="w-7 h-7 text-red-500 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-red-200/90 text-xs text-right leading-relaxed font-black" dir="rtl">
+                {/* Final Warning/Footer Box: Tiny text */}
+                <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-start gap-2 mt-1.5">
+                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-0.5">
+                    <p className="text-red-200/90 text-[10px] text-right leading-relaxed font-black" dir="rtl">
                       تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا
                     </p>
-                    <p className="text-slate-400 text-[10px] text-right" dir="rtl">في النهاية دمتم برعاية الله</p>
+                    <p className="text-slate-400 text-[8px] text-right" dir="rtl">في النهاية دمتم برعاية الله</p>
                   </div>
                 </div>
 
