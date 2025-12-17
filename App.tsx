@@ -3,9 +3,9 @@ import { telegramChannels, socialLinks, footerData, profileConfig } from './data
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
 import { 
-  Share2, Home, Info, Search, MessageSquare, AlertTriangle, 
-  Wrench, Cpu, Smartphone, ArrowRight, Copy, Loader2, ChevronLeft, 
-  CheckCircle2, AlertCircle, ExternalLink, Facebook, Instagram, Send
+  Home, Info, AlertTriangle, 
+  Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
+  AlertCircle, Facebook, Send
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { AINewsItem, PhoneComparisonResult } from './types';
@@ -57,8 +57,8 @@ const App: React.FC = () => {
   };
 
   const getApiKey = () => {
-    // محاولة جلب المفتاح من عدة مصادر لضمان وصوله في كل البيئات
-    const key = (import.meta as any).env?.VITE_API_KEY || (process as any).env?.API_KEY;
+    // الحصول على المفتاح حصرياً من process.env.API_KEY كما هو محدد في القواعد
+    const key = process.env.API_KEY;
     if (!key || key === 'undefined' || key === 'null' || key === '') return null;
     return key.trim();
   };
@@ -119,7 +119,6 @@ const App: React.FC = () => {
     setComparisonResult(null);
     try {
       const ai = new GoogleGenAI({ apiKey });
-      // استخدمنا gemini-3-flash-preview لأنه أكثر توفراً لجميع المفاتيح حالياً
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `قارن بجدول مفصل بين ${phone1} و ${phone2} بالعربي. أجب بتنسيق JSON حصراً.`,
@@ -153,7 +152,6 @@ const App: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Gemini Error:", error);
-      // إظهار الخطأ التقني الحقيقي للمستخدم للمساعدة في التشخيص
       alert(`فشل تقني: ${error.message}\n(تأكد من تفعيل Gemini API في Google AI Studio)`);
     } finally {
       setLoadingComparison(false);
