@@ -5,7 +5,7 @@ import { SocialLinks } from './components/SocialLinks';
 import { 
   Home, Info, AlertTriangle, 
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
-  AlertCircle, Facebook, Send
+  AlertCircle, Facebook, Send, Search, MessageSquare
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { AINewsItem, PhoneComparisonResult } from './types';
@@ -57,7 +57,6 @@ const App: React.FC = () => {
   };
 
   const getApiKey = () => {
-    // الحصول على المفتاح حصرياً من process.env.API_KEY كما هو محدد في القواعد
     const key = process.env.API_KEY;
     if (!key || key === 'undefined' || key === 'null' || key === '') return null;
     return key.trim();
@@ -206,16 +205,63 @@ const App: React.FC = () => {
 
         <main className="flex-grow py-4">
           {activeTab === 'home' && telegramChannels.map((ch, i) => <ChannelCard key={ch.id} channel={ch} index={i} />)}
+          
           {activeTab === 'info' && (
-            <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl space-y-4 text-right animate-fade-in">
-              <h2 className="font-bold text-sky-400 flex items-center gap-2 justify-end"><Info className="w-5 h-5" /> بوت الطلبات</h2>
-              <p className="text-sm text-slate-300 leading-relaxed">أرسل اسم التطبيق أو الرابط من متجر بلاي فقط. البوت مخصص للطلبات التقنية.</p>
-              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-start gap-3 justify-end">
-                <p className="text-red-200/80 text-[10px]">تنبيه: حظر البوت يؤدي لحظر تلقائي دائم.</p>
-                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <div className="space-y-4 animate-fade-in text-right">
+              <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl space-y-4 backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-sky-400 mb-2 justify-end">
+                  <h2 className="font-bold text-lg">بخصوص بوت الطلبات</h2>
+                  <Info className="w-5 h-5" />
+                </div>
+                
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  ارسل اسم التطبيق وصورته او رابط التطبيق من متجر بلي فقط .
+                  <span className="text-sky-400 mr-1 text-xs">✪</span>
+                </p>
+                
+                <p className="text-slate-300 text-sm leading-relaxed border-t border-slate-700/50 pt-3">
+                  لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .
+                  <span className="text-sky-400 mr-1 text-xs">✪</span>
+                </p>
+
+                <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl flex items-start gap-3 justify-end">
+                  <p className="text-amber-200/80 text-xs text-right">
+                    البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات
+                  </p>
+                  <MessageSquare className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-slate-700/30">
+                  <p className="text-sky-400 font-black text-sm mb-3 flex items-center gap-2 justify-end">
+                    طرق البحث المتاحة في قنوات المناقشات في التيليكرام:
+                    <Search className="w-4 h-4" />
+                  </p>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3 text-slate-300 text-xs leading-relaxed justify-end group">
+                      <span className="text-right">ابحث بالقناة من خلال زر البحث واكتب اسم التطبيق بشكل دقيق.</span>
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-700/50 flex items-center justify-center text-sky-400 font-bold">١</div>
+                    </li>
+                    <li className="flex items-start gap-3 text-slate-300 text-xs leading-relaxed justify-end group">
+                      <span className="text-right">اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) باسم مضبوط ومباشر (مثلاً: كاب كات).</span>
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-700/50 flex items-center justify-center text-sky-400 font-bold">٢</div>
+                    </li>
+                    <li className="flex items-start gap-3 text-slate-300 text-xs leading-relaxed justify-end group">
+                      <span className="text-right">استخدم أمر البحث السريع بكتابة كلمة <span className="text-sky-400 font-bold">"بحث"</span> متبوعة باسم التطبيق (مثلاً: بحث ياسين).</span>
+                      <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-slate-700/50 flex items-center justify-center text-sky-400 font-bold">٣</div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-start gap-3 mt-4 justify-end">
+                  <p className="text-red-200/80 text-xs text-right">
+                    تنبيه: حظر البوت يؤدي لحظر تلقائي دائم ولا يمكن فكه حتى لو قمت بإزالة الحظر لاحقاً.
+                  </p>
+                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                </div>
               </div>
             </div>
           )}
+
           {activeTab === 'tools' && (
             <div className="animate-fade-in">
               {activeToolView === 'main' ? (
