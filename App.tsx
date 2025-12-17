@@ -34,7 +34,7 @@ const App: React.FC = () => {
     setLoaded(true);
   }, []);
 
-  // Helper function to clean JSON from Markdown blocks
+  // دالة متطورة لتحليل الـ JSON وتنظيفه من أي نصوص زائدة
   const cleanAndParseJSON = (text: string) => {
     try {
       const cleaned = text.trim()
@@ -43,33 +43,26 @@ const App: React.FC = () => {
         .trim();
       return JSON.parse(cleaned);
     } catch (e) {
-      console.error("JSON Parse Error:", e);
-      // Fallback: try to find the first '{' and last '}'
-      const start = text.indexOf('[');
-      const end = text.lastIndexOf(']');
-      if (start !== -1 && end !== -1) {
-        try {
-          return JSON.parse(text.substring(start, end + 1));
-        } catch (innerError) {
-          throw new Error("Could not parse JSON even with substring logic");
-        }
+      console.warn("فشل التحليل الأولي، محاولة استخراج JSON يدويًا...");
+      // محاولة البحث عن بداية المصفوفة أو الكائن
+      const arrayStart = text.indexOf('[');
+      const arrayEnd = text.lastIndexOf(']');
+      if (arrayStart !== -1 && arrayEnd !== -1) {
+        try { return JSON.parse(text.substring(arrayStart, arrayEnd + 1)); } catch (err) {}
       }
-      const objStart = text.indexOf('{');
-      const objEnd = text.lastIndexOf('}');
-       if (objStart !== -1 && objEnd !== -1) {
-        try {
-          return JSON.parse(text.substring(objStart, objEnd + 1));
-        } catch (innerError) {
-          throw new Error("Could not parse JSON object even with substring logic");
-        }
+      const objectStart = text.indexOf('{');
+      const objectEnd = text.lastIndexOf('}');
+      if (objectStart !== -1 && objectEnd !== -1) {
+        try { return JSON.parse(text.substring(objectStart, objectEnd + 1)); } catch (err) {}
       }
-      throw e;
+      throw new Error("فشل في تحليل البيانات المستلمة.");
     }
   };
 
   const fetchAINews = async () => {
-    if (!process.env.API_KEY) {
-      setNewsError("مفتاح API غير متوفر. يرجى تهيئة الإعدادات.");
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined') {
+      setNewsError("مفتاح API غير متوفر في إعدادات GitHub. يرجى التأكد من إضافة API_KEY.");
       setActiveToolView('ai-news');
       return;
     }
@@ -78,8 +71,7 @@ const App: React.FC = () => {
     setNewsError(null);
     setActiveToolView('ai-news');
     try {
-      // Re-initialize for each request as per guidelines to avoid stale keys
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: "قم بإنشاء 10 منشورات متنوعة عن أحدث أخبار الذكاء الاصطناعي (أدوات جديدة، تحديثات نماذج). لكل منشور: عنوان جذاب، وصف من 4 أسطر دقيقة، ورابط حقيقي للأداة. أجب بتنسيق JSON حصراً.",
@@ -105,11 +97,11 @@ const App: React.FC = () => {
         const newsData = cleanAndParseJSON(text);
         setAiNews(newsData);
       } else {
-        setNewsError("لم يتم العثور على بيانات في استجابة الخادم.");
+        setNewsError("لم يتم استلام نص من الذكاء الاصطناعي.");
       }
     } catch (error: any) {
       console.error("Error fetching news:", error);
-      setNewsError(error.message || "حدث خطأ أثناء جلب الأخبار. حاول مرة أخرى.");
+      setNewsError(error.message || "حدث خطأ غير متوقع أثناء جلب الأخبار.");
     } finally {
       setLoadingNews(false);
     }
@@ -117,15 +109,16 @@ const App: React.FC = () => {
 
   const handleComparePhones = async () => {
     if (!phone1 || !phone2) return;
-    if (!process.env.API_KEY) {
-      alert("مفتاح API غير متوفر.");
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined') {
+      alert("خطأ: مفتاح API_KEY غير معرف في البيئة.");
       return;
     }
 
     setLoadingComparison(true);
+    setComparisonResult(null);
     try {
-      // Re-initialize for each request as per guidelines
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-pro-preview",
         contents: `قارن بين هاتف ${phone1} وهاتف ${phone2} باللغة العربية. يجب أن تتضمن المقارنة: الشاشة، المعالج، الكاميرا، البطارية، السعر التقريبي. حدد الأفضل بناءً على المواقع التقنية الشهيرة مع ذكر السبب. أجب بتنسيق JSON.`,
@@ -161,7 +154,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Error comparing phones:", error);
-      alert("حدث خطأ في المقارنة. تأكد من صحة أسماء الهواتف.");
+      alert("حدث خطأ أثناء إجراء المقارنة. حاول لاحقاً.");
     } finally {
       setLoadingComparison(false);
     }
@@ -387,7 +380,7 @@ const App: React.FC = () => {
                   ) : newsError ? (
                     <div className="text-center py-10 space-y-4">
                       <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-                      <p className="text-slate-400 text-sm">{newsError}</p>
+                      <p className="text-slate-400 text-sm px-6">{newsError}</p>
                       <button onClick={fetchAINews} className="text-sky-400 font-bold border-b border-sky-400 pb-1 text-sm">إعادة المحاولة</button>
                     </div>
                   ) : (
@@ -400,7 +393,6 @@ const App: React.FC = () => {
                             <button onClick={() => shareToPlatform(news, 'tg')} className="p-2 bg-sky-500/20 rounded-xl text-sky-400 hover:bg-sky-500 hover:text-white transition-all"><Send className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'fb')} className="p-2 bg-blue-600/20 rounded-xl text-blue-400 hover:bg-blue-600 hover:text-white transition-all"><Facebook className="w-4 h-4" /></button>
                             <button onClick={() => shareToPlatform(news, 'insta')} className="p-2 bg-pink-500/20 rounded-xl text-pink-400 hover:bg-pink-500 hover:text-white transition-all"><Instagram className="w-4 h-4" /></button>
-                            {/* FIX: Use 'news.url' instead of the undefined 'item.url' */}
                             <button onClick={() => copyToClipboard(`${news.title}\n\n${news.description}\n\n${news.url}`)} className="p-2 bg-slate-700/50 rounded-xl text-slate-300 hover:bg-slate-600 transition-all"><Copy className="w-4 h-4" /></button>
                           </div>
                           <a href={news.url} target="_blank" rel="noopener noreferrer" className="bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-indigo-500 hover:text-white transition-all">
