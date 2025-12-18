@@ -58,7 +58,7 @@ const App: React.FC = () => {
   const callGroqAPI = async (prompt: string) => {
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-      throw new Error("مفتاح API غير متوفر. يرجى التأكد من إعدادات البيئة.");
+      throw new Error("مفتاح API غير متوفر. يرجى التأكد من إعدادات VITE_GROQ_API_KEY في GitHub Secrets أو ملف .env");
     }
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
