@@ -8,7 +8,7 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap, Star, CheckCircle2
+  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap, Star
 } from 'lucide-react';
 import { AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
 
