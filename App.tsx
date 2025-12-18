@@ -7,19 +7,17 @@ import {
   Home, Info, 
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
-  Briefcase, Copy, TrendingUp,
+  Copy, TrendingUp,
   MessageCircle, Facebook, Instagram, BadgeCheck, Zap,
-  ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
-  Calendar, Building2
+  ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2
 } from 'lucide-react';
-import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
+import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
 import { GoogleGenAI, Type } from "@google/genai";
 
 type TabType = 'home' | 'info' | 'tools';
-type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
+type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v40',
   AI_NEWS: 'techtouch_ai_v40',
   PHONE_NEWS: 'techtouch_phones_v40'
 };
@@ -31,7 +29,6 @@ const App: React.FC = () => {
   
   const [aiNews, setAiNews] = useState<AINewsItem[]>([]);
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
-  const [jobs, setJobs] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -78,12 +75,11 @@ const App: React.FC = () => {
     setError(null);
     setActiveToolView(type);
     
-    const cacheKey = type === 'jobs' ? CACHE_KEYS.JOBS : type === 'ai-news' ? CACHE_KEYS.AI_NEWS : CACHE_KEYS.PHONE_NEWS;
+    const cacheKey = type === 'ai-news' ? CACHE_KEYS.AI_NEWS : CACHE_KEYS.PHONE_NEWS;
     const cached = !force ? getCachedData(cacheKey) : null;
 
     if (cached) {
-      if (type === 'jobs') setJobs(cached.iraq_jobs || []);
-      else if (type === 'ai-news') setAiNews(cached.ai_news || []);
+      if (type === 'ai-news') setAiNews(cached.ai_news || []);
       else if (type === 'phone-news') setPhoneNews(cached.smartphones || []);
       setLoading(false);
       return;
@@ -93,36 +89,14 @@ const App: React.FC = () => {
       const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر رئيسي لموقع Techtouch.
 التاريخ الحالي المرجعي: ${todayStr}.
 القواعد الصارمة:
-1. الوظائف: مصادر gov.iq فقط، منشورة حالياً، الموعد النهائي بعد ${todayStr}.
-2. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 30 يوماً.
-3. الهواتف: السنة الحالية فقط، مواصفات كاملة، سعر عراقي موثق.
-4. إذا لم توجد بيانات حقيقية، أخرج مصفوفة فارغة [].`;
+1. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 30 يوماً.
+2. الهواتف: السنة الحالية فقط، مواصفات كاملة، سعر عراقي موثق.
+3. إذا لم توجد بيانات حقيقية، أخرج مصفوفة فارغة [].`;
 
       let prompt = "";
       let schema: any = {};
 
-      if (type === 'jobs') {
-        prompt = `استخرج أحدث 8 وظائف حكومية عراقية (gov.iq) فعالة حالياً.`;
-        schema = {
-            type: Type.OBJECT,
-            properties: {
-                iraq_jobs: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: {
-                            title: { type: Type.STRING },
-                            entity: { type: Type.STRING },
-                            job_type: { type: Type.STRING },
-                            conditions: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            apply_deadline: { type: Type.STRING },
-                            official_link: { type: Type.STRING }
-                        }
-                    }
-                }
-            }
-        };
-      } else if (type === 'ai-news') {
+      if (type === 'ai-news') {
         prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي (إصدارات ونماذج جديدة) خلال آخر 30 يوماً.`;
         schema = {
             type: Type.OBJECT,
@@ -192,8 +166,7 @@ const App: React.FC = () => {
       const result = await callGeminiAPI(prompt, systemInstruction, schema);
       saveToCache(cacheKey, result);
       
-      if (type === 'jobs') setJobs(result.iraq_jobs || []);
-      else if (type === 'ai-news') setAiNews(result.ai_news || []);
+      if (type === 'ai-news') setAiNews(result.ai_news || []);
       else if (type === 'phone-news') setPhoneNews(result.smartphones || []);
 
     } catch (err: any) {
@@ -339,7 +312,6 @@ const App: React.FC = () => {
               {activeToolView === 'main' ? (
                 <div className="grid gap-3">
                   {[
-                    { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية رسمية (gov.iq)' },
                     { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'أخبار الذكاء الاصطناعي', desc: 'أحداث وإصدارات تقنية موثقة' },
                     { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات كاملة وأسعار السنة الحالية' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
@@ -372,52 +344,6 @@ const App: React.FC = () => {
                     <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6">
                       <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
                       <p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p>
-                    </div>
-                  ) : activeToolView === 'jobs' ? (
-                    <div className="space-y-4">
-                      {jobs.length > 0 ? jobs.map((job, i) => (
-                        <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-[2rem] shadow-lg border-r-4 border-r-emerald-500/50">
-                          <div className="flex justify-between items-start mb-4 border-b border-slate-700/50 pb-3">
-                            <div>
-                               <h3 className="text-[13px] font-black text-emerald-400">{job.title}</h3>
-                               <div className="flex items-center gap-2 mt-1">
-                                  <Building2 className="w-3 h-3 text-slate-500" />
-                                  <span className="text-[9px] text-slate-300 font-bold">{job.entity}</span>
-                                </div>
-                            </div>
-                            <div className="bg-emerald-500/10 px-2 py-1 rounded-lg">
-                               <span className="text-[8px] text-emerald-400 font-black uppercase">{job.job_type}</span>
-                            </div>
-                          </div>
-                          <div className="text-[10px] text-slate-300 mb-5 font-bold space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
-                            {job.conditions.map((line, idx) => (
-                              <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80">
-                                <span className="w-1 h-1 bg-emerald-500/40 rounded-full shrink-0 mt-1.5"></span>
-                                {line}
-                              </p>
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-2 mb-5 p-2.5 bg-slate-900/40 rounded-xl border border-slate-700/30">
-                             <Calendar className="w-3.5 h-3.5 text-sky-400" />
-                             <span className="text-[9px] text-slate-400 font-black uppercase">آخر موعد:</span>
-                             <span className="text-[9px] text-sky-400 font-black">{job.apply_deadline}</span>
-                          </div>
-                          <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
-                            <div className="flex gap-1.5">
-                              <button onClick={() => shareContent(job, 'fb')} className="p-2 bg-slate-700/40 text-blue-400 rounded-xl hover:bg-slate-700 transition-colors"><Facebook className="w-4 h-4" /></button>
-                              <button onClick={() => shareContent(job, 'insta')} className="p-2 bg-slate-700/40 text-pink-400 rounded-xl hover:bg-slate-700 transition-colors"><Instagram className="w-4 h-4" /></button>
-                              <button onClick={() => shareContent(job, 'tg')} className="p-2 bg-slate-700/40 text-sky-400 rounded-xl hover:bg-slate-700 transition-colors"><Send className="w-4 h-4" /></button>
-                              <button onClick={() => shareContent(job, 'copy')} className="p-2 bg-slate-700/40 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors"><Copy className="w-4 h-4" /></button>
-                            </div>
-                            <a href={job.official_link} target="_blank" className="text-[9px] font-black px-5 py-2.5 bg-emerald-500 text-white rounded-2xl flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">الرابط الحكومي <ExternalLink className="w-3 h-3" /></a>
-                          </div>
-                        </div>
-                      )) : (
-                        <div className="py-20 text-center opacity-40">
-                          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
-                          <p className="text-[11px] font-black">لا توجد تعيينات حكومية جديدة حالياً.</p>
-                        </div>
-                      )}
                     </div>
                   ) : activeToolView === 'ai-news' ? (
                     <div className="space-y-4">

@@ -52,15 +52,6 @@ export interface PhoneNewsItem {
   copy_payload: string;
 }
 
-export interface JobItem {
-  title: string;
-  entity: string;
-  job_type: string;
-  conditions: string[];
-  apply_deadline: string;
-  official_link: string;
-}
-
 export interface PhoneComparisonResult {
   specs: { feature: string; phone1: string; phone2: string }[];
   verdict: string;
