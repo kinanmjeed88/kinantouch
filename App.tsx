@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
