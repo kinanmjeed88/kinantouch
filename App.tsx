@@ -46,7 +46,6 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 3 hours now due to strictness
       return (Date.now() - timestamp < 3 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
@@ -309,6 +308,7 @@ JSON: {"smartphones": [{
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
                             <div className="flex gap-1.5">
                               <button onClick={() => shareContent(job, 'fb')} className="p-2 bg-slate-700/40 text-blue-400 rounded-xl hover:bg-slate-700 transition-colors"><Facebook className="w-4 h-4" /></button>
+                              <button onClick={() => shareContent(job, 'insta')} className="p-2 bg-slate-700/40 text-pink-400 rounded-xl hover:bg-slate-700 transition-colors"><Instagram className="w-4 h-4" /></button>
                               <button onClick={() => shareContent(job, 'tg')} className="p-2 bg-slate-700/40 text-sky-400 rounded-xl hover:bg-slate-700 transition-colors"><Send className="w-4 h-4" /></button>
                               <button onClick={() => shareContent(job, 'copy')} className="p-2 bg-slate-700/40 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors"><Copy className="w-4 h-4" /></button>
                             </div>
@@ -349,6 +349,8 @@ JSON: {"smartphones": [{
                           </div>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
                             <div className="flex gap-2">
+                              <button onClick={() => shareContent(n, 'fb')} className="p-2 bg-slate-700/40 text-blue-400 rounded-xl hover:bg-slate-700 transition-colors"><Facebook className="w-4 h-4" /></button>
+                              <button onClick={() => shareContent(n, 'insta')} className="p-2 bg-slate-700/40 text-pink-400 rounded-xl hover:bg-slate-700 transition-colors"><Instagram className="w-4 h-4" /></button>
                               <button onClick={() => shareContent(n, 'tg')} className="p-2 bg-slate-700/40 text-sky-400 rounded-xl hover:bg-slate-700 transition-colors"><Send className="w-4 h-4" /></button>
                               <button onClick={() => shareContent(n, 'copy')} className="p-2 bg-slate-700/40 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors"><Copy className="w-4 h-4" /></button>
                             </div>
@@ -440,6 +442,7 @@ JSON: {"smartphones": [{
                             <div className="flex justify-between items-center pt-6 border-t border-slate-700/50">
                                 <div className="flex gap-2">
                                   <button onClick={() => shareContent(phone, 'fb')} className="p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-blue-400 hover:bg-blue-500/10 transition-colors"><Facebook className="w-5 h-5" /></button>
+                                  <button onClick={() => shareContent(phone, 'insta')} className="p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-pink-400 hover:bg-pink-500/10 transition-colors"><Instagram className="w-5 h-5" /></button>
                                   <button onClick={() => shareContent(phone, 'tg')} className="p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-sky-400 hover:bg-sky-500/10 transition-colors"><Send className="w-5 h-5" /></button>
                                   <button onClick={() => shareContent(phone, 'copy')} className="p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-slate-200 hover:bg-slate-700 transition-colors"><Copy className="w-5 h-5" /></button>
                                 </div>
