@@ -8,7 +8,7 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap, Star
+  MessageCircle, Facebook, Instagram, BadgeCheck, Clock, Zap, Star
 } from 'lucide-react';
 import { AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
 
@@ -17,7 +17,7 @@ type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
   JOBS: 'techtouch_jobs_v18',
-  AI_NEWS: 'techtouch_ai_v20',
+  AI_NEWS: 'techtouch_ai_v21',
   PHONE_NEWS: 'techtouch_phones_v18'
 };
 
