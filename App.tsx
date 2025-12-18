@@ -17,7 +17,7 @@ type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
   JOBS: 'techtouch_jobs_v18',
-  AI_NEWS: 'techtouch_ai_v18',
+  AI_NEWS: 'techtouch_ai_v20',
   PHONE_NEWS: 'techtouch_phones_v18'
 };
 
@@ -99,31 +99,28 @@ const App: React.FC = () => {
       if (type === 'jobs') {
         prompt = `قائمة بـ 8 وظائف عراقية حقيقية وتاريخ إعلانها من مواقع رسمية لآخر أسبوع من تاريخ ${formattedDate}. العنوان سطر واحد. المحتوى 5-6 أسطر دقيقة. الرابط مباشر. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'ai-news') {
-        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر أخبار تقني محترف لموقع Techtouch العربي.
-مهمتك استخراج أخبار الذكاء الاصطناعي الحقيقية فقط من إعلانات رسمية مؤكدة لآخر أسبوع من ${formattedDate}.
+        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني احترافي لموقع Techtouch.
+مهمتك توليد بيانات أدوات الذكاء الاصطناعي المعتمدة فقط لآخر أسبوع من ${formattedDate}.
 القواعد الصارمة:
-1. القاعدة الذهبية: ارفض أي خبر لا يمكن التحقق منه تقنياً عبر الرابط الرسمي المرفق.
-2. الهوية التقنية: يجب ذكر اسم الأداة ورقم الإصدار (مثل Gemini 1.5 Pro) أو ميزة رسمية محددة.
-3. العنوان الإلزامي: العنوان يجب أن يكون حصراً "اسم الأداة + رقم الإصدار" (مثال: ChatGPT 5.2). يمنع إضافة أفعال أو أوصاف.
-4. الرابط المخصص: يجب أن يكون الرابط لصفحة الإعلان الرسمية المخصصة وليس الصفحة الرئيسية.
-5. المحتوى: 4 أسطر بالضبط (الحدث، الفرق التقني، المستفيد، الأثر العملي).
-6. الترتيب: من الأحدث للأقدم.
-7. Fallback: إذا قل العدد عن 10، ولد Fallback Highlight واحد فقط لآخر إصدار مستقر لأداة كبرى.
+1. الهوية التقنية: يجب ذكر اسم الأداة ورقم إصدار معتمد رسمياً.
+2. العنوان الإلزامي: العنوان يجب أن يكون حصراً "اسم الأداة + رقم الإصدار" (مثال: ChatGPT 5.2). يمنع أي كلمات إضافية.
+3. رابط الاستخدام: الرابط يجب أن يكون رابط المنتج/التطبيق الرسمي المباشر للاستخدام وليس رابط خبر أو مدونة.
+4. المحتوى: 4 أسطر تصف التغييرات التقنية والأثر العملي.
+5. Fallback: إذا قل العدد عن 10، ولد Fallback Highlight واحد فقط لآخر إصدار مستقر لأداة كبرى.
 صيغة الإخراج JSON حصراً:
 {
   "generated_at": "${new Date().toISOString()}",
   "expires_in_hours": 6,
-  "ai_news": [
+  "items": [
     {
       "id": "uuid",
       "tool_name": "...",
-      "company": "اسم الشركة المطورة",
+      "company": "الجهة المطورة",
       "category": "llm|image|video|audio|platform|other",
-      "version": "رقم الإصدار الرسمي",
+      "version": "رقم الإصدار",
       "title": "اسم الأداة + رقم الإصدار",
-      "content": ["سطر 1", "سطر 2", "سطر 3", "سطر 4"],
-      "news_date": "YYYY-MM-DD",
-      "official_link": "رابط الإعلان الرسمي المخصص"
+      "description": ["سطر 1", "سطر 2", "سطر 3", "سطر 4"],
+      "official_usage_link": "رابط الاستخدام الرسمي المباشر"
     }
   ],
   "fallback_highlight": {
@@ -132,9 +129,8 @@ const App: React.FC = () => {
     "title": "اسم الأداة + رقم الإصدار",
     "display_rule": "same_layout_bigger_title_only"
   }
-}
-ملاحظة: إذا كان العنوان لا يطابق "اسم الأداة + رقم الإصدار"، ارفض الخبر فوراً.`;
-        prompt = `استخرج الآن أحدث 10 أخبار تقنية للذكاء الاصطناعي تستوفي جميع الشروط الصارمة أعلاه.`;
+}`;
+        prompt = `استخرج الآن أحدث 10 أدوات/تحديثات ذكاء اصطناعي تستوفي جميع الشروط الصارمة أعلاه.`;
       } else if (type === 'phone-news') {
         prompt = `أحدث 8 هواتف ذكية (أخبار آخر أسبوع من ${formattedDate}). تفاصيل فنية شاملة. إحصائيات مبيعات 2025: حصة السوق، الشركة الأكثر مبيعاً، والهاتف الأكثر مبيعاً لكل شركة وإحصائياته. التنسيق: {"phones": [{"title": "...", "manufacturer": "...", "launchYear": "...", "specsPoints": ["...", "..."], "imageUrl": "...", "url": "..."}], "stats": [{"name": "...", "marketShare": "...", "topPhone": "...", "details": "..."}]}`;
       }
@@ -167,8 +163,8 @@ const App: React.FC = () => {
 
   const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
     const title = item.title || item.tool_name;
-    const desc = Array.isArray(item.content) ? item.content.join('\n') : (item.description || (item.specsPoints ? item.specsPoints.join('\n') : ''));
-    const url = item.official_link || item.url;
+    const desc = Array.isArray(item.description) ? item.description.join('\n') : (item.description || (item.specsPoints ? item.specsPoints.join('\n') : ''));
+    const url = item.official_usage_link || item.url;
     const fullText = `🔹 ${title}\n\n${desc}\n\n🔗 الرابط الرسمي: ${url}\n\n#Techtouch`;
     
     if (platform === 'copy') {
@@ -226,14 +222,38 @@ const App: React.FC = () => {
                   <MessageCircle className="w-6 h-6 shrink-0" />
                   <h2 className="font-black text-xs sm:text-sm uppercase tracking-tight whitespace-nowrap overflow-hidden text-ellipsis flex-1">بوت الطلبات على التيليكرام</h2>
                 </div>
+                
                 <div className="space-y-5">
                   <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95">
                     <Send className="w-4 h-4" />
                     <span className="text-[10px]">الدخول لبوت الطلبات</span>
                   </a>
+
                   <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50 text-[9px] text-slate-200 font-bold leading-relaxed">
                     <p>✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
                     <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
+                  </div>
+
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <p className="text-emerald-400 text-[8px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+                  </div>
+
+                  <div className="space-y-3 pt-3 border-t border-slate-700/50">
+                    <h3 className="text-sky-400 font-black text-[9px] uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
+                    <ul className="space-y-2 text-[8px] text-slate-400 font-bold leading-relaxed">
+                      {[
+                        "١. ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.",
+                        "٢. اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط.",
+                        "٣. استخدم أمر البحث بكتابة كلمة \"بحث\" متبوع باسم التطبيق.",
+                        "٤. للاعلان في القناة تواصل من خلال البوت"
+                      ].map((item, i) => (
+                        <li key={i} className="pr-2 border-r-2 border-slate-700">{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-red-400 text-[8px] font-black text-center leading-relaxed">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
                   </div>
                 </div>
               </div>
@@ -246,7 +266,7 @@ const App: React.FC = () => {
                 <div className="grid gap-3">
                   {[
                     { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية رسمية' },
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أخبار تقنية موثقة بمميزات محددة' },
+                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أدوات ذكاء اصطناعي موثقة بإصدارات رسمية' },
                     { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات وإحصائيات 2025' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
                   ].map((tool) => (
@@ -312,7 +332,7 @@ const App: React.FC = () => {
                         </div>
                       )}
 
-                      {aiNewsData?.ai_news.map((n, i) => (
+                      {aiNewsData?.items.map((n, i) => (
                         <div key={n.id || i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden group hover:bg-slate-800/80 transition-all">
                           {/* Version Badge */}
                           <div className="absolute top-0 left-0 bg-indigo-500/20 text-indigo-400 text-[6px] font-black px-2 py-1 rounded-br-lg uppercase tracking-tighter flex items-center gap-1">
@@ -329,10 +349,6 @@ const App: React.FC = () => {
                               <h3 className="text-sm font-black text-slate-100 leading-tight pr-1 border-r-2 border-indigo-500/50 group-hover:text-sky-400 transition-colors">{n.title}</h3>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                              <div className="flex items-center gap-1 text-[8px] text-slate-500 font-black">
-                                <Calendar className="w-3 h-3" />
-                                <span>{n.news_date}</span>
-                              </div>
                               <div className="flex items-center gap-0.5 text-[6px] text-emerald-500 font-black uppercase">
                                 <BadgeCheck className="w-2.5 h-2.5" />
                                 <span>موثق تقنياً</span>
@@ -340,7 +356,7 @@ const App: React.FC = () => {
                             </div>
                           </div>
                           <div className="text-[9px] text-slate-300 mb-4 font-bold space-y-1.5 h-[95px] overflow-y-auto pr-1">
-                            {n.content.map((line, idx) => (
+                            {n.description.map((line, idx) => (
                               <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80 group-hover:opacity-100">
                                 <span className="w-1 h-1 bg-sky-500/40 rounded-full shrink-0 mt-1.5"></span>
                                 {line}
@@ -354,14 +370,14 @@ const App: React.FC = () => {
                               <button onClick={() => shareContent(n, 'tg')} className="p-1.5 bg-slate-700/40 text-sky-400 rounded-lg hover:bg-slate-700 transition-colors"><Send className="w-3 h-3" /></button>
                               <button onClick={() => shareContent(n, 'copy')} className="p-1.5 bg-slate-700/40 text-slate-200 rounded-lg hover:bg-slate-700 transition-colors"><Copy className="w-3 h-3" /></button>
                             </div>
-                            <a href={n.official_link} target="_blank" className="text-[8px] text-indigo-400 font-black px-3 py-1.5 border border-indigo-500/30 rounded-lg bg-indigo-500/5 flex items-center gap-1.5 hover:bg-indigo-500/10">رابط الإعلان الرسمي <ExternalLink className="w-2.5 h-2.5" /></a>
+                            <a href={n.official_usage_link} target="_blank" className="text-[8px] text-indigo-400 font-black px-3 py-1.5 border border-indigo-500/30 rounded-lg bg-indigo-500/5 flex items-center gap-1.5 hover:bg-indigo-500/10">استخدم الأداة الآن <ExternalLink className="w-2.5 h-2.5" /></a>
                           </div>
                         </div>
                       ))}
-                      {(!aiNewsData || aiNewsData.ai_news.length === 0) && !loading && (
+                      {(!aiNewsData || aiNewsData.items.length === 0) && !loading && (
                         <div className="text-center py-10 opacity-50 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
                           <Clock className="w-10 h-10 mx-auto mb-2 text-slate-600" />
-                          <p className="text-[10px] font-black">لا توجد أخبار تقنية موثقة حالياً، ترقبوا التحديث القادم.</p>
+                          <p className="text-[10px] font-black">لا توجد أدوات تقنية موثقة حالياً، ترقبوا التحديث القادم.</p>
                         </div>
                       )}
                     </div>

@@ -21,9 +21,9 @@ export interface AINewsItem {
   category: 'llm' | 'image' | 'video' | 'audio' | 'platform' | 'other';
   version: string;
   title: string;
-  content: string[];
-  news_date: string;
-  official_link: string;
+  description: string[];
+  official_usage_link: string;
+  news_date?: string;
 }
 
 export interface AIFallbackHighlight {
@@ -36,7 +36,7 @@ export interface AIFallbackHighlight {
 export interface AINewsResponse {
   generated_at: string;
   expires_in_hours: number;
-  ai_news: AINewsItem[];
+  items: AINewsItem[];
   fallback_highlight?: AIFallbackHighlight;
 }
 
