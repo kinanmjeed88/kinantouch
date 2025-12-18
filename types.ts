@@ -17,12 +17,12 @@ export interface SocialData {
 export interface AINewsItem {
   id: string;
   tool_name: string;
-  category: string;
+  category: 'llm' | 'text' | 'image' | 'video' | 'audio' | 'productivity' | 'research' | 'platform' | 'other';
   title: string;
   content: string[]; // بالضبط 4 أسطر
-  update_type: string;
   news_date: string; // YYYY-MM-DD
   official_link: string;
+  review_status: 'draft' | 'pending_review' | 'auto_approved' | 'rejected';
 }
 
 export interface PhoneNewsItem {
@@ -37,7 +37,7 @@ export interface PhoneNewsItem {
 export interface CompanySalesStat {
   name: string;
   marketShare: string;
-  topPhone: string; // الهاتف الأكثر مبيعاً لهذه الشركة
+  topPhone: string;
   details: string;
 }
 
