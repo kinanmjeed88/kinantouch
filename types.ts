@@ -17,7 +17,7 @@ export interface SocialData {
 export interface AINewsItem {
   tool_name: string;
   title: string;
-  description: string[];
+  summary: string[];
   date: string;
   official_link: string;
 }
@@ -56,7 +56,7 @@ export interface JobItem {
   title: string;
   entity: string;
   job_type: string;
-  details: string[];
+  conditions: string[];
   apply_deadline: string;
   official_link: string;
 }

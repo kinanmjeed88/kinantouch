@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
@@ -18,9 +19,9 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v30',
-  AI_NEWS: 'techtouch_ai_v30',
-  PHONE_NEWS: 'techtouch_phones_v30'
+  JOBS: 'techtouch_jobs_v40',
+  AI_NEWS: 'techtouch_ai_v40',
+  PHONE_NEWS: 'techtouch_phones_v40'
 };
 
 const App: React.FC = () => {
@@ -38,15 +39,15 @@ const App: React.FC = () => {
   const [phone2, setPhone2] = useState('');
   const [comparisonResult, setComparisonResult] = useState<PhoneComparisonResult | null>(null);
 
-  const today = new Date();
-  const formattedDate = today.toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const getCachedData = (key: string) => {
     const cached = localStorage.getItem(key);
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      return (Date.now() - timestamp < 3 * 60 * 60 * 1000) ? data : null;
+      // Cache valid for 6 hours as per new master rules
+      return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
 
@@ -54,27 +55,23 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
-  const callGroqAPI = async (prompt: string, systemInstruction: string) => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) throw new Error("مفتاح API غير متوفر.");
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemInstruction },
-          { role: 'user', content: prompt }
-        ],
-        response_format: { type: 'json_object' },
+  const callGeminiAPI = async (prompt: string, systemInstruction: string) => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
         temperature: 0.1
-      }),
+      }
     });
 
-    if (!response.ok) throw new Error("فشل الاتصال بـ Groq API.");
-    const result = await response.json();
-    return JSON.parse(result.choices[0].message.content);
+    try {
+      return JSON.parse(response.text || "{}");
+    } catch (e) {
+      throw new Error("فشل في تحليل استجابة الذكاء الاصطناعي.");
+    }
   };
 
   const fetchToolData = async (type: ToolView, force: boolean = false) => {
@@ -94,33 +91,28 @@ const App: React.FC = () => {
     }
 
     try {
-      let prompt = "";
-      let system = "";
+      const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر رئيسي لموقع Techtouch.
+التاريخ الحالي المرجعي: ${todayStr}.
+القواعد الصارمة:
+1. الوظائف: مصادر gov.iq فقط، منشورة حالياً، الموعد النهائي بعد ${todayStr}.
+2. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 30 يوماً.
+3. الهواتف: السنة الحالية فقط، مواصفات كاملة، سعر عراقي موثق.
+4. إذا لم توجد بيانات حقيقية، أخرج مصفوفة فارغة [].
+أخرج JSON فقط بدون شرح.`;
 
+      let prompt = "";
       if (type === 'jobs') {
-        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر محتوى احترافي لموقع Techtouch. مهمتك توليد بيانات وظائف العراق لآخر أسبوع من ${formattedDate}.
-القواعد: المصادر مسموحة حصراً: الوزارات العراقية (gov.iq)، مجلس الخدمة الاتحادي، بوابة أور. 
-يمنع توليد وظائف وهمية أو روابط غير حكومية. إذا لم تجد، أخرج قائمة فارغة.
-JSON: {"iraq_jobs": [{"title": "الجهة + نوع التعيين", "entity": "اسم الوزارة/الجهة", "job_type": "عقود/ملاك/تطوع", "details": ["شرط 1", "تفصيل 2"], "apply_deadline": "تاريخ انتهاء التقديم", "official_link": "رابط gov.iq مباشر"}]}`;
-        prompt = "استخرج أحدث الوظائف الحكومية العراقية المعلنة رسمياً حالياً.";
+        prompt = `استخرج أحدث 8 وظائف حكومية عراقية (gov.iq) فعالة حالياً. 
+        الهيكل المطلوب: {"iraq_jobs": [{"title": "", "entity": "", "job_type": "", "conditions": [], "apply_deadline": "", "official_link": ""}]}`;
       } else if (type === 'ai-news') {
-        system = `أنت محرر تقني لـ Techtouch. ولد أحداث وأخبار ذكاء اصطناعي حقيقية (إصدارات، ميزات جديدة) لآخر أسبوع من ${formattedDate}.
-يمنع التعريف بالأدوات القديمة، فقط الأخبار والتحركات الجديدة.
-JSON: {"ai_news": [{"tool_name": "اسم الأداة", "title": "اسم الأداة + رقم الإصدار/الحدث", "description": ["ما الجديد؟", "لمن متاح؟"], "date": "YYYY-MM-DD", "official_link": "رابط الإعلان الرسمي"}]}`;
-        prompt = "استخرج أحدث 10 أخبار وتقنيات ذكاء اصطناعي أعلنت رسمياً هذا الأسبوع.";
+        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي (إصدارات ونماذج جديدة) خلال آخر 30 يوماً.
+        الهيكل المطلوب: {"ai_news": [{"tool_name": "", "title": "", "summary": [], "date": "", "official_link": ""}]}`;
       } else if (type === 'phone-news') {
-        system = `أنت محرر تقني متخصص للهواتف في Techtouch. ولد بيانات هواتف أطلقت رسمياً لآخر شهر من ${formattedDate}.
-القواعد: العنوان: اسم الهاتف فقط. المواصفات كاملة (شبكات، أبعاد، وزن، خامات، مقاومة، شاشة، معالج، رسوميات، ذاكرة، كاميرات، فيديو، بطارية، نظام، اتصال، مستشعرات، ألوان).
-السعر: بالدولار من مصدر عراقي حصراً.
-JSON: {"smartphones": [{
-  "phone_name": "...", "brand": "...", "release_date": "...",
-  "specifications": {"networks": "...", "dimensions": "...", "weight": "...", "materials": "...", "water_resistance": "...", "display": "...", "processor": "...", "gpu": "...", "memory": "...", "cameras": "...", "video": "...", "battery": "...", "os": "...", "connectivity": "...", "sensors": "...", "colors": "..."},
-  "price_usd": "...", "official_specs_link": "...", "iraqi_price_source": "...", "pros": ["...", "..."], "cons": ["...", "..."], "copy_payload": "..."
-}]}`;
-        prompt = "استخرج أحدث الهواتف الذكية بمواصفاتها الكاملة وأسعارها في السوق العراقي بالدولار.";
+        prompt = `استخرج أحدث 8 هواتف ذكية صدرت في السنة الحالية بمواصفاتها الكاملة وسعرها في العراق.
+        الهيكل المطلوب: {"smartphones": [{"phone_name": "", "brand": "", "release_date": "", "specifications": {"networks": "", "dimensions": "", "weight": "", "materials": "", "water_resistance": "", "display": "", "processor": "", "gpu": "", "memory": "", "cameras": "", "video": "", "battery": "", "os": "", "connectivity": "", "sensors": "", "colors": ""}, "price_usd": "", "official_specs_link": "", "iraqi_price_source": "", "pros": [], "cons": [], "copy_payload": ""}]}`;
       }
 
-      const result = await callGroqAPI(prompt, system);
+      const result = await callGeminiAPI(prompt, systemInstruction);
       saveToCache(cacheKey, result);
       
       if (type === 'jobs') setJobs(result.iraq_jobs || []);
@@ -139,16 +131,16 @@ JSON: {"smartphones": [{
     setLoading(true);
     setError(null);
     try {
-      const system = "أنت خبير تقني محترف. الرد JSON فقط.";
-      const prompt = `قارن تقنياً وشاملاً جداً بين ${phone1} و ${phone2} بكل التفاصيل والمميزات الرسمية. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`;
-      const result = await callGroqAPI(prompt, system);
+      const system = "أنت خبير تقني محترف متخصص في المقارنات. الرد JSON فقط.";
+      const prompt = `قارن تقنياً وشاملاً بين ${phone1} و ${phone2}. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`;
+      const result = await callGeminiAPI(prompt, system);
       setComparisonResult(result);
     } catch (err: any) { setError("فشل تحليل المقارنة."); } finally { setLoading(false); }
   };
 
   const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
     const title = item.title || item.phone_name || item.tool_name;
-    const url = item.official_link || item.official_specs_link || item.url;
+    const url = item.official_link || item.official_specs_link || item.url || '';
     const payload = item.copy_payload || `${title}\n\n🔗 الرابط: ${url}`;
     
     if (platform === 'copy') {
@@ -166,6 +158,7 @@ JSON: {"smartphones": [{
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right" dir="rtl">
+      {/* Background Orbs */}
       <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/4"></div>
@@ -249,8 +242,8 @@ JSON: {"smartphones": [{
                 <div className="grid gap-3">
                   {[
                     { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية رسمية (gov.iq)' },
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أحداث وإصدارات تقنية موثقة' },
-                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات كاملة وأسعار موثقة' },
+                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'أخبار الذكاء الاصطناعي', desc: 'أحداث وإصدارات تقنية موثقة' },
+                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات كاملة وأسعار السنة الحالية' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
                   ].map((tool) => (
                     <button key={tool.id} onClick={() => tool.id === 'comparison' ? setActiveToolView('comparison') : fetchToolData(tool.id as ToolView)} className="group flex items-center p-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-md active:scale-95">
@@ -269,13 +262,19 @@ JSON: {"smartphones": [{
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-4">
                     <button onClick={() => setActiveToolView('main')} className="flex items-center gap-1.5 text-slate-500 hover:text-sky-400 transition-colors"><ChevronLeft className="w-4 h-4 rotate-180" /><span className="text-[10px] font-bold">الأدوات</span></button>
-                    {!loading && activeToolView !== 'comparison' && <button onClick={() => fetchToolData(activeToolView, true)} className="text-[8px] text-sky-500 font-black border border-sky-500/20 px-3 py-1.5 rounded-xl">تحديث الأخبار</button>}
+                    {!loading && activeToolView !== 'comparison' && <button onClick={() => fetchToolData(activeToolView, true)} className="text-[8px] text-sky-500 font-black border border-sky-500/20 px-3 py-1.5 rounded-xl">تحديث الآن</button>}
                   </div>
 
                   {loading ? (
-                    <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري فحص المصادر الرسمية...</p></div>
+                    <div className="py-24 flex flex-col items-center gap-3">
+                      <Loader2 className="w-10 h-10 text-sky-400 animate-spin" />
+                      <p className="text-[10px] text-slate-500 font-black animate-pulse">جاري التحقق من المصادر الرسمية والتاريخ المرجعي...</p>
+                    </div>
                   ) : error ? (
-                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6"><AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" /><p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p></div>
+                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6">
+                      <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                      <p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p>
+                    </div>
                   ) : activeToolView === 'jobs' ? (
                     <div className="space-y-4">
                       {jobs.length > 0 ? jobs.map((job, i) => (
@@ -293,7 +292,7 @@ JSON: {"smartphones": [{
                             </div>
                           </div>
                           <div className="text-[10px] text-slate-300 mb-5 font-bold space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
-                            {job.details.map((line, idx) => (
+                            {job.conditions.map((line, idx) => (
                               <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80">
                                 <span className="w-1 h-1 bg-emerald-500/40 rounded-full shrink-0 mt-1.5"></span>
                                 {line}
@@ -316,7 +315,10 @@ JSON: {"smartphones": [{
                           </div>
                         </div>
                       )) : (
-                        <div className="py-20 text-center opacity-40"><AlertCircle className="w-12 h-12 mx-auto mb-4" /><p className="text-[11px] font-black">لا توجد تعيينات حكومية جديدة حالياً.</p></div>
+                        <div className="py-20 text-center opacity-40">
+                          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+                          <p className="text-[11px] font-black">لا توجد تعيينات حكومية جديدة حالياً.</p>
+                        </div>
                       )}
                     </div>
                   ) : activeToolView === 'ai-news' ? (
@@ -340,7 +342,7 @@ JSON: {"smartphones": [{
                             </div>
                           </div>
                           <div className="text-[10px] text-slate-300 mb-5 font-bold space-y-2 h-[100px] overflow-y-auto pr-1">
-                            {n.description.map((line, idx) => (
+                            {n.summary.map((line, idx) => (
                               <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80">
                                 <span className="w-1 h-1 bg-sky-500/40 rounded-full shrink-0 mt-1.5"></span>
                                 {line}
@@ -358,14 +360,17 @@ JSON: {"smartphones": [{
                           </div>
                         </div>
                       )) : (
-                        <div className="py-20 text-center opacity-40"><AlertCircle className="w-12 h-12 mx-auto mb-4" /><p className="text-[11px] font-black">لا توجد أخبار ذكاء اصطناعي موثقة حالياً.</p></div>
+                        <div className="py-20 text-center opacity-40">
+                          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+                          <p className="text-[11px] font-black">لا توجد أخبار ذكاء اصطناعي موثقة حالياً.</p>
+                        </div>
                       )}
                     </div>
                   ) : activeToolView === 'phone-news' ? (
                     <div className="space-y-6">
                        {phoneNews.length > 0 ? phoneNews.map((phone, i) => (
                          <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-[2.5rem] shadow-2xl border-r-4 border-r-sky-500/50 overflow-hidden relative group">
-                            <div className="absolute top-0 left-0 bg-sky-500/20 text-sky-400 text-[8px] font-black px-4 py-2 rounded-br-[1.5rem] uppercase tracking-tighter z-10">إصدار رسمي</div>
+                            <div className="absolute top-0 left-0 bg-sky-500/20 text-sky-400 text-[8px] font-black px-4 py-2 rounded-br-[1.5rem] uppercase tracking-tighter z-10">إصدار رسمي {new Date().getFullYear()}</div>
                             
                             <div className="flex items-center justify-between mb-6 border-b border-slate-700/50 pb-5 mt-4">
                               <div className="flex flex-col">
@@ -450,7 +455,10 @@ JSON: {"smartphones": [{
                             </div>
                          </div>
                        )) : (
-                        <div className="py-20 text-center opacity-40"><AlertCircle className="w-12 h-12 mx-auto mb-4" /><p className="text-[11px] font-black">لا توجد هواتف موثقة في هذه الفترة.</p></div>
+                        <div className="py-20 text-center opacity-40">
+                          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+                          <p className="text-[11px] font-black">لا توجد هواتف موثقة صادرة في {new Date().getFullYear()}.</p>
+                        </div>
                        )}
                     </div>
                   ) : (
