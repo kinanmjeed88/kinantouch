@@ -137,7 +137,7 @@ const App: React.FC = () => {
     } finally { setLoading(false); }
   };
 
-  const shareFullContent = (data: any, type: 'phone' | 'job' | 'ai', platform: 'tg' | 'fb' | 'insta' | 'copy') => {
+  const shareFullContent = (data: any, type: 'phone' | 'job' | 'ai', platform: 'tg' | 'copy') => {
     let text = "";
     if (type === 'phone') {
       const item = data as PhoneNewsItem;
@@ -160,11 +160,6 @@ const App: React.FC = () => {
     const encodedUrl = encodeURIComponent(data.url);
 
     if (platform === 'tg') window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
-    else if (platform === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
-    else {
-      navigator.clipboard.writeText(text);
-      alert('تم النسخ لمشاركته في Instagram');
-    }
   };
 
   return (
@@ -224,19 +219,19 @@ const App: React.FC = () => {
             <div className="animate-fade-in">
               {activeToolView === 'main' ? (
                 <div className="grid gap-4">
-                  {/* زر الوظائف - تم تعديل المحاذاة لليسار بطلب المستخدم */}
-                  <button onClick={() => fetchToolData('jobs')} className="group flex flex-row p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-xl items-center">
-                    <div className="flex-shrink-0 w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors ml-4">
+                  {/* زر الوظائف - تم استخدام dir="ltr" لإجبار المحاذاة لليسار بالكامل */}
+                  <button onClick={() => fetchToolData('jobs')} dir="ltr" className="group flex flex-row p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-xl items-center text-left">
+                    <div className="flex-shrink-0 w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors mr-4">
                       <Briefcase className="w-6 h-6 text-emerald-400" />
                     </div>
-                    <div className="flex-grow text-left">
+                    <div className="flex-grow">
                       <div className="flex items-center gap-2 justify-start mb-0.5">
-                        <span className="text-[8px] bg-red-600/20 text-red-400 px-2 py-0.5 rounded-full font-black border border-red-600/30">تجريبي</span>
                         <h3 className="text-sm font-bold">أخبار الوظائف والتعيينات</h3>
+                        <span className="text-[8px] bg-red-600/20 text-red-400 px-2 py-0.5 rounded-full font-black border border-red-600/30">تجريبي</span>
                       </div>
                       <p className="text-[10px] text-slate-400">نشر ما يخص التعيينات والوظائف في العراق</p>
                     </div>
-                    <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400 mr-2" />
+                    <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-sky-400 ml-2" />
                   </button>
 
                   <button onClick={() => fetchToolData('ai-news')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-xl">
@@ -271,7 +266,7 @@ const App: React.FC = () => {
                   <button onClick={() => setActiveToolView('main')} className="flex items-center gap-2 text-slate-500 mb-4 hover:text-sky-400 transition-colors"><ChevronLeft className="w-5 h-5 rotate-180" /><span className="text-sm font-bold">رجوع للأدوات</span></button>
                   
                   {loading ? (
-                    <div className="py-20 flex flex-col items-center gap-4 animate-fade-in"><Loader2 className="w-12 h-12 text-sky-400 animate-spin" /><p className="text-[11px] text-slate-400 font-black tracking-widest text-center">جاري استرجاع البيانات الحقيقية {formattedDate}...</p></div>
+                    <div className="py-20 flex flex-col items-center gap-4 animate-fade-in"><Loader2 className="w-12 h-12 text-sky-400 animate-spin" /><p className="text-[11px] text-slate-400 font-black tracking-widest text-center">جاري استرجاع البيانات عبر Groq...</p></div>
                   ) : error ? (
                     <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-4"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" /><p className="text-xs text-slate-300">{error}</p></div>
                   ) : activeToolView === 'jobs' ? (
@@ -297,7 +292,7 @@ const App: React.FC = () => {
                                <button onClick={() => shareFullContent(job, 'job', 'tg')} className="p-2 bg-sky-500/10 rounded-xl text-sky-400"><Send className="w-4 h-4" /></button>
                                <button onClick={() => shareFullContent(job, 'job', 'copy')} className="p-2 bg-slate-700 rounded-xl text-slate-200"><Copy className="w-4 h-4" /></button>
                             </div>
-                            <a href={job.url} target="_blank" className={`text-[10px] font-black px-4 py-2 rounded-xl border flex items-center gap-1.5 transition-all ${job.announcement_type === 'actionable' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-slate-700/50 text-slate-400 border-slate-600/50 hover:bg-slate-700'}`}>
+                            <a href={job.url} target="_blank" className="text-[10px] font-black px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-xl flex items-center gap-1.5 hover:bg-emerald-500/20 transition-all">
                               الرابط الرسمي <ExternalLink className="w-3 h-3" />
                             </a>
                           </div>
