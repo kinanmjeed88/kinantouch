@@ -8,7 +8,7 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  MessageCircle, Facebook, Instagram, Calendar, CheckCircle2, Clock
+  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
 
@@ -16,9 +16,9 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v15',
-  AI_NEWS: 'techtouch_ai_v15',
-  PHONE_NEWS: 'techtouch_phones_v15'
+  JOBS: 'techtouch_jobs_v16',
+  AI_NEWS: 'techtouch_ai_v16',
+  PHONE_NEWS: 'techtouch_phones_v16'
 };
 
 const App: React.FC = () => {
@@ -45,7 +45,7 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // كاش صارم لمدة 6 ساعات (21,600,000 مللي ثانية)
+      // كاش صارم لمدة 6 ساعات كما هو مطلوب
       return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
@@ -100,27 +100,28 @@ const App: React.FC = () => {
       if (type === 'jobs') {
         prompt = `قائمة بـ 8 وظائف عراقية حقيقية وتاريخ إعلانها من مواقع رسمية لآخر أسبوع من تاريخ ${formattedDate}. العنوان سطر واحد. المحتوى 5-6 أسطر دقيقة. الرابط مباشر. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'ai-news') {
-        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر أخبار تقني محترف لموقع Techtouch العربي.
-مهمتك جلب 10 أخبار حقيقية ومؤرخة للذكاء الاصطناعي (آخر أسبوع من ${formattedDate}) لجميع المنصات (Gemini, ChatGPT, Claude, xAI, Sora, الخ).
-القواعد: 10 أخبار، مرتبة زمنياً (الأحدث أولاً)، عنوان (14 كلمة)، محتوى (4 أسطر بالضبط)، تاريخ (YYYY-MM-DD)، رابط رسمي مباشر، وحالة مراجعة (auto_approved).
-صيغة الإخراج JSON حصراً:
+        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر أخبار تقني محترف لموقع Techtouch.
+مهمتك استخراج أخبار الذكاء الاصطناعي الحقيقية فقط من إعلانات رسمية مؤكدة لآخر أسبوع من ${formattedDate}.
+يجب أن يحتوي كل خبر على "explicit_update" (رقم إصدار، اسم ميزة رسمي، نموذج جديد). ارفض أي خبر عام.
+يجب أن تكون الروابط مخصصة للإعلان وليست Homepages.
+ولد 10 أخبار مرتبة من الأحدث للأقدم. إذا لم تجد 10 أخبار حقيقية، أخرج المتاح فقط أو قائمة فارغة.
+التنسيق JSON حصراً:
 {
   "generated_at": "${new Date().toISOString()}",
-  "expires_in_hours": 6,
   "ai_news": [
     {
       "id": "uuid",
       "tool_name": "...",
-      "category": "llm|text|image|video|audio|productivity|research|platform|other",
+      "category": "llm|image|video|audio|platform|other",
+      "explicit_update": "اسم الإصدار أو الميزة التقنية المحددة",
       "title": "...",
-      "content": ["سطر 1", "سطر 2", "سطر 3", "سطر 4"],
+      "content": ["سطر 1 التقني", "سطر 2 الفرق التقني", "سطر 3 المستفيد", "سطر 4 الأثر"],
       "news_date": "YYYY-MM-DD",
-      "official_link": "...",
-      "review_status": "auto_approved"
+      "official_link": "رابط الإعلان الرسمي المخصص"
     }
   ]
 }`;
-        prompt = `أنتج الآن 10 أخبار ذكاء اصطناعي محدثة وحقيقية ومرتبة زمنياً. يجب أن تكون الروابط رسمية وتؤدي لصفحة الإعلان أو التحديث.`;
+        prompt = `استخرج الآن أهم أخبار وتحديثات الذكاء الاصطناعي الحقيقية والمؤرخة خلال الأسبوع الأخير. رتبهم زمنياً.`;
       } else if (type === 'phone-news') {
         prompt = `أحدث 8 هواتف ذكية (أخبار آخر أسبوع من ${formattedDate}). تفاصيل فنية شاملة. إحصائيات مبيعات 2025: حصة السوق، الشركة الأكثر مبيعاً، والهاتف الأكثر مبيعاً لكل شركة وإحصائياته. التنسيق: {"phones": [{"title": "...", "manufacturer": "...", "launchYear": "...", "specsPoints": ["...", "..."], "imageUrl": "...", "url": "..."}], "stats": [{"name": "...", "marketShare": "...", "topPhone": "...", "details": "..."}]}`;
       }
@@ -174,9 +175,9 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right" dir="rtl">
       {/* Dynamic Background Effects */}
-      <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4"></div>
+      <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/4"></div>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/4"></div>
       </div>
 
       <div className="relative z-10 max-w-lg mx-auto px-5 pb-8 min-h-screen flex flex-col">
@@ -211,8 +212,8 @@ const App: React.FC = () => {
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4 overflow-hidden">
                   <MessageCircle className="w-6 h-6 shrink-0" />
-                  {/* العنوان في سطر واحد مهما كان حجم الشاشة */}
-                  <h2 className="font-black text-xs sm:text-sm uppercase tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">بوت الطلبات على التيليكرام</h2>
+                  {/* العنوان في سطر واحد مهما كانت الشاشة، مع تصغير الخط إذا لزم الأمر */}
+                  <h2 className="font-black text-xs sm:text-sm uppercase tracking-tight whitespace-nowrap overflow-hidden text-ellipsis flex-1">بوت الطلبات على التيليكرام</h2>
                 </div>
                 
                 <div className="space-y-5">
@@ -258,7 +259,7 @@ const App: React.FC = () => {
                 <div className="grid gap-3">
                   {[
                     { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية رسمية' },
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: '10 أخبار مؤرخة وحقيقية' },
+                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أخبار تقنية موثقة بمميزات محددة' },
                     { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات وإحصائيات 2025' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
                   ].map((tool) => (
@@ -279,11 +280,11 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-4">
                     <button onClick={() => setActiveToolView('main')} className="flex items-center gap-1.5 text-slate-500 hover:text-sky-400 transition-colors"><ChevronLeft className="w-4 h-4 rotate-180" /><span className="text-[10px] font-bold">الأدوات</span></button>
-                    {!loading && activeToolView !== 'comparison' && <button onClick={() => fetchToolData(activeToolView, true)} className="text-[8px] text-sky-500 font-black border border-sky-500/20 px-3 py-1.5 rounded-xl">تحديث الأخبار</button>}
+                    {!loading && activeToolView !== 'comparison' && <button onClick={() => fetchToolData(activeToolView, true)} className="text-[8px] text-sky-500 font-black border border-sky-500/20 px-3 py-1.5 rounded-xl">تحديث فوري</button>}
                   </div>
 
                   {loading ? (
-                    <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري جلب أحدث البيانات المحدثة...</p></div>
+                    <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري جلب أحدث البيانات الموثقة...</p></div>
                   ) : error ? (
                     <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6"><AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" /><p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p></div>
                   ) : activeToolView === 'jobs' ? (
@@ -306,33 +307,37 @@ const App: React.FC = () => {
                     </div>
                   ) : activeToolView === 'ai-news' ? (
                     <div className="space-y-4">
-                      {aiNews.filter(n => n.review_status === 'auto_approved' || n.review_status === 'pending_review').map((n, i) => (
-                        <div key={n.id || i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50">
-                          <div className="flex justify-between items-start mb-3 border-b border-slate-700 pb-2">
+                      {aiNews.map((n, i) => (
+                        <div key={n.id || i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden">
+                          {/* Explicit Update Badge */}
+                          <div className="absolute top-0 left-0 bg-indigo-500/20 text-indigo-400 text-[6px] font-black px-2 py-1 rounded-br-lg uppercase tracking-tighter flex items-center gap-1">
+                            <Zap className="w-2 h-2" />
+                            {n.explicit_update}
+                          </div>
+
+                          <div className="mt-2 flex justify-between items-start mb-3 border-b border-slate-700 pb-2">
                             <div className="flex flex-col gap-1.5">
                               <div className="flex items-center gap-2">
-                                <span className="text-[7px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name}</span>
-                                <span className="text-[6px] bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded-full uppercase">{n.category}</span>
+                                <span className="text-[7px] bg-slate-700 text-sky-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name}</span>
+                                <span className="text-[6px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded-full uppercase">{n.category}</span>
                               </div>
-                              <h3 className="text-[10px] font-black text-sky-400 leading-tight">{n.title}</h3>
+                              <h3 className="text-[10px] font-black text-slate-100 leading-tight pr-1 border-r-2 border-indigo-500/50">{n.title}</h3>
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <div className="flex items-center gap-1 text-[8px] text-slate-500 font-black">
                                 <Calendar className="w-3 h-3" />
                                 <span>{n.news_date}</span>
                               </div>
-                              {n.review_status === 'auto_approved' && (
-                                <div className="flex items-center gap-0.5 text-[6px] text-emerald-500 font-black uppercase">
-                                  <CheckCircle2 className="w-2 h-2" />
-                                  <span>موثق</span>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-0.5 text-[6px] text-emerald-500 font-black uppercase">
+                                <BadgeCheck className="w-2.5 h-2.5" />
+                                <span>موثق تقنياً</span>
+                              </div>
                             </div>
                           </div>
                           <div className="text-[9px] text-slate-300 mb-4 font-bold space-y-1.5 h-[95px] overflow-y-auto pr-1">
                             {n.content.map((line, idx) => (
                               <p key={idx} className="flex items-start gap-2 leading-relaxed">
-                                <span className="w-1 h-1 bg-indigo-400 rounded-full shrink-0 mt-1.5 opacity-50"></span>
+                                <span className="w-1 h-1 bg-sky-500/40 rounded-full shrink-0 mt-1.5"></span>
                                 {line}
                               </p>
                             ))}
@@ -344,14 +349,14 @@ const App: React.FC = () => {
                               <button onClick={() => shareContent(n, 'tg')} className="p-1.5 bg-slate-700/40 text-sky-400 rounded-lg hover:bg-slate-700 transition-colors"><Send className="w-3 h-3" /></button>
                               <button onClick={() => shareContent(n, 'copy')} className="p-1.5 bg-slate-700/40 text-slate-200 rounded-lg hover:bg-slate-700 transition-colors"><Copy className="w-3 h-3" /></button>
                             </div>
-                            <a href={n.official_link} target="_blank" className="text-[8px] text-indigo-400 font-black px-3 py-1.5 border border-indigo-500/30 rounded-lg bg-indigo-500/5 flex items-center gap-1.5 hover:bg-indigo-500/10">المصدر الرسمي <ExternalLink className="w-2.5 h-2.5" /></a>
+                            <a href={n.official_link} target="_blank" className="text-[8px] text-indigo-400 font-black px-3 py-1.5 border border-indigo-500/30 rounded-lg bg-indigo-500/5 flex items-center gap-1.5 hover:bg-indigo-500/10">رابط الإعلان الرسمي <ExternalLink className="w-2.5 h-2.5" /></a>
                           </div>
                         </div>
                       ))}
                       {aiNews.length === 0 && !loading && (
-                        <div className="text-center py-10 opacity-50">
+                        <div className="text-center py-10 opacity-50 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
                           <Clock className="w-10 h-10 mx-auto mb-2 text-slate-600" />
-                          <p className="text-[10px] font-black">لا توجد أخبار جديدة حالياً، بانتظار دورة التحديث القادمة.</p>
+                          <p className="text-[10px] font-black">لا توجد أخبار تقنية موثقة في هذه الدورة.</p>
                         </div>
                       )}
                     </div>

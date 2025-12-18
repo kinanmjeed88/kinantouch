@@ -17,12 +17,12 @@ export interface SocialData {
 export interface AINewsItem {
   id: string;
   tool_name: string;
-  category: 'llm' | 'text' | 'image' | 'video' | 'audio' | 'productivity' | 'research' | 'platform' | 'other';
+  category: 'llm' | 'image' | 'video' | 'audio' | 'platform' | 'other';
+  explicit_update: string; // اسم الإصدار أو الميزة التقنية المحددة
   title: string;
   content: string[]; // بالضبط 4 أسطر
   news_date: string; // YYYY-MM-DD
   official_link: string;
-  review_status: 'draft' | 'pending_review' | 'auto_approved' | 'rejected';
 }
 
 export interface PhoneNewsItem {
