@@ -19,6 +19,23 @@ export interface AINewsItem {
   url: string;
 }
 
+export interface PhoneNewsItem {
+  title: string;
+  manufacturer: string;
+  launchDate: string;
+  shortDesc: string;
+  fullSpecs: string[];
+  url: string;
+}
+
+export interface JobItem {
+  title: string;
+  ministry: string;
+  date: string;
+  description: string;
+  url: string;
+}
+
 export interface PhoneSpec {
   feature: string;
   phone1: string;
