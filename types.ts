@@ -15,11 +15,11 @@ export interface SocialData {
 }
 
 export interface AINewsItem {
-  type: 'news';
   id: string;
   tool_name: string;
+  company: string;
   category: 'llm' | 'image' | 'video' | 'audio' | 'platform' | 'other';
-  explicit_update: string;
+  version: string;
   title: string;
   content: string[];
   news_date: string;
@@ -27,7 +27,6 @@ export interface AINewsItem {
 }
 
 export interface AIFallbackHighlight {
-  type: 'fallback';
   tool_name: string;
   latest_version: string;
   title: string;

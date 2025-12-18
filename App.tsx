@@ -16,9 +16,9 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v17',
-  AI_NEWS: 'techtouch_ai_v17',
-  PHONE_NEWS: 'techtouch_phones_v17'
+  JOBS: 'techtouch_jobs_v18',
+  AI_NEWS: 'techtouch_ai_v18',
+  PHONE_NEWS: 'techtouch_phones_v18'
 };
 
 const App: React.FC = () => {
@@ -100,37 +100,41 @@ const App: React.FC = () => {
         prompt = `قائمة بـ 8 وظائف عراقية حقيقية وتاريخ إعلانها من مواقع رسمية لآخر أسبوع من تاريخ ${formattedDate}. العنوان سطر واحد. المحتوى 5-6 أسطر دقيقة. الرابط مباشر. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'ai-news') {
         system = `أنت نظام ذكاء اصطناعي يعمل كمحرر أخبار تقني محترف لموقع Techtouch العربي.
-مهمتك جلب 10 أخبار حقيقية ومؤرخة للذكاء الاصطناعي (أحدث 10 أخبار خلال آخر أسبوع من ${formattedDate}) لجميع المنصات.
-القواعد:
-- الترتيب من الأحدث للأقدم.
-- إذا لم تجد 10 أخبار، أضف "fallback_highlight" واحد فقط يمثل أحدث إصدار مستقر لأداة معروفة.
-- الـ fallback يحتوي فقط على اسم الأداة ورقم الإصدار في العنوان.
+مهمتك استخراج أخبار الذكاء الاصطناعي الحقيقية فقط من إعلانات رسمية مؤكدة لآخر أسبوع من ${formattedDate}.
+القواعد الصارمة:
+1. القاعدة الذهبية: ارفض أي خبر لا يمكن التحقق منه تقنياً عبر الرابط الرسمي المرفق.
+2. الهوية التقنية: يجب ذكر اسم الأداة ورقم الإصدار (مثل Gemini 1.5 Pro) أو ميزة رسمية محددة.
+3. العنوان الإلزامي: العنوان يجب أن يكون حصراً "اسم الأداة + رقم الإصدار" (مثال: ChatGPT 5.2). يمنع إضافة أفعال أو أوصاف.
+4. الرابط المخصص: يجب أن يكون الرابط لصفحة الإعلان الرسمية المخصصة وليس الصفحة الرئيسية.
+5. المحتوى: 4 أسطر بالضبط (الحدث، الفرق التقني، المستفيد، الأثر العملي).
+6. الترتيب: من الأحدث للأقدم.
+7. Fallback: إذا قل العدد عن 10، ولد Fallback Highlight واحد فقط لآخر إصدار مستقر لأداة كبرى.
 صيغة الإخراج JSON حصراً:
 {
   "generated_at": "${new Date().toISOString()}",
   "expires_in_hours": 6,
   "ai_news": [
     {
-      "type": "news",
       "id": "uuid",
       "tool_name": "...",
+      "company": "اسم الشركة المطورة",
       "category": "llm|image|video|audio|platform|other",
-      "explicit_update": "اسم الإصدار أو الميزة التقنية المحددة",
-      "title": "...",
+      "version": "رقم الإصدار الرسمي",
+      "title": "اسم الأداة + رقم الإصدار",
       "content": ["سطر 1", "سطر 2", "سطر 3", "سطر 4"],
       "news_date": "YYYY-MM-DD",
-      "official_link": "..."
+      "official_link": "رابط الإعلان الرسمي المخصص"
     }
   ],
   "fallback_highlight": {
-    "type": "fallback",
-    "tool_name": "اسم الأداة",
-    "latest_version": "رقم الإصدار الأحدث",
+    "tool_name": "...",
+    "latest_version": "...",
     "title": "اسم الأداة + رقم الإصدار",
-    "display_rule": "same_font_size_bigger_title_only"
+    "display_rule": "same_layout_bigger_title_only"
   }
-}`;
-        prompt = `استخرج الآن أهم 10 أخبار تقنية للذكاء الاصطناعي موثقة وحقيقية. إذا كان العدد أقل من 10، ولد Fallback Highlight واحد لأداة كبرى.`;
+}
+ملاحظة: إذا كان العنوان لا يطابق "اسم الأداة + رقم الإصدار"، ارفض الخبر فوراً.`;
+        prompt = `استخرج الآن أحدث 10 أخبار تقنية للذكاء الاصطناعي تستوفي جميع الشروط الصارمة أعلاه.`;
       } else if (type === 'phone-news') {
         prompt = `أحدث 8 هواتف ذكية (أخبار آخر أسبوع من ${formattedDate}). تفاصيل فنية شاملة. إحصائيات مبيعات 2025: حصة السوق، الشركة الأكثر مبيعاً، والهاتف الأكثر مبيعاً لكل شركة وإحصائياته. التنسيق: {"phones": [{"title": "...", "manufacturer": "...", "launchYear": "...", "specsPoints": ["...", "..."], "imageUrl": "...", "url": "..."}], "stats": [{"name": "...", "marketShare": "...", "topPhone": "...", "details": "..."}]}`;
       }
@@ -242,7 +246,7 @@ const App: React.FC = () => {
                 <div className="grid gap-3">
                   {[
                     { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية رسمية' },
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أحدث 10 أخبار موثقة ومؤرخة' },
+                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أخبار تقنية موثقة بمميزات محددة' },
                     { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات وإحصائيات 2025' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
                   ].map((tool) => (
@@ -310,17 +314,19 @@ const App: React.FC = () => {
 
                       {aiNewsData?.ai_news.map((n, i) => (
                         <div key={n.id || i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden group hover:bg-slate-800/80 transition-all">
+                          {/* Version Badge */}
                           <div className="absolute top-0 left-0 bg-indigo-500/20 text-indigo-400 text-[6px] font-black px-2 py-1 rounded-br-lg uppercase tracking-tighter flex items-center gap-1">
                             <Zap className="w-2 h-2" />
-                            {n.explicit_update}
+                            {n.version}
                           </div>
+
                           <div className="mt-2 flex justify-between items-start mb-3 border-b border-slate-700 pb-2">
                             <div className="flex flex-col gap-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-[7px] bg-slate-700 text-sky-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name}</span>
-                                <span className="text-[6px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded-full uppercase">{n.category}</span>
+                                <span className="text-[6px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded-full uppercase">{n.company}</span>
                               </div>
-                              <h3 className="text-[10px] font-black text-slate-100 leading-tight pr-1 border-r-2 border-indigo-500/50 group-hover:text-sky-400 transition-colors">{n.title}</h3>
+                              <h3 className="text-sm font-black text-slate-100 leading-tight pr-1 border-r-2 border-indigo-500/50 group-hover:text-sky-400 transition-colors">{n.title}</h3>
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <div className="flex items-center gap-1 text-[8px] text-slate-500 font-black">
