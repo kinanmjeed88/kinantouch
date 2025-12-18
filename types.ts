@@ -1,3 +1,4 @@
+
 export interface ChannelData {
   id: string;
   name: string;
@@ -15,27 +16,31 @@ export interface SocialData {
 
 export interface AINewsItem {
   title: string;
-  description: string;
+  description: string; // يجب أن يكون 5 أسطر
   url: string;
 }
 
 export interface PhoneNewsItem {
   title: string;
   manufacturer: string;
-  launchDate: string;
-  shortDesc: string;
-  fullSpecs: string[];
+  launchYear: string;
+  specsPoints: string[]; // قائمة نقاط مرتبة
+  imageUrl: string;
   url: string;
+}
+
+export interface CompanySalesStat {
+  name: string;
+  marketShare: string;
+  details: string;
 }
 
 export interface JobItem {
   title: string;
   ministry: string;
   date: string;
-  description: string;
+  description: string; // لا يتجاوز 5 أسطر
   url: string;
-  announcement_type: 'informational' | 'actionable';
-  is_link_verified: boolean;
 }
 
 export interface PhoneSpec {

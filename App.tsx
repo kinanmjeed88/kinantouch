@@ -8,17 +8,17 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  ShieldCheck, HelpCircle, MessageCircle, Globe
+  ShieldCheck, HelpCircle, MessageCircle, Globe, Facebook, Instagram, Share2, List
 } from 'lucide-react';
-import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
+import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v7',
-  AI_NEWS: 'techtouch_ai_v7',
-  PHONE_NEWS: 'techtouch_phones_v7'
+  JOBS: 'techtouch_jobs_v8',
+  AI_NEWS: 'techtouch_ai_v8',
+  PHONE_NEWS: 'techtouch_phones_v8'
 };
 
 const App: React.FC = () => {
@@ -28,6 +28,7 @@ const App: React.FC = () => {
   
   const [aiNews, setAiNews] = useState<AINewsItem[]>([]);
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
+  const [salesStats, setSalesStats] = useState<CompanySalesStat[]>([]);
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,11 +45,8 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      const now = Date.now();
-      const sixHours = 6 * 60 * 60 * 1000;
-      if (now - timestamp < sixHours) return data;
+      return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
-    return null;
   };
 
   const saveToCache = (key: string, data: any) => {
@@ -57,35 +55,23 @@ const App: React.FC = () => {
 
   const callGroqAPI = async (prompt: string) => {
     const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      throw new Error("مفتاح API غير متوفر. يرجى التأكد من إعدادات VITE_GROQ_API_KEY في GitHub Secrets أو ملف .env");
-    }
+    if (!apiKey) throw new Error("مفتاح API غير متوفر.");
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          {
-            role: 'system',
-            content: "أنت محرر تقني خبير ومحترف. تقدم بيانات دقيقة وحقيقية من العراق والعالم باللغة العربية الفصيحة. يجب أن تكون الاستجابة دائماً بصيغة JSON صالحة."
-          },
+          { role: 'system', content: "أنت محرر تقني عراقي محترف. تلتزم بالتعليمات الصارمة حول طول المحتوى وصحة الروابط (رسمية وحقيقية 100%). الرد دائماً JSON." },
           { role: 'user', content: prompt }
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.2
+        temperature: 0.1
       }),
     });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error?.message || `فشل الاتصال بـ Groq: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error("فشل الاتصال بـ Groq.");
     const result = await response.json();
     return JSON.parse(result.choices[0].message.content);
   };
@@ -101,7 +87,7 @@ const App: React.FC = () => {
     if (cached) {
       if (type === 'jobs') setJobs(cached);
       else if (type === 'ai-news') setAiNews(cached);
-      else if (type === 'phone-news') setPhoneNews(cached);
+      else if (type === 'phone-news') { setPhoneNews(cached.phones); setSalesStats(cached.stats); }
       setLoading(false);
       return;
     }
@@ -109,27 +95,23 @@ const App: React.FC = () => {
     try {
       let prompt = "";
       if (type === 'jobs') {
-        prompt = `قائمة بـ 8 وظائف حكومية عراقية حقيقية معلنة لتاريخ ${formattedDate}.
-        التنسيق: {"data": [{"title": "عنوان الوظيفة", "ministry": "الوزارة", "date": "${formattedDate}", "description": "وصف مختصر", "url": "رابط رسمي", "announcement_type": "actionable", "is_link_verified": true}]}`;
+        prompt = `قائمة بـ 8 وظائف عراقية حقيقية من مواقع وزارات أو تويتر رسمي وزارات لتاريخ ${formattedDate}. العنوان سطر واحد. المحتوى بحد أقصى 5 أسطر. الرابط رسمي ومؤكد 100%. التنسيق: {"data": [{"title": "...", "ministry": "...", "date": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'ai-news') {
-        prompt = `أهم 8 أخبار تقنية وذكاء اصطناعي عالمية ليوم ${formattedDate}.
-        التنسيق: {"data": [{"title": "عنوان الخبر", "description": "تفاصيل مختصرة", "url": "رابط المصدر"}]}`;
+        prompt = `أهم 8 أخبار ذكاء اصطناعي عالمية. العنوان سطر واحد. المحتوى يجب أن يكون 5 أسطر بالضبط. الرابط يخص أدوات AI. التنسيق: {"data": [{"title": "...", "description": "السطر 1\\nالسطر 2\\nالسطر 3\\nالسطر 4\\nالسطر 5", "url": "..."}]}`;
       } else if (type === 'phone-news') {
-        prompt = `أحدث 8 هواتف ذكية تم إطلاقها في 2024-2025.
-        التنسيق: {"data": [{"title": "اسم الهاتف", "manufacturer": "الشركة", "launchDate": "تاريخ الإطلاق", "shortDesc": "المواصفات الأساسية", "url": "رابط التفاصيل"}]}`;
+        prompt = `أحدث 8 هواتف ذكية 2024-2025. التنسيق: {"phones": [{"title": "اسم الهاتف", "manufacturer": "الشركة", "launchYear": "السنة", "specsPoints": ["نقطة 1", "نقطة 2", "نقطة 3", "نقطة 4"], "imageUrl": "رابط صورة", "url": "رابط مواصفات"}], "stats": [{"name": "شركة", "marketShare": "نسبة", "details": "تفاصيل بسيطة"}]}`;
       }
 
       const result = await callGroqAPI(prompt);
-      const data = result.data || [];
+      const data = result.data || result;
       saveToCache(cacheKey, data);
       
       if (type === 'jobs') setJobs(data);
       else if (type === 'ai-news') setAiNews(data);
-      else if (type === 'phone-news') setPhoneNews(data);
+      else if (type === 'phone-news') { setPhoneNews(data.phones); setSalesStats(data.stats); }
 
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "فشل جلب البيانات عبر Groq. يرجى المحاولة مرة أخرى.");
+      setError(err.message || "فشل جلب البيانات.");
     } finally {
       setLoading(false);
     }
@@ -140,26 +122,28 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const prompt = `قارن تقنياً بين هاتف ${phone1} وهاتف ${phone2}.
-      التنسيق: {"specs": [{"feature": "الميزة", "phone1": "مواصفات الهاتف الأول", "phone2": "مواصفات الهاتف الثاني"}], "betterPhone": "اسم الهاتف الأفضل", "verdict": "الخلاصة الفنية"}`;
-      
-      const result = await callGroqAPI(prompt);
+      const result = await callGroqAPI(`قارن بين ${phone1} و ${phone2}. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`);
       setComparisonResult(result);
-    } catch (err: any) {
-      setError("تعذر إجراء المقارنة حالياً باستخدام Groq.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { setError("فشلت المقارنة."); } finally { setLoading(false); }
   };
 
-  const shareContent = (item: any, platform: 'tg' | 'copy') => {
-    const text = `🔹 ${item.title}\n📝 ${item.description || item.shortDesc || ''}\n🔗 ${item.url}\n#Techtouch`;
+  const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
+    const text = `🔹 ${item.title}\n${item.description || item.specsPoints?.join('\n') || ''}\n🔗 ${item.url}\n#Techtouch`;
     if (platform === 'copy') {
       navigator.clipboard.writeText(text);
       alert('تم النسخ!');
-    } else {
+    } else if (platform === 'tg') {
       window.open(`https://t.me/share/url?url=${encodeURIComponent(item.url)}&text=${encodeURIComponent(text)}`, '_blank');
+    } else if (platform === 'fb') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(item.url)}`, '_blank');
+    } else {
+      alert("يرجى نسخ المحتوى ومشاركته يدوياً على إنستغرام (قصص أو منشورات).");
     }
+  };
+
+  const copyPhoneName = (name: string) => {
+    navigator.clipboard.writeText(name);
+    alert(`تم نسخ: ${name}`);
   };
 
   return (
@@ -200,22 +184,42 @@ const App: React.FC = () => {
             <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4">
-                  <HelpCircle className="w-6 h-6" />
-                  <h2 className="font-black text-lg uppercase tracking-tight">دليل Techtouch</h2>
+                  <MessageCircle className="w-6 h-6" />
+                  <h2 className="font-black text-lg uppercase tracking-tight">دليل بوت الطلبات</h2>
                 </div>
+                
                 <div className="space-y-6">
-                  <section>
-                    <h3 className="text-sky-400 font-bold text-sm mb-2 flex items-center gap-2"><Globe className="w-4 h-4"/> هويتنا</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed font-medium">نحن أكبر تجمع تقني عراقي يوفر التطبيقات المعدلة، الألعاب، وشروحات البرمجيات بأمان تام.</p>
-                  </section>
-                  <section>
-                    <h3 className="text-emerald-400 font-bold text-sm mb-2 flex items-center gap-2"><MessageCircle className="w-4 h-4"/> نظام الطلبات</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed font-medium">عبر بوت الطلبات الذكي، يمكنك إرسال اسم أي تطبيق وسوف ندرجه في القناة بعد فحصه.</p>
-                  </section>
-                  <section>
-                    <h3 className="text-amber-400 font-bold text-sm mb-2 flex items-center gap-2"><ShieldCheck className="w-4 h-4"/> الأمان</h3>
-                    <p className="text-slate-400 text-xs leading-relaxed font-medium">كل ما ننشره مفحوص بأحدث تقنيات مكافحة الفيروسات لضمان خصوصيتك.</p>
-                  </section>
+                  <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95 mb-6">
+                    <Send className="w-5 h-5" />
+                    <span>الدخول لبوت الطلبات</span>
+                  </a>
+
+                  <div className="space-y-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
+                    <p className="text-slate-200 text-sm font-bold flex items-center gap-2">✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
+                    <p className="text-slate-200 text-sm font-bold flex items-center gap-2">✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
+                  </div>
+
+                  <p className="text-emerald-400 text-[11px] font-black leading-relaxed">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+
+                  <div className="space-y-4 pt-4 border-t border-slate-700/50">
+                    <h3 className="text-sky-400 font-black text-sm uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
+                    <ul className="space-y-3">
+                      {[
+                        "١. ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.",
+                        "٢. اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).",
+                        "٣. استخدم أمر البحث بكتابة كلمة \"بحث\" متبوع باسم التطبيق (مثلاً: بحث ياسين).",
+                        "٤. للاعلان في القناة تواصل من خلال البوت"
+                      ].map((item, i) => (
+                        <li key={i} className="text-slate-400 text-xs font-bold leading-relaxed pr-2 border-r-2 border-slate-700">{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-red-400 text-[10px] font-black text-center">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
+                  </div>
+
+                  <p className="text-slate-500 text-center font-black text-xs pt-4">في النهاية دمتم برعاية الله</p>
                 </div>
               </div>
             </div>
@@ -226,13 +230,13 @@ const App: React.FC = () => {
               {activeToolView === 'main' ? (
                 <div className="grid gap-3">
                   {[
-                    { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'وظائف العراق', desc: 'تحديثات وزارية رسمية' },
+                    { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'وظائف العراق', desc: 'تحديثات حكومية رسمية' },
                     { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'الأخبار التقنية', desc: 'جديد الذكاء الاصطناعي' },
-                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'الهواتف 2025', desc: 'أحدث المواصفات والأسعار' },
-                    { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة ذكية', desc: 'تحليل فني دقيق للهواتف' }
+                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'أخبار الهواتف', desc: 'مواصفات وإحصائيات المبيعات' },
+                    { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة ذكية', desc: 'تحليل فني دقيق' }
                   ].map((tool) => (
                     <button key={tool.id} onClick={() => tool.id === 'comparison' ? setActiveToolView('comparison') : fetchToolData(tool.id as ToolView)} className="group flex items-center p-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-md active:scale-95">
-                      <div className={`w-8 h-8 bg-${tool.color}-500/10 rounded-lg flex items-center justify-center ml-3 shrink-0 transition-transform group-hover:scale-110`}><tool.icon className={`w-4 h-4 text-${tool.color}-400`} /></div>
+                      <div className={`w-8 h-8 bg-${tool.color}-500/10 rounded-lg flex items-center justify-center ml-3 shrink-0`}><tool.icon className={`w-4 h-4 text-${tool.color}-400`} /></div>
                       <div className="flex-grow text-right">
                         <h3 className="text-[10px] font-black text-slate-100 group-hover:text-sky-400 transition-colors uppercase">{tool.title}</h3>
                         <p className="text-[8px] text-slate-500 mt-0.5">{tool.desc}</p>
@@ -251,19 +255,16 @@ const App: React.FC = () => {
                   {loading ? (
                     <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري جلب البيانات عبر Groq...</p></div>
                   ) : error ? (
-                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6"><AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" /><p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p></div>
+                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6"><AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" /><p className="text-[10px] text-slate-300 font-bold">{error}</p></div>
                   ) : activeToolView === 'jobs' ? (
                     <div className="space-y-4">
                       {jobs.map((job, i) => (
                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-lg border-r-4 border-r-emerald-500/50">
-                          <h3 className="text-[11px] font-black text-emerald-400 mb-2 leading-tight">{job.title}</h3>
-                          <p className="text-[10px] text-slate-400 leading-relaxed mb-4 font-medium">{job.description}</p>
+                          <h3 className="text-[11px] font-black text-emerald-400 mb-2 leading-none border-b border-slate-700 pb-2">{job.title}</h3>
+                          <p className="text-[10px] text-slate-400 leading-relaxed mb-4 font-bold whitespace-pre-line">{job.description}</p>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
-                            <div className="flex gap-2">
-                               <button onClick={() => shareContent(job, 'tg')} className="p-1.5 bg-sky-500/10 rounded-lg text-sky-400 hover:bg-sky-500/20 transition-colors"><Send className="w-3.5 h-3.5" /></button>
-                               <button onClick={() => shareContent(job, 'copy')} className="p-1.5 bg-slate-700 rounded-lg text-slate-200 hover:bg-slate-600 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
-                            </div>
-                            <a href={job.url} target="_blank" className="text-[9px] font-black px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 hover:bg-emerald-500/20">رابط التقديم <ExternalLink className="w-3 h-3" /></a>
+                            <button onClick={() => shareContent(job, 'copy')} className="flex items-center gap-1.5 p-2 bg-slate-700 rounded-lg text-slate-200 text-[9px] font-black hover:bg-slate-600"><Copy className="w-3.5 h-3.5" /> نسخ الإعلان</button>
+                            <a href={job.url} target="_blank" className="text-[9px] font-black px-4 py-2 bg-emerald-500 text-white rounded-lg flex items-center gap-1.5">رابط رسمي <ExternalLink className="w-3 h-3" /></a>
                           </div>
                         </div>
                       ))}
@@ -272,42 +273,84 @@ const App: React.FC = () => {
                     <div className="space-y-4">
                       {aiNews.map((n, i) => (
                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50">
-                          <h3 className="text-[11px] font-black text-sky-400 mb-2 leading-tight">{n.title}</h3>
-                          <p className="text-[10px] text-slate-400 mb-4 leading-relaxed font-medium">{n.description}</p>
+                          <h3 className="text-[11px] font-black text-sky-400 mb-3 border-b border-slate-700 pb-2 truncate">{n.title}</h3>
+                          <p className="text-[10px] text-slate-400 mb-4 leading-relaxed font-bold whitespace-pre-line h-[80px]">{n.description}</p>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
-                            <div className="flex gap-2"><button onClick={() => shareContent(n, 'tg')} className="p-1.5 bg-sky-500/10 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button></div>
-                            <a href={n.url} target="_blank" className="text-[9px] text-indigo-400 font-black border border-indigo-500/30 px-3 py-1.5 rounded-lg hover:bg-indigo-500/10 transition-all flex items-center gap-1">قراءة المزيد <ExternalLink className="w-3 h-3" /></a>
+                            <div className="flex gap-2">
+                              <button onClick={() => shareContent(n, 'fb')} className="p-2 bg-blue-600/10 text-blue-400 rounded-lg"><Facebook className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => shareContent(n, 'insta')} className="p-2 bg-pink-600/10 text-pink-400 rounded-lg"><Instagram className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => shareContent(n, 'tg')} className="p-2 bg-sky-500/10 text-sky-400 rounded-lg"><Send className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => shareContent(n, 'copy')} className="p-2 bg-slate-700 text-slate-200 rounded-lg"><Copy className="w-3.5 h-3.5" /></button>
+                            </div>
+                            <a href={n.url} target="_blank" className="text-[9px] text-indigo-400 font-black px-3 py-2 border border-indigo-500/30 rounded-lg">المصدر</a>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : activeToolView === 'phone-news' ? (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                        {phoneNews.map((phone, i) => (
-                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-sky-500/50">
-                            <h3 className="text-[11px] font-black text-sky-400 mb-2">{phone.title}</h3>
-                            <p className="text-[10px] text-slate-400 mb-3 font-medium">{phone.shortDesc}</p>
-                            <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
-                              <div className="flex gap-2"><button onClick={() => shareContent(phone, 'tg')} className="p-1.5 bg-sky-500/10 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button></div>
-                              <a href={phone.url} target="_blank" className="text-[9px] text-sky-400 font-black px-4 py-1.5 border border-sky-500/20 rounded-lg">التفاصيل الفنية</a>
+                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl shadow-md border-r-4 border-r-sky-500/50">
+                            <div className="flex items-center justify-between mb-3 border-b border-slate-700 pb-3">
+                              <h3 className="text-[12px] font-black text-sky-400">{phone.title}</h3>
+                              <button onClick={() => copyPhoneName(phone.title)} className="p-2 bg-sky-500/10 text-sky-400 rounded-lg hover:bg-sky-500/20 transition-all"><Copy className="w-3.5 h-3.5" /></button>
+                            </div>
+                            <div className="flex gap-4 text-[9px] text-slate-500 font-black mb-4 uppercase tracking-tighter">
+                              <span>الشركة: {phone.manufacturer}</span>
+                              <span className="w-px h-3 bg-slate-700"></span>
+                              <span>السنة: {phone.launchYear}</span>
+                            </div>
+                            <ul className="space-y-2 mb-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/30">
+                              {phone.specsPoints.map((point, idx) => (
+                                <li key={idx} className="text-[10px] text-slate-300 font-bold flex items-center gap-2">
+                                  <div className="w-1 h-1 bg-sky-400 rounded-full shrink-0"></div>
+                                  {point}
+                                </li>
+                              ))}
+                            </ul>
+                            <div className="flex justify-between items-center pt-4 border-t border-slate-700/50">
+                              <div className="flex gap-2">
+                                <button onClick={() => shareContent(phone, 'fb')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-blue-400"><Facebook className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => shareContent(phone, 'insta')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-pink-400"><Instagram className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button>
+                              </div>
+                              <a href={phone.imageUrl} target="_blank" className="text-[9px] text-slate-300 font-black bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 flex items-center gap-2">صورة الهاتف <ExternalLink className="w-3 h-3" /></a>
                             </div>
                          </div>
                        ))}
+                       
+                       <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl">
+                          <div className="flex items-center gap-2 text-emerald-400 mb-4">
+                            <TrendingUp className="w-5 h-5" />
+                            <h3 className="text-[12px] font-black uppercase">إحصائيات مبيعات الشركات 2024</h3>
+                          </div>
+                          <div className="space-y-4">
+                             {salesStats.map((stat, i) => (
+                               <div key={i} className="flex flex-col gap-1 border-b border-slate-700/50 pb-3 last:border-0">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-black text-slate-100">{stat.name}</span>
+                                    <span className="text-[11px] font-black text-emerald-400">{stat.marketShare}</span>
+                                  </div>
+                                  <p className="text-[9px] text-slate-500 font-bold">{stat.details}</p>
+                               </div>
+                             ))}
+                          </div>
+                       </div>
                     </div>
                   ) : (
                     <div className="space-y-6">
                       <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl space-y-4 shadow-2xl">
                         <div className="flex items-center gap-2 text-sky-400 mb-1"><Search className="w-4 h-4" /><h3 className="text-[11px] font-black uppercase tracking-widest">مقارنة فنية</h3></div>
-                        <input type="text" placeholder="اسم الهاتف الأول (مثال: S24 Ultra)" value={phone1} onChange={(e) => setPhone1(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-[10px] outline-none focus:border-sky-500/50 font-bold" />
-                        <input type="text" placeholder="اسم الهاتف الثاني (مثال: iPhone 16)" value={phone2} onChange={(e) => setPhone2(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-[10px] outline-none focus:border-sky-500/50 font-bold" />
+                        <input type="text" placeholder="اسم الهاتف الأول (S24 Ultra)" value={phone1} onChange={(e) => setPhone1(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-[10px] outline-none focus:border-sky-500/50 font-bold" />
+                        <input type="text" placeholder="اسم الهاتف الثاني (iPhone 16)" value={phone2} onChange={(e) => setPhone2(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-[10px] outline-none focus:border-sky-500/50 font-bold" />
                         <button onClick={handleComparePhones} disabled={loading || !phone1 || !phone2} className="w-full bg-sky-500 text-white font-black py-3 rounded-xl text-[10px] shadow-lg shadow-sky-500/20 active:scale-95 transition-all uppercase tracking-tighter">{loading ? "جاري التحليل..." : "بدء المقارنة الذكية"}</button>
                       </div>
                       {comparisonResult && (
-                        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl animate-slide-up">
+                        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
                           <div className="overflow-x-auto">
                             <table className="w-full text-right text-[9px]">
                               <thead className="bg-slate-900/80"><tr><th className="p-3 text-sky-400 border-b border-slate-700">الميزة</th><th className="p-3 border-b border-slate-700">{phone1}</th><th className="p-3 border-b border-slate-700">{phone2}</th></tr></thead>
-                              <tbody className="divide-y divide-slate-700/30">{comparisonResult.specs.map((s, i) => <tr key={i} className="hover:bg-white/5 transition-colors"><td className="p-3 font-black text-slate-300">{s.feature}</td><td className="p-3 text-slate-400 font-medium">{s.phone1}</td><td className="p-3 text-slate-400 font-medium">{s.phone2}</td></tr>)}</tbody>
+                              <tbody className="divide-y divide-slate-700/30">{comparisonResult.specs.map((s, i) => <tr key={i} className="hover:bg-white/5 transition-colors"><td className="p-3 font-black text-slate-300">{s.feature}</td><td className="p-3 text-slate-400 font-bold">{s.phone1}</td><td className="p-3 text-slate-400 font-bold">{s.phone2}</td></tr>)}</tbody>
                             </table>
                           </div>
                           <div className="p-5 bg-emerald-500/10 border-t border-slate-700/50">
