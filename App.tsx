@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
@@ -8,7 +9,6 @@ import {
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp, ChevronDown, ChevronUp, CheckCircle2
 } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
@@ -31,7 +31,6 @@ const App: React.FC = () => {
   const [phone2, setPhone2] = useState('');
   const [comparisonResult, setComparisonResult] = useState<PhoneComparisonResult | null>(null);
 
-  // Define formattedDate in component scope to fix the undefined error in JSX and functions
   const today = new Date();
   const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
 
@@ -53,107 +52,73 @@ const App: React.FC = () => {
       if (arrayStart !== -1 && arrayEnd !== -1) {
         try { return JSON.parse(text.substring(arrayStart, arrayEnd + 1)); } catch (err) {}
       }
-      throw new Error("فشل في تحليل البيانات.");
+      throw new Error("فشل في تحليل البيانات كـ JSON.");
     }
   };
 
-  const getApiKey = () => process.env.API_KEY?.trim() || null;
+  const callGroqAPI = async (prompt: string, isJson: boolean = true) => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) throw new Error("مفتاح Groq API غير متوفر.");
 
-  const fetchToolData = async (type: ToolView) => {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError("مفتاح API غير متوفر.");
-      setActiveToolView(type);
-      return;
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: isJson 
+              ? "You are a helpful assistant that strictly outputs JSON. Do not include any conversational text." 
+              : "You are a helpful tech expert."
+          },
+          { role: "user", content: prompt }
+        ],
+        response_format: isJson ? { type: "json_object" } : undefined,
+        temperature: 0.3
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || "فشل الاتصال بـ Groq API");
     }
 
+    const result = await response.json();
+    return result.choices[0].message.content;
+  };
+
+  const fetchToolData = async (type: ToolView) => {
     setLoading(true);
     setError(null);
     setActiveToolView(type);
     
     let prompt = "";
-    let schema: any = {};
 
     if (type === 'phone-news') {
-      prompt = `List 10 of the ABSOLUTE LATEST smartphones officially released or leaked for late 2024 and 2025. 
-      Context: Today is ${formattedDate}. Focus on Samsung S25 Ultra, iPhone 16 Pro, Xiaomi 15, and latest flagships. 
-      Arabic language. JSON array: 
-      title, manufacturer, launchDate, shortDesc, fullSpecs (array of details), url (official source).`;
-      
-      schema = {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            manufacturer: { type: Type.STRING },
-            launchDate: { type: Type.STRING },
-            shortDesc: { type: Type.STRING },
-            fullSpecs: { type: Type.ARRAY, items: { type: Type.STRING } },
-            url: { type: Type.STRING }
-          },
-          required: ["title", "manufacturer", "launchDate", "shortDesc", "fullSpecs", "url"]
-        }
-      };
+      prompt = `List 10 of the ABSOLUTE LATEST smartphones released or leaked in late 2024/2025. Today is ${formattedDate}. Arabic. 
+      Return a JSON object with a key 'data' which is an array of objects: {title, manufacturer, launchDate, shortDesc, fullSpecs: string[], url}.`;
     } else if (type === 'jobs') {
-      prompt = `As an AI expert in Iraqi job news, search for REAL and OFFICIAL government job vacancies in Iraq specifically for the date ${formattedDate}. 
-      RULES: 
-      1. ONLY classify as 'actionable' if there is a verified direct application link.
-      2. Classify as 'informational' if it is just a news announcement without a link or link is closed.
-      3. Use Arabic. 
-      JSON array of objects: 
-      title, ministry, date, description (detailed requirements), url (official source), announcement_type (informational/actionable), is_link_verified (true/false).`;
-      
-      schema = {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            ministry: { type: Type.STRING },
-            date: { type: Type.STRING },
-            description: { type: Type.STRING },
-            url: { type: Type.STRING },
-            announcement_type: { type: Type.STRING, enum: ["informational", "actionable"] },
-            is_link_verified: { type: Type.BOOLEAN }
-          },
-          required: ["title", "ministry", "date", "description", "url", "announcement_type", "is_link_verified"]
-        }
-      };
+      prompt = `Search for REAL official Iraqi job vacancies for ${formattedDate}. Arabic. 
+      Return a JSON object with a key 'data' which is an array: {title, ministry, date, description, url, announcement_type: 'informational'|'actionable', is_link_verified: boolean}.`;
     } else if (type === 'ai-news') {
-      prompt = `List 10 of the most RECENT AI tools and models released as of ${formattedDate}. 
-      MUST include real 2024/2025 models like Gemini 2.0, Gemini 3, GPT-5, GPT-5.2, Claude 3.5/4 if they exist in current context. 
-      Do NOT return old info from 2023. Language: Arabic. JSON array: title, description, url.`;
-      schema = {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            description: { type: Type.STRING },
-            url: { type: Type.STRING }
-          },
-          required: ["title", "description", "url"]
-        }
-      };
+      prompt = `List 10 RECENT AI tools released as of ${formattedDate}. Arabic. 
+      Return a JSON object with a key 'data' which is an array: {title, description, url}.`;
     }
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: { responseMimeType: "application/json", responseSchema: schema }
-      });
-      
-      const textResponse = response.text || '';
-      const data = cleanAndParseJSON(textResponse);
+      const textResponse = await callGroqAPI(prompt);
+      const parsed = cleanAndParseJSON(textResponse);
+      const data = parsed.data || parsed;
       
       if (type === 'phone-news') setPhoneNews(data);
       else if (type === 'jobs') setJobs(data);
       else if (type === 'ai-news') setAiNews(data);
     } catch (err: any) {
-      setError(`خطأ في جلب البيانات: ${err.message}`);
+      setError(`خطأ: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -161,30 +126,16 @@ const App: React.FC = () => {
 
   const handleComparePhones = async () => {
     if (!phone1 || !phone2) return;
-    const apiKey = getApiKey();
-    if (!apiKey) return;
     setLoading(true);
     setComparisonResult(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `قارن بين ${phone1} و ${phone2} بأحدث مواصفات 2025 بالعربي بتنسيق JSON.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              specs: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { feature: { type: Type.STRING }, phone1: { type: Type.STRING }, phone2: { type: Type.STRING } } } },
-              verdict: { type: Type.STRING },
-              betterPhone: { type: Type.STRING }
-            }
-          }
-        }
-      });
-      const textResponse = response.text || '';
+      const prompt = `قارن بين ${phone1} و ${phone2} بأحدث مواصفات 2025. 
+      أرجع النتيجة بصيغة JSON حصراً بهذا الهيكل: { "specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "verdict": "...", "betterPhone": "..." } باللغة العربية.`;
+      const textResponse = await callGroqAPI(prompt);
       setComparisonResult(cleanAndParseJSON(textResponse));
-    } catch (err) {} finally { setLoading(false); }
+    } catch (err) {
+      setError("فشلت المقارنة.");
+    } finally { setLoading(false); }
   };
 
   const shareFullContent = (data: any, type: 'phone' | 'job' | 'ai', platform: 'tg' | 'fb' | 'insta' | 'copy') => {
@@ -274,13 +225,12 @@ const App: React.FC = () => {
             <div className="animate-fade-in">
               {activeToolView === 'main' ? (
                 <div className="grid gap-4">
-                  {/* 1. تجريبي: أخبار الوظائف والتعيينات - محاذاة يسار بطلب المستخدم */}
                   <button onClick={() => fetchToolData('jobs')} className="group flex flex-row p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-xl items-center">
                     <div className="flex-shrink-0 w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors ml-4">
                       <Briefcase className="w-6 h-6 text-emerald-400" />
                     </div>
                     <div className="flex-grow text-left">
-                      <div className="flex items-center gap-2 justify-end mb-0.5">
+                      <div className="flex items-center gap-2 justify-start mb-0.5">
                         <span className="text-[8px] bg-red-600/20 text-red-400 px-2 py-0.5 rounded-full font-black border border-red-600/30">تجريبي</span>
                         <h3 className="text-sm font-bold">أخبار الوظائف والتعيينات</h3>
                       </div>
@@ -289,17 +239,15 @@ const App: React.FC = () => {
                     <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400 mr-2" />
                   </button>
 
-                  {/* 2. أخبار الذكاء الاصطناعي */}
                   <button onClick={() => fetchToolData('ai-news')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-xl">
                     <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-indigo-500/20 transition-colors"><Cpu className="w-6 h-6 text-indigo-400" /></div>
                     <div className="flex-grow pr-1 text-right">
                       <h3 className="text-sm font-bold">أخبار الذكاء الاصطناعي</h3>
-                      <p className="text-[10px] text-slate-400">آخر النماذج والتقنيات (Gemini 3, GPT-5.2)</p>
+                      <p className="text-[10px] text-slate-400">آخر النماذج والتقنيات (Llama 3, GPT-5)</p>
                     </div>
                     <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400" />
                   </button>
 
-                  {/* 3. أخبار الهواتف */}
                   <button onClick={() => fetchToolData('phone-news')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-xl">
                     <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-sky-500/20 transition-colors"><Smartphone className="w-6 h-6 text-sky-400" /></div>
                     <div className="flex-grow pr-1 text-right">
@@ -309,7 +257,6 @@ const App: React.FC = () => {
                     <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400" />
                   </button>
 
-                  {/* 4. المقارنة */}
                   <button onClick={() => setActiveToolView('comparison')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-xl">
                     <div className="w-10 h-10 bg-slate-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-slate-500/20 transition-colors"><Search className="w-6 h-6 text-slate-400" /></div>
                     <div className="flex-grow pr-1 text-right">
@@ -324,15 +271,11 @@ const App: React.FC = () => {
                   <button onClick={() => setActiveToolView('main')} className="flex items-center gap-2 text-slate-500 mb-4 hover:text-sky-400 transition-colors"><ChevronLeft className="w-5 h-5 rotate-180" /><span className="text-sm font-bold">رجوع للأدوات</span></button>
                   
                   {loading ? (
-                    <div className="py-20 flex flex-col items-center gap-4 animate-fade-in"><Loader2 className="w-12 h-12 text-sky-400 animate-spin" /><p className="text-[11px] text-slate-400 font-black tracking-widest text-center">جاري استرجاع البيانات الحقيقية {formattedDate}...</p></div>
+                    <div className="py-20 flex flex-col items-center gap-4 animate-fade-in"><Loader2 className="w-12 h-12 text-sky-400 animate-spin" /><p className="text-[11px] text-slate-400 font-black tracking-widest text-center">جاري استرجاع البيانات عبر Groq API...</p></div>
                   ) : error ? (
                     <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-4"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" /><p className="text-xs text-slate-300">{error}</p></div>
                   ) : activeToolView === 'jobs' ? (
                     <div className="space-y-4">
-                      <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl text-right mb-2 shadow-lg">
-                        <div className="flex items-center gap-2 text-amber-500 mb-1.5"><Briefcase className="w-4 h-4" /><p className="text-[11px] font-black">نظام التحقق الذكي من الوظائف</p></div>
-                        <p className="text-[10px] text-slate-300 leading-tight">لا يُدرج التقديم كـ "مفتوح" إلا بعد التأكد من وجود استمارة إلكترونية فعالة حالياً.</p>
-                      </div>
                       {jobs.map((job, i) => (
                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl text-right animate-slide-up hover:border-emerald-500/30 transition-all shadow-lg">
                           <div className="flex justify-between items-start mb-3">
@@ -341,13 +284,9 @@ const App: React.FC = () => {
                               <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-lg font-black mt-1">{job.ministry}</span>
                             </div>
                             {job.announcement_type === 'actionable' ? (
-                              <span className="flex items-center gap-1 text-[8px] bg-emerald-600/20 text-emerald-400 px-2 py-1 rounded-full font-black border border-emerald-600/30">
-                                <CheckCircle2 className="w-3 h-3" /> تقديم مفتوح
-                              </span>
+                              <span className="flex items-center gap-1 text-[8px] bg-emerald-600/20 text-emerald-400 px-2 py-1 rounded-full font-black border border-emerald-600/30"><CheckCircle2 className="w-3 h-3" /> تقديم مفتوح</span>
                             ) : (
-                              <span className="flex items-center gap-1 text-[8px] bg-slate-600/20 text-slate-400 px-2 py-1 rounded-full font-black border border-slate-600/30">
-                                <AlertTriangle className="w-3 h-3" /> إعلان رسمي فقط
-                              </span>
+                              <span className="flex items-center gap-1 text-[8px] bg-slate-600/20 text-slate-400 px-2 py-1 rounded-full font-black border border-slate-600/30"><AlertTriangle className="w-3 h-3" /> إعلان رسمي</span>
                             )}
                           </div>
                           <div className="bg-slate-900/50 p-4 rounded-2xl mb-4 border border-slate-700/30">
@@ -358,12 +297,9 @@ const App: React.FC = () => {
                                <button onClick={() => shareFullContent(job, 'job', 'tg')} className="p-2 bg-sky-500/10 rounded-xl text-sky-400"><Send className="w-4 h-4" /></button>
                                <button onClick={() => shareFullContent(job, 'job', 'copy')} className="p-2 bg-slate-700 rounded-xl text-slate-200"><Copy className="w-4 h-4" /></button>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                              <a href={job.url} target="_blank" className={`text-[10px] font-black px-4 py-2 rounded-xl border flex items-center gap-1.5 transition-all ${job.announcement_type === 'actionable' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-slate-700/50 text-slate-400 border-slate-600/50 cursor-not-allowed hover:bg-slate-700'}`}>
-                                {job.announcement_type === 'actionable' ? 'رابط التقديم المباشر' : 'رابط المصدر الرسمي'} <ExternalLink className="w-3 h-3" />
-                              </a>
-                              {job.is_link_verified && <span className="text-[7px] text-emerald-500/70 font-bold">تم التحقق من الرابط برمجياً</span>}
-                            </div>
+                            <a href={job.url} target="_blank" className={`text-[10px] font-black px-4 py-2 rounded-xl border flex items-center gap-1.5 transition-all ${job.announcement_type === 'actionable' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-slate-700/50 text-slate-400 border-slate-600/50 hover:bg-slate-700'}`}>
+                              الرابط الرسمي <ExternalLink className="w-3 h-3" />
+                            </a>
                           </div>
                         </div>
                       ))}
@@ -379,7 +315,7 @@ const App: React.FC = () => {
                               <button onClick={() => shareFullContent(n, 'ai', 'tg')} className="p-2 bg-sky-500/10 rounded-xl text-sky-400"><Send className="w-4 h-4" /></button>
                               <button onClick={() => shareFullContent(n, 'ai', 'copy')} className="p-2 bg-slate-700 rounded-xl text-slate-200"><Copy className="w-4 h-4" /></button>
                             </div>
-                            <a href={n.url} target="_blank" className="text-[10px] text-indigo-400 font-black border border-indigo-500/30 px-5 py-2 rounded-xl hover:bg-indigo-500/10 transition-all">زيارة الأداة <ExternalLink className="w-3 h-3 inline mr-1" /></a>
+                            <a href={n.url} target="_blank" className="text-[10px] text-indigo-400 font-black border border-indigo-500/30 px-5 py-2 rounded-xl hover:bg-indigo-500/10 transition-all">زيارة الموقع <ExternalLink className="w-3 h-3 inline mr-1" /></a>
                           </div>
                         </div>
                       ))}
@@ -402,16 +338,15 @@ const App: React.FC = () => {
                             <p className="text-[11px] text-slate-300 leading-relaxed pr-3 border-r-2 border-sky-500/20 mb-4">{phone.shortDesc}</p>
                             
                             <button onClick={() => setExpandedPhone(expandedPhone === i ? null : i)} className="w-full flex items-center justify-between px-4 py-2.5 bg-sky-500/5 text-sky-400 text-[10px] font-black rounded-xl border border-sky-500/20 mb-3 hover:bg-sky-500/10 transition-all">
-                              <span>{expandedPhone === i ? 'عرض أقل' : 'عرض المواصفات التفصيلية الكاملة'}</span>
+                              <span>{expandedPhone === i ? 'إخفاء التفاصيل' : 'عرض المواصفات الكاملة'}</span>
                               {expandedPhone === i ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
                             </button>
 
                             {expandedPhone === i && (
-                              <div className="bg-slate-900/80 p-4 rounded-2xl mb-4 animate-fade-in border border-slate-700/80 shadow-inner">
-                                <p className="text-[11px] text-sky-400 font-black mb-3 border-b border-sky-900/50 pb-1.5 flex items-center gap-2"><Smartphone className="w-4 h-4"/> المواصفات التقنية الكاملة:</p>
+                              <div className="bg-slate-900/80 p-4 rounded-2xl mb-4 border border-slate-700/80 shadow-inner">
                                 <ul className="space-y-2.5">
                                   {phone.fullSpecs.map((spec, idx) => (
-                                    <li key={idx} className="text-[10px] text-slate-300 pr-3 border-r border-sky-500/40 flex items-start leading-relaxed"><span className="text-sky-500 ml-2 opacity-60">•</span>{spec}</li>
+                                    <li key={idx} className="text-[10px] text-slate-300 pr-3 border-r border-sky-500/40 flex items-start"><span className="text-sky-500 ml-2 opacity-60">•</span>{spec}</li>
                                   ))}
                                 </ul>
                               </div>
@@ -422,7 +357,7 @@ const App: React.FC = () => {
                                 <button onClick={() => shareFullContent(phone, 'phone', 'tg')} className="p-2 bg-sky-500/10 rounded-xl text-sky-400"><Send className="w-4 h-4" /></button>
                                 <button onClick={() => shareFullContent(phone, 'phone', 'copy')} className="p-2 bg-slate-700 rounded-xl text-slate-200"><Copy className="w-4 h-4" /></button>
                               </div>
-                              <a href={phone.url} target="_blank" className="text-[10px] text-sky-400 font-black px-4 py-2 bg-sky-500/5 rounded-xl border border-sky-500/20 flex items-center gap-1.5">المصدر الرسمي <ExternalLink className="w-3 h-3" /></a>
+                              <a href={phone.url} target="_blank" className="text-[10px] text-sky-400 font-black px-4 py-2 bg-sky-500/5 rounded-xl border border-sky-500/20 flex items-center gap-1.5">المصدر <ExternalLink className="w-3 h-3" /></a>
                             </div>
                          </div>
                        ))}
@@ -432,11 +367,11 @@ const App: React.FC = () => {
                       <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl space-y-4 shadow-xl">
                         <div className="flex items-center gap-2 text-sky-400 mb-1">
                           <Search className="w-5 h-5" />
-                          <h3 className="text-sm font-black">مقارنة أحدث هواتف 2025</h3>
+                          <h3 className="text-sm font-black">مقارنة هواتف 2025</h3>
                         </div>
-                        <input type="text" placeholder="اسم الهاتف الأول (مثال: Galaxy S25 Ultra)..." value={phone1} onChange={(e) => setPhone1(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-right text-sm outline-none focus:border-sky-500/50 transition-colors" />
-                        <input type="text" placeholder="اسم الهاتف الثاني (مثال: iPhone 16 Pro)..." value={phone2} onChange={(e) => setPhone2(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-right text-sm outline-none focus:border-sky-500/50 transition-colors" />
-                        <button onClick={handleComparePhones} disabled={loading || !phone1 || !phone2} className="w-full bg-sky-500 text-white font-black py-3 rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20">{loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "ابدأ المقارنة الذكية"}</button>
+                        <input type="text" placeholder="الهاتف الأول..." value={phone1} onChange={(e) => setPhone1(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-right text-sm outline-none focus:border-sky-500/50 transition-colors" />
+                        <input type="text" placeholder="الهاتف الثاني..." value={phone2} onChange={(e) => setPhone2(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-right text-sm outline-none focus:border-sky-500/50 transition-colors" />
+                        <button onClick={handleComparePhones} disabled={loading || !phone1 || !phone2} className="w-full bg-sky-500 text-white font-black py-3 rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20">{loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "ابدأ المقارنة"}</button>
                       </div>
                       {comparisonResult && (
                         <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden animate-slide-up shadow-2xl">
@@ -445,7 +380,7 @@ const App: React.FC = () => {
                             <tbody className="divide-y divide-slate-700/30">{comparisonResult.specs.map((s, i) => <tr key={i} className="hover:bg-slate-700/10 transition-colors"><td className="p-3 font-bold text-slate-300">{s.feature}</td><td className="p-3 text-slate-400">{s.phone1}</td><td className="p-3 text-slate-400">{s.phone2}</td></tr>)}</tbody>
                           </table>
                           <div className="p-5 bg-emerald-500/10 border-t border-slate-700/50">
-                            <p className="text-xs text-emerald-400 font-black mb-1.5 flex items-center gap-1.5"><TrendingUp className="w-4 h-4"/> النتيجة النهائية: {comparisonResult.betterPhone}</p>
+                            <p className="text-xs text-emerald-400 font-black mb-1.5 flex items-center gap-1.5"><TrendingUp className="w-4 h-4"/> النتيجة: {comparisonResult.betterPhone}</p>
                             <p className="text-[11px] text-slate-300 leading-relaxed font-bold">{comparisonResult.verdict}</p>
                           </div>
                         </div>
