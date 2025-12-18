@@ -16,9 +16,9 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v11',
-  AI_NEWS: 'techtouch_ai_v11',
-  PHONE_NEWS: 'techtouch_phones_v11'
+  JOBS: 'techtouch_jobs_v12',
+  AI_NEWS: 'techtouch_ai_v12',
+  PHONE_NEWS: 'techtouch_phones_v12'
 };
 
 const App: React.FC = () => {
@@ -37,6 +37,7 @@ const App: React.FC = () => {
   const [phone2, setPhone2] = useState('');
   const [comparisonResult, setComparisonResult] = useState<PhoneComparisonResult | null>(null);
 
+  // تحديث التاريخ ليكون 2025-12-18 كما طلب المستخدم أو استخدامه كمرجع
   const today = new Date();
   const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
 
@@ -63,7 +64,7 @@ const App: React.FC = () => {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: "أنت خبير تقني عراقي. تلتزم بالتعليمات الصارمة حول طول المحتوى وصحة الروابط الرسمية. الرد JSON فقط." },
+          { role: 'system', content: "أنت خبير تقني عراقي. تلتزم بالتعليمات الصارمة حول جودة البيانات (التي يجب أن تكون حديثة جداً، بحد أقصى أسبوع واحد من تاريخ اليوم). الرد JSON فقط." },
           { role: 'user', content: prompt }
         ],
         response_format: { type: 'json_object' },
@@ -95,11 +96,11 @@ const App: React.FC = () => {
     try {
       let prompt = "";
       if (type === 'jobs') {
-        prompt = `قائمة بـ 8 وظائف عراقية حقيقية وصارمة من مواقع وزارات أو تويتر رسمي وزارات لتاريخ اليوم ${formattedDate}. العنوان سطر واحد. المحتوى 5 إلى 6 أسطر دقيقة. الرابط يجب أن يكون رسمياً ومباشراً للتقديم 100%. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
+        prompt = `قائمة بـ 8 وظائف عراقية حقيقية وصارمة من مواقع وزارات أو تويتر رسمي وزارات لتاريخ ${formattedDate} (يجب أن تكون الأخبار حديثة جداً خلال آخر أسبوع). العنوان سطر واحد. المحتوى 5 إلى 6 أسطر دقيقة. الرابط يجب أن يكون رسمياً ومباشراً للتقديم 100%. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'ai-news') {
-        prompt = `أهم 8 أخبار حصرية عن "أدوات الذكاء الاصطناعي الجديدة" وتحديثات الأدوات الحالية فقط. العنوان سطر واحد. المحتوى من 5 إلى 6 أسطر تشرح مميزات الأداة وكيفية تطويرها. الرابط يجب أن يكون الموقع الرسمي للأداة للاستخدام. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
+        prompt = `أهم 8 أخبار حصرية وتحديثات عن منصات الذكاء الاصطناعي الكبرى مثل (Gemini, ChatGPT/GPT-4o, Claude 3.5, Kimi, Manus, Mistral) حصراً. العنوان سطر واحد. المحتوى من 5 إلى 6 أسطر تشرح الميزات الجديدة بدقة. الرابط يجب أن يكون الموقع الرسمي للمنصة. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'phone-news') {
-        prompt = `أحدث 8 هواتف ذكية عالمية 2024-2025. قدم تفاصيل فنية شاملة بالكامل لكل هاتف (المعالج، الشاشة، الكاميرات، البطارية، الشحن، ميزات فريدة) دون تقييد بعدد الأسطر. الرابط يجب أن يكون الصفحة الرسمية للهاتف من موقع الشركة المصنعة. التنسيق: {"phones": [{"title": "...", "manufacturer": "...", "launchYear": "...", "specsPoints": ["نقطة تقنية 1", "..."], "imageUrl": "...", "url": "..."}], "stats": [{"name": "...", "marketShare": "...", "details": "..."}]}`;
+        prompt = `أحدث 8 هواتف ذكية عالمية (أخبار آخر أسبوع من تاريخ ${formattedDate}). قدم تفاصيل فنية شاملة جداً لكل هاتف دون تقييد بعدد الأسطر. الرابط هو الموقع الرسمي للشركة (Samsung, Apple, Xiaomi, etc). أيضاً قدم إحصائيات المبيعات لعام 2024/2025: حصة السوق لكل شركة، والشركة الأكثر مبيعاً، والهاتف الأكثر مبيعاً لكل شركة منها. التنسيق: {"phones": [{"title": "...", "manufacturer": "...", "launchYear": "...", "specsPoints": ["...", "..."], "imageUrl": "...", "url": "..."}], "stats": [{"name": "اسم الشركة", "marketShare": "نسبة الحصة", "topPhone": "الهاتف الأكثر مبيعاً لديهم", "details": "تفاصيل النمو"}]}`;
       }
 
       const result = await callGroqAPI(prompt);
@@ -122,7 +123,7 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await callGroqAPI(`قارن تقنياً وشاملاً جداً بين ${phone1} و ${phone2} بكل التفاصيل والمميزات دون تقييد بعدد الأسطر. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`);
+      const result = await callGroqAPI(`قارن تقنياً وشاملاً جداً بين ${phone1} و ${phone2} بكل التفاصيل والمميزات الرسمية دون تقييد بعدد الأسطر. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`);
       setComparisonResult(result);
     } catch (err: any) { setError("فشل تحليل المقارنة."); } finally { setLoading(false); }
   };
@@ -182,36 +183,37 @@ const App: React.FC = () => {
           {activeTab === 'info' && (
             <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
-                <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4">
-                  <MessageCircle className="w-6 h-6" />
-                  <h2 className="font-black text-base uppercase tracking-tight">بوت الطلبات على التيليكرام</h2>
+                <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4 overflow-hidden">
+                  <MessageCircle className="w-6 h-6 shrink-0" />
+                  {/* العنوان في سطر واحد مهما كان حجم الشاشة */}
+                  <h2 className="font-black text-sm uppercase tracking-tight whitespace-nowrap">بوت الطلبات على التيليكرام</h2>
                 </div>
                 
                 <div className="space-y-5">
                   <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95">
                     <Send className="w-4 h-4" />
-                    <span className="text-xs">الدخول لبوت الطلبات</span>
+                    <span className="text-[10px]">الدخول لبوت الطلبات</span>
                   </a>
 
                   <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                    <p className="text-slate-200 text-[10px] font-bold leading-relaxed">✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
-                    <p className="text-slate-200 text-[10px] font-bold leading-relaxed">✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
+                    <p className="text-slate-200 text-[9px] font-bold leading-relaxed">✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
+                    <p className="text-slate-200 text-[9px] font-bold leading-relaxed">✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
                   </div>
 
                   <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                    <p className="text-emerald-400 text-[9px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+                    <p className="text-emerald-400 text-[8px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
                   </div>
 
                   <div className="space-y-3 pt-3 border-t border-slate-700/50">
-                    <h3 className="text-sky-400 font-black text-[10px] uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
+                    <h3 className="text-sky-400 font-black text-[9px] uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
                     <ul className="space-y-2">
                       {[
                         "١. ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.",
-                        "٢. اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).",
-                        "٣. استخدم أمر البحث بكتابة كلمة \"بحث\" متبوع باسم التطبيق (مثلاً: بحث ياسين).",
+                        "٢. اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط.",
+                        "٣. استخدم أمر البحث بكتابة كلمة \"بحث\" متبوع باسم التطبيق.",
                         "٤. للاعلان في القناة تواصل من خلال البوت"
                       ].map((item, i) => (
-                        <li key={i} className="text-slate-400 text-[9px] font-bold leading-relaxed pr-2 border-r-2 border-slate-700">{item}</li>
+                        <li key={i} className="text-slate-400 text-[8px] font-bold leading-relaxed pr-2 border-r-2 border-slate-700">{item}</li>
                       ))}
                     </ul>
                   </div>
@@ -220,7 +222,7 @@ const App: React.FC = () => {
                     <p className="text-red-400 text-[8px] font-black text-center leading-relaxed">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
                   </div>
 
-                  <p className="text-slate-500 text-center font-black text-[9px] pt-4 opacity-70">في النهاية دمتم برعاية الله</p>
+                  <p className="text-slate-500 text-center font-black text-[8px] pt-4 opacity-70">في النهاية دمتم برعاية الله</p>
                 </div>
               </div>
             </div>
@@ -232,8 +234,8 @@ const App: React.FC = () => {
                 <div className="grid gap-3">
                   {[
                     { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية (تجريبي)' },
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'أدوات الذكاء الاصطناعي', desc: 'جديد وتحديثات الأدوات' },
-                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'قسم الهواتف الذكية', desc: 'مواصفات كاملة وروابط رسمية' },
+                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'أخبار منصات الذكاء الاصطناعي', desc: 'GPT, Gemini, Claude & More' },
+                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'قسم الهواتف الذكية', desc: 'مواصفات وإحصائيات محدثة' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
                   ].map((tool) => (
                     <button key={tool.id} onClick={() => tool.id === 'comparison' ? setActiveToolView('comparison') : fetchToolData(tool.id as ToolView)} className="group flex items-center p-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-md active:scale-95">
@@ -257,7 +259,7 @@ const App: React.FC = () => {
                   </div>
 
                   {loading ? (
-                    <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري جلب آخر الأخبار...</p></div>
+                    <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري جلب آخر البيانات...</p></div>
                   ) : error ? (
                     <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6"><AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" /><p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p></div>
                   ) : activeToolView === 'jobs' ? (
@@ -291,7 +293,7 @@ const App: React.FC = () => {
                               <button onClick={() => shareContent(n, 'tg')} className="p-2 bg-slate-700/50 text-sky-400 rounded-lg"><Send className="w-3.5 h-3.5" /></button>
                               <button onClick={() => shareContent(n, 'copy')} className="p-2 bg-slate-700/50 text-slate-200 rounded-lg"><Copy className="w-3.5 h-3.5" /></button>
                             </div>
-                            <a href={n.url} target="_blank" className="text-[9px] text-indigo-400 font-black px-4 py-2 border border-indigo-500/30 rounded-lg">رابط الأداة</a>
+                            <a href={n.url} target="_blank" className="text-[9px] text-indigo-400 font-black px-4 py-2 border border-indigo-500/30 rounded-lg">رابط المنصة</a>
                           </div>
                         </div>
                       ))}
@@ -325,7 +327,7 @@ const App: React.FC = () => {
                                   <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button>
                                   <button onClick={() => shareContent(phone, 'copy')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200"><Copy className="w-3.5 h-3.5" /></button>
                                 </div>
-                                <a href={phone.url} target="_blank" className="text-[9px] text-sky-400 font-black px-4 py-2 border border-sky-500/30 rounded-lg flex items-center gap-2">رابط الشركة الرسمي <ExternalLink className="w-3 h-3" /></a>
+                                <a href={phone.url} target="_blank" className="text-[9px] text-sky-400 font-black px-4 py-2 border border-sky-500/30 rounded-lg flex items-center gap-2">الموقع الرسمي <ExternalLink className="w-3 h-3" /></a>
                               </div>
                             </div>
                          </div>
@@ -334,7 +336,7 @@ const App: React.FC = () => {
                        <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl">
                           <div className="flex items-center gap-2 text-emerald-400 mb-4 border-b border-slate-700/50 pb-3">
                             <TrendingUp className="w-5 h-5" />
-                            <h3 className="text-[12px] font-black uppercase">إحصائيات المبيعات 2024</h3>
+                            <h3 className="text-[12px] font-black uppercase tracking-tight">إحصائيات المبيعات والأكثر طلباً</h3>
                           </div>
                           <div className="space-y-4">
                              {salesStats.map((stat, i) => (
@@ -343,7 +345,11 @@ const App: React.FC = () => {
                                     <span className="text-[11px] font-black text-slate-100">{stat.name}</span>
                                     <span className="text-[11px] font-black text-emerald-400">{stat.marketShare}</span>
                                   </div>
-                                  <p className="text-[9px] text-slate-500 font-bold leading-relaxed">{stat.details}</p>
+                                  <div className="flex justify-between items-center bg-slate-900/40 px-3 py-1.5 rounded-lg mt-1 border border-slate-700/30">
+                                     <span className="text-[8px] text-slate-500 font-bold">الأكثر مبيعاً لديهم:</span>
+                                     <span className="text-[9px] text-sky-400 font-black">{stat.topPhone}</span>
+                                  </div>
+                                  <p className="text-[9px] text-slate-500 font-bold leading-relaxed mt-1">{stat.details}</p>
                                </div>
                              ))}
                           </div>

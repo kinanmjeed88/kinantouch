@@ -16,7 +16,7 @@ export interface SocialData {
 
 export interface AINewsItem {
   title: string;
-  description: string; // يجب أن يكون 5 أسطر
+  description: string;
   url: string;
 }
 
@@ -24,7 +24,7 @@ export interface PhoneNewsItem {
   title: string;
   manufacturer: string;
   launchYear: string;
-  specsPoints: string[]; // قائمة نقاط مرتبة
+  specsPoints: string[];
   imageUrl: string;
   url: string;
 }
@@ -32,6 +32,7 @@ export interface PhoneNewsItem {
 export interface CompanySalesStat {
   name: string;
   marketShare: string;
+  topPhone: string; // الهاتف الأكثر مبيعاً لهذه الشركة
   details: string;
 }
 
@@ -39,7 +40,7 @@ export interface JobItem {
   title: string;
   ministry: string;
   date: string;
-  description: string; // لا يتجاوز 5 أسطر
+  description: string;
   url: string;
 }
 
