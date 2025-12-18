@@ -23,55 +23,49 @@ export interface AINewsItem {
   title: string;
   description: string[];
   official_usage_link: string;
-  news_date?: string;
-}
-
-export interface AIFallbackHighlight {
-  tool_name: string;
-  latest_version: string;
-  title: string;
-  display_rule: string;
 }
 
 export interface AINewsResponse {
   generated_at: string;
   expires_in_hours: number;
   items: AINewsItem[];
-  fallback_highlight?: AIFallbackHighlight;
+  fallback_highlight?: {
+    tool_name: string;
+    latest_version: string;
+    title: string;
+    display_rule: string;
+  };
 }
 
 export interface PhoneNewsItem {
-  title: string;
-  manufacturer: string;
-  launchYear: string;
-  specsPoints: string[];
-  imageUrl: string;
-  url: string;
-}
-
-export interface CompanySalesStat {
-  name: string;
-  marketShare: string;
-  topPhone: string;
-  details: string;
+  phone_name: string;
+  brand: string;
+  release_date: string;
+  specifications: {
+    display: string;
+    processor: string;
+    ram: string;
+    storage: string;
+    cameras: string;
+    battery: string;
+    os: string;
+    features: string;
+  };
+  price_usd: string;
+  official_link: string;
+  iraqi_price_source: string;
+  copy_payload: string;
 }
 
 export interface JobItem {
   title: string;
-  ministry: string;
-  date: string;
-  description: string;
-  url: string;
-}
-
-export interface PhoneSpec {
-  feature: string;
-  phone1: string;
-  phone2: string;
+  content: string[];
+  official_link: string;
+  copy_payload: string;
 }
 
 export interface PhoneComparisonResult {
-  specs: PhoneSpec[];
+  specs: { feature: string; phone1: string; phone2: string }[];
   verdict: string;
   betterPhone: string;
 }

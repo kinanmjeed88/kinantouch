@@ -8,17 +8,18 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  MessageCircle, Facebook, Instagram, BadgeCheck, Clock, Zap, Star
+  MessageCircle, Facebook, Instagram, BadgeCheck, Clock, Zap, Star,
+  ShieldCheck, DollarSign
 } from 'lucide-react';
-import { AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
+import { AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v18',
+  JOBS: 'techtouch_jobs_v25',
   AI_NEWS: 'techtouch_ai_v21',
-  PHONE_NEWS: 'techtouch_phones_v18'
+  PHONE_NEWS: 'techtouch_phones_v25'
 };
 
 const App: React.FC = () => {
@@ -28,7 +29,6 @@ const App: React.FC = () => {
   
   const [aiNewsData, setAiNewsData] = useState<AINewsResponse | null>(null);
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
-  const [salesStats, setSalesStats] = useState<CompanySalesStat[]>([]);
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +45,7 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
+      return (Date.now() - timestamp < 4 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
 
@@ -85,62 +85,47 @@ const App: React.FC = () => {
     const cached = !force ? getCachedData(cacheKey) : null;
 
     if (cached) {
-      if (type === 'jobs') setJobs(cached);
+      if (type === 'jobs') setJobs(cached.iraq_jobs);
       else if (type === 'ai-news') setAiNewsData(cached);
-      else if (type === 'phone-news') { setPhoneNews(cached.phones); setSalesStats(cached.stats); }
+      else if (type === 'phone-news') setPhoneNews(cached.smartphones);
       setLoading(false);
       return;
     }
 
     try {
       let prompt = "";
-      let system = "أنت خبير تقني عراقي محترف. الرد JSON فقط.";
+      let system = "";
 
       if (type === 'jobs') {
-        prompt = `قائمة بـ 8 وظائف عراقية حقيقية وتاريخ إعلانها من مواقع رسمية لآخر أسبوع من تاريخ ${formattedDate}. العنوان سطر واحد. المحتوى 5-6 أسطر دقيقة. الرابط مباشر. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
+        system = `أنت محرر إخباري محترف لموقع Techtouch. مهمتك توليد بيانات وظائف العراق لآخر أسبوع من ${formattedDate}.
+القواعد: المصادر مسموحة حصراً: الوزارات، مجلس الخدمة الاتحادي، بوابة أور. 
+العنوان: الجهة + نوع التعيين. 
+المحتوى: الجهة، الوظيفة، الفئات، الشروط، مدة التقديم.
+صيغة JSON: {"iraq_jobs": [{"title": "...", "content": ["..."], "official_link": "...", "copy_payload": "..."}]}`;
+        prompt = "استخرج أحدث 8 وظائف حكومية عراقية موثقة بروابطها الرسمية.";
       } else if (type === 'ai-news') {
-        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني احترافي لموقع Techtouch.
-مهمتك توليد بيانات أدوات الذكاء الاصطناعي المعتمدة فقط لآخر أسبوع من ${formattedDate}.
-القواعد الصارمة:
-1. الهوية التقنية: يجب ذكر اسم الأداة ورقم إصدار معتمد رسمياً.
-2. العنوان الإلزامي: العنوان يجب أن يكون حصراً "اسم الأداة + رقم الإصدار" (مثال: ChatGPT 5.2). يمنع أي كلمات إضافية.
-3. رابط الاستخدام: الرابط يجب أن يكون رابط المنتج/التطبيق الرسمي المباشر للاستخدام وليس رابط خبر أو مدونة.
-4. المحتوى: 4 أسطر تصف التغييرات التقنية والأثر العملي.
-5. Fallback: إذا قل العدد عن 10، ولد Fallback Highlight واحد فقط لآخر إصدار مستقر لأداة كبرى.
-صيغة الإخراج JSON حصراً:
-{
-  "generated_at": "${new Date().toISOString()}",
-  "expires_in_hours": 6,
-  "items": [
-    {
-      "id": "uuid",
-      "tool_name": "...",
-      "company": "الجهة المطورة",
-      "category": "llm|image|video|audio|platform|other",
-      "version": "رقم الإصدار",
-      "title": "اسم الأداة + رقم الإصدار",
-      "description": ["سطر 1", "سطر 2", "سطر 3", "سطر 4"],
-      "official_usage_link": "رابط الاستخدام الرسمي المباشر"
-    }
-  ],
-  "fallback_highlight": {
-    "tool_name": "...",
-    "latest_version": "...",
-    "title": "اسم الأداة + رقم الإصدار",
-    "display_rule": "same_layout_bigger_title_only"
-  }
-}`;
-        prompt = `استخرج الآن أحدث 10 أدوات/تحديثات ذكاء اصطناعي تستوفي جميع الشروط الصارمة أعلاه.`;
+        system = `أنت محرر تقني لـ Techtouch. ولد بيانات أدوات AI المعتمدة فقط لآخر أسبوع من ${formattedDate}. 
+العنوان: اسم الأداة + الإصدار حصراً. رابط الاستخدام المباشر فقط.
+JSON: {"items": [{"id": "...", "tool_name": "...", "version": "...", "title": "...", "description": ["..."], "official_usage_link": "..."}]}`;
+        prompt = "استخرج أحدث 10 أدوات AI رسمية.";
       } else if (type === 'phone-news') {
-        prompt = `أحدث 8 هواتف ذكية (أخبار آخر أسبوع من ${formattedDate}). تفاصيل فنية شاملة. إحصائيات مبيعات 2025: حصة السوق، الشركة الأكثر مبيعاً، والهاتف الأكثر مبيعاً لكل شركة وإحصائياته. التنسيق: {"phones": [{"title": "...", "manufacturer": "...", "launchYear": "...", "specsPoints": ["...", "..."], "imageUrl": "...", "url": "..."}], "stats": [{"name": "...", "marketShare": "...", "topPhone": "...", "details": "..."}]}`;
+        system = `أنت محرر تقني لموقع Techtouch. ولد بيانات هواتف لآخر شهر من تاريخ ${formattedDate}.
+القواعد: العنوان: اسم الهاتف فقط. المواصفات كاملة (شاشة، معالج، رام، تخزين، كاميرات، بطارية، نظام، ميزات).
+السعر: بالدولار من مصدر عراقي رسمي.
+JSON: {"smartphones": [{
+  "phone_name": "...", "brand": "...", "release_date": "...",
+  "specifications": {"display": "...", "processor": "...", "ram": "...", "storage": "...", "cameras": "...", "battery": "...", "os": "...", "features": "..."},
+  "price_usd": "...", "official_link": "...", "iraqi_price_source": "...", "copy_payload": "..."
+}]}`;
+        prompt = "استخرج أحدث 8 هواتف ذكية بمواصفاتها الكاملة وأسعارها في السوق العراقي.";
       }
 
       const result = await callGroqAPI(prompt, system);
       saveToCache(cacheKey, result);
       
-      if (type === 'jobs') setJobs(result.data || result);
+      if (type === 'jobs') setJobs(result.iraq_jobs || []);
       else if (type === 'ai-news') setAiNewsData(result);
-      else if (type === 'phone-news') { setPhoneNews(result.phones); setSalesStats(result.stats); }
+      else if (type === 'phone-news') setPhoneNews(result.smartphones || []);
 
     } catch (err: any) {
       setError(err.message || "فشل في جلب البيانات.");
@@ -162,27 +147,25 @@ const App: React.FC = () => {
   };
 
   const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
-    const title = item.title || item.tool_name;
-    const desc = Array.isArray(item.description) ? item.description.join('\n') : (item.description || (item.specsPoints ? item.specsPoints.join('\n') : ''));
-    const url = item.official_usage_link || item.url;
-    const fullText = `🔹 ${title}\n\n${desc}\n\n🔗 الرابط الرسمي: ${url}\n\n#Techtouch`;
+    const title = item.title || item.phone_name || item.tool_name;
+    const url = item.official_usage_link || item.official_link || item.url;
+    const payload = item.copy_payload || `${title}\n\n🔗 الرابط: ${url}`;
     
     if (platform === 'copy') {
-      navigator.clipboard.writeText(fullText);
+      navigator.clipboard.writeText(payload);
       alert('تم نسخ المحتوى بالكامل!');
     } else if (platform === 'tg') {
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(fullText)}`, '_blank');
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(payload)}`, '_blank');
     } else if (platform === 'fb') {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     } else if (platform === 'insta') {
-      navigator.clipboard.writeText(fullText);
-      alert('تم نسخ المحتوى!');
+      navigator.clipboard.writeText(payload);
+      alert('تم نسخ المحتوى لمشاركته على إنستغرام!');
     }
   };
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right" dir="rtl">
-      {/* Dynamic Background Effects */}
       <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/4"></div>
@@ -267,7 +250,7 @@ const App: React.FC = () => {
                   {[
                     { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية رسمية' },
                     { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أدوات ذكاء اصطناعي موثقة بإصدارات رسمية' },
-                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات وإحصائيات 2025' },
+                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات وإحصائيات عراقية دقيقة' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
                   ].map((tool) => (
                     <button key={tool.id} onClick={() => tool.id === 'comparison' ? setActiveToolView('comparison') : fetchToolData(tool.id as ToolView)} className="group flex items-center p-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-md active:scale-95">
@@ -275,7 +258,6 @@ const App: React.FC = () => {
                       <div className="flex-grow text-right">
                         <div className="flex items-center gap-2">
                            <h3 className="text-[10px] font-black text-slate-100 group-hover:text-sky-400 transition-colors uppercase">{tool.title}</h3>
-                           {tool.id === 'jobs' && <span className="text-[7px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-black">تجريبي</span>}
                         </div>
                         <p className="text-[8px] text-slate-500 mt-0.5 font-bold">{tool.desc}</p>
                       </div>
@@ -299,65 +281,49 @@ const App: React.FC = () => {
                       {jobs.map((job, i) => (
                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-lg border-r-4 border-r-emerald-500/50">
                           <h3 className="text-[11px] font-black text-emerald-400 mb-2 border-b border-slate-700 pb-2">{job.title}</h3>
-                          <p className="text-[10px] text-slate-300 leading-relaxed mb-4 font-bold whitespace-pre-line h-[120px] overflow-y-auto">{job.description}</p>
+                          <div className="text-[10px] text-slate-300 mb-4 font-bold space-y-1.5 h-[120px] overflow-y-auto pr-1">
+                            {job.content.map((line, idx) => (
+                              <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80">
+                                <span className="w-1 h-1 bg-emerald-500/40 rounded-full shrink-0 mt-1.5"></span>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
-                            <div className="flex gap-2">
-                              <button onClick={() => shareContent(job, 'fb')} className="p-2 bg-slate-700/50 text-blue-400 rounded-lg"><Facebook className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => shareContent(job, 'insta')} className="p-2 bg-slate-700/50 text-pink-400 rounded-lg"><Instagram className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => shareContent(job, 'tg')} className="p-2 bg-slate-700/50 text-sky-400 rounded-lg"><Send className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => shareContent(job, 'copy')} className="p-2 bg-slate-700/50 text-slate-200 rounded-lg"><Copy className="w-3.5 h-3.5" /></button>
+                            <div className="flex gap-1.5">
+                              <button onClick={() => shareContent(job, 'fb')} className="p-1.5 bg-slate-700/40 text-blue-400 rounded-lg"><Facebook className="w-3 h-3" /></button>
+                              <button onClick={() => shareContent(job, 'insta')} className="p-1.5 bg-slate-700/40 text-pink-400 rounded-lg"><Instagram className="w-3 h-3" /></button>
+                              <button onClick={() => shareContent(job, 'tg')} className="p-1.5 bg-slate-700/40 text-sky-400 rounded-lg"><Send className="w-3 h-3" /></button>
+                              <button onClick={() => shareContent(job, 'copy')} className="p-1.5 bg-slate-700/40 text-slate-200 rounded-lg"><Copy className="w-3 h-3" /></button>
                             </div>
-                            <a href={job.url} target="_blank" className="text-[9px] font-black px-4 py-2 bg-emerald-500 text-white rounded-lg flex items-center gap-1.5">رابط التقديم <ExternalLink className="w-3 h-3" /></a>
+                            <a href={job.official_link} target="_blank" className="text-[9px] font-black px-4 py-2 bg-emerald-500 text-white rounded-lg flex items-center gap-1.5">التقديم الحكومي <ExternalLink className="w-3 h-3" /></a>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : activeToolView === 'ai-news' ? (
                     <div className="space-y-4">
-                      {/* Fallback Highlight Render */}
-                      {aiNewsData?.fallback_highlight && (
-                        <div className="bg-gradient-to-br from-indigo-500/10 to-sky-500/10 border-2 border-indigo-500/30 p-5 rounded-3xl shadow-xl relative overflow-hidden group">
-                           <div className="absolute -top-4 -left-4 w-24 h-24 bg-indigo-500/20 blur-2xl rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                           <div className="flex items-center gap-3 relative z-10">
-                              <div className="p-3 bg-indigo-500/20 rounded-2xl text-indigo-400">
-                                <Star className="w-6 h-6 fill-indigo-400/20" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">الإصدار الأحدث المعتمد</div>
-                                <h2 className="text-xl font-black text-white tracking-tight leading-tight group-hover:text-indigo-300 transition-colors">
-                                  {aiNewsData.fallback_highlight.title}
-                                </h2>
-                              </div>
-                           </div>
-                        </div>
-                      )}
-
                       {aiNewsData?.items.map((n, i) => (
-                        <div key={n.id || i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden group hover:bg-slate-800/80 transition-all">
-                          {/* Version Badge */}
+                        <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden group">
                           <div className="absolute top-0 left-0 bg-indigo-500/20 text-indigo-400 text-[6px] font-black px-2 py-1 rounded-br-lg uppercase tracking-tighter flex items-center gap-1">
                             <Zap className="w-2 h-2" />
                             {n.version}
                           </div>
-
                           <div className="mt-2 flex justify-between items-start mb-3 border-b border-slate-700 pb-2">
                             <div className="flex flex-col gap-1.5">
                               <div className="flex items-center gap-2">
-                                <span className="text-[7px] bg-slate-700 text-sky-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name}</span>
-                                <span className="text-[6px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded-full uppercase">{n.company}</span>
+                                <span className="text-[7px] bg-slate-700 text-sky-400 px-2 py-0.5 rounded-full font-black uppercase">{n.tool_name}</span>
                               </div>
-                              <h3 className="text-sm font-black text-slate-100 leading-tight pr-1 border-r-2 border-indigo-500/50 group-hover:text-sky-400 transition-colors">{n.title}</h3>
+                              <h3 className="text-sm font-black text-slate-100 group-hover:text-sky-400 transition-colors">{n.title}</h3>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                              <div className="flex items-center gap-0.5 text-[6px] text-emerald-500 font-black uppercase">
-                                <BadgeCheck className="w-2.5 h-2.5" />
-                                <span>موثق تقنياً</span>
-                              </div>
+                            <div className="flex items-center gap-0.5 text-[6px] text-emerald-500 font-black uppercase">
+                              <BadgeCheck className="w-2.5 h-2.5" />
+                              <span>موثق تقنياً</span>
                             </div>
                           </div>
                           <div className="text-[9px] text-slate-300 mb-4 font-bold space-y-1.5 h-[95px] overflow-y-auto pr-1">
                             {n.description.map((line, idx) => (
-                              <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80 group-hover:opacity-100">
+                              <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80">
                                 <span className="w-1 h-1 bg-sky-500/40 rounded-full shrink-0 mt-1.5"></span>
                                 {line}
                               </p>
@@ -365,68 +331,72 @@ const App: React.FC = () => {
                           </div>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
                             <div className="flex gap-1.5">
-                              <button onClick={() => shareContent(n, 'fb')} className="p-1.5 bg-slate-700/40 text-blue-400 rounded-lg hover:bg-slate-700 transition-colors"><Facebook className="w-3 h-3" /></button>
-                              <button onClick={() => shareContent(n, 'insta')} className="p-1.5 bg-slate-700/40 text-pink-400 rounded-lg hover:bg-slate-700 transition-colors"><Instagram className="w-3 h-3" /></button>
-                              <button onClick={() => shareContent(n, 'tg')} className="p-1.5 bg-slate-700/40 text-sky-400 rounded-lg hover:bg-slate-700 transition-colors"><Send className="w-3 h-3" /></button>
-                              <button onClick={() => shareContent(n, 'copy')} className="p-1.5 bg-slate-700/40 text-slate-200 rounded-lg hover:bg-slate-700 transition-colors"><Copy className="w-3 h-3" /></button>
+                              <button onClick={() => shareContent(n, 'fb')} className="p-1.5 bg-slate-700/40 text-blue-400 rounded-lg"><Facebook className="w-3 h-3" /></button>
+                              <button onClick={() => shareContent(n, 'insta')} className="p-1.5 bg-slate-700/40 text-pink-400 rounded-lg"><Instagram className="w-3 h-3" /></button>
+                              <button onClick={() => shareContent(n, 'tg')} className="p-1.5 bg-slate-700/40 text-sky-400 rounded-lg"><Send className="w-3 h-3" /></button>
+                              <button onClick={() => shareContent(n, 'copy')} className="p-1.5 bg-slate-700/40 text-slate-200 rounded-lg"><Copy className="w-3 h-3" /></button>
                             </div>
-                            <a href={n.official_usage_link} target="_blank" className="text-[8px] text-indigo-400 font-black px-3 py-1.5 border border-indigo-500/30 rounded-lg bg-indigo-500/5 flex items-center gap-1.5 hover:bg-indigo-500/10">استخدم الأداة الآن <ExternalLink className="w-2.5 h-2.5" /></a>
+                            <a href={n.official_usage_link} target="_blank" className="text-[8px] text-indigo-400 font-black px-3 py-1.5 border border-indigo-500/30 rounded-lg bg-indigo-500/5 flex items-center gap-1.5 hover:bg-indigo-500/10">استخدم الأداة <ExternalLink className="w-2.5 h-2.5" /></a>
                           </div>
                         </div>
                       ))}
-                      {(!aiNewsData || aiNewsData.items.length === 0) && !loading && (
-                        <div className="text-center py-10 opacity-50 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
-                          <Clock className="w-10 h-10 mx-auto mb-2 text-slate-600" />
-                          <p className="text-[10px] font-black">لا توجد أدوات تقنية موثقة حالياً، ترقبوا التحديث القادم.</p>
-                        </div>
-                      )}
                     </div>
                   ) : activeToolView === 'phone-news' ? (
                     <div className="space-y-6">
                        {phoneNews.map((phone, i) => (
-                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl shadow-md border-r-4 border-r-sky-500/50">
-                            <div className="flex items-center justify-between mb-3 border-b border-slate-700 pb-3">
-                              <h3 className="text-[12px] font-black text-sky-400">{phone.title}</h3>
-                              <button onClick={() => { navigator.clipboard.writeText(phone.title); alert('تم نسخ اسم الهاتف'); }} className="p-2 bg-sky-500/10 text-sky-400 rounded-lg"><Copy className="w-3.5 h-3.5" /></button>
-                            </div>
-                            <ul className="space-y-2 mb-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/30 h-[150px] overflow-y-auto">
-                              {phone.specsPoints.map((point, idx) => (
-                                <li key={idx} className="text-[10px] text-slate-300 font-bold flex items-start gap-2">
-                                  <div className="w-1.5 h-1.5 bg-sky-400 rounded-full shrink-0 mt-1.5"></div>
-                                  <span>{point}</span>
-                                </li>
-                              ))}
-                            </ul>
-                            <div className="flex justify-between items-center pt-4 border-t border-slate-700/50">
-                                <div className="flex gap-2">
-                                  <button onClick={() => shareContent(phone, 'fb')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-blue-400"><Facebook className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button>
+                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-3xl shadow-md border-r-4 border-r-sky-500/50">
+                            <div className="flex items-center justify-between mb-4 border-b border-slate-700/50 pb-3">
+                              <div className="flex flex-col">
+                                <h3 className="text-[13px] font-black text-sky-400">{phone.phone_name}</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[8px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded-full font-black uppercase">{phone.brand}</span>
+                                  <span className="text-[8px] text-slate-500 font-bold">{phone.release_date}</span>
                                 </div>
-                                <a href={phone.url} target="_blank" className="text-[9px] text-sky-400 font-black px-4 py-2 border border-sky-500/30 rounded-lg flex items-center gap-2">الموقع الرسمي <ExternalLink className="w-3 h-3" /></a>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-1 text-emerald-400 font-black text-[11px]">
+                                  <DollarSign className="w-3.5 h-3.5" />
+                                  <span>{phone.price_usd}</span>
+                                </div>
+                                <a href={phone.iraqi_price_source} target="_blank" className="text-[6px] text-slate-500 underline flex items-center gap-1">مصدر السعر العراقي <ExternalLink className="w-2 h-2" /></a>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 mb-5">
+                               {[
+                                 { icon: Smartphone, label: 'الشاشة', value: phone.specifications.display },
+                                 { icon: Cpu, label: 'المعالج', value: phone.specifications.processor },
+                                 { icon: Zap, label: 'رام', value: phone.specifications.ram },
+                                 { icon: Briefcase, label: 'تخزين', value: phone.specifications.storage },
+                                 { icon: ShieldCheck, label: 'البطارية', value: phone.specifications.battery },
+                                 { icon: BadgeCheck, label: 'النظام', value: phone.specifications.os }
+                               ].map((spec, idx) => (
+                                 <div key={idx} className="bg-slate-900/40 p-2.5 rounded-xl border border-slate-700/30">
+                                   <div className="flex items-center gap-1.5 text-sky-400/70 mb-1">
+                                      <spec.icon className="w-3 h-3" />
+                                      <span className="text-[7px] font-black uppercase">{spec.label}</span>
+                                   </div>
+                                   <div className="text-[8px] text-slate-300 font-bold leading-tight">{spec.value}</div>
+                                 </div>
+                               ))}
+                            </div>
+
+                            <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-700/30 mb-5">
+                               <div className="text-sky-400/70 text-[7px] font-black uppercase mb-1">الكاميرات</div>
+                               <div className="text-[8px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras}</div>
+                            </div>
+
+                            <div className="flex justify-between items-center pt-4 border-t border-slate-700/50">
+                                <div className="flex gap-1.5">
+                                  <button onClick={() => shareContent(phone, 'fb')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-blue-400"><Facebook className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => shareContent(phone, 'insta')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-pink-400"><Instagram className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => shareContent(phone, 'tg')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => shareContent(phone, 'copy')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200"><Copy className="w-3.5 h-3.5" /></button>
+                                </div>
+                                <a href={phone.official_link} target="_blank" className="text-[9px] text-sky-400 font-black px-4 py-2 border border-sky-500/30 rounded-xl flex items-center gap-2 hover:bg-sky-500/5">المواصفات الرسمية <ExternalLink className="w-3 h-3" /></a>
                             </div>
                          </div>
                        ))}
-                       <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl">
-                          <div className="flex items-center gap-2 text-emerald-400 mb-4 border-b border-slate-700/50 pb-3">
-                            <TrendingUp className="w-5 h-5" />
-                            <h3 className="text-[12px] font-black uppercase tracking-tight">إحصائيات المبيعات (تحديث 2025)</h3>
-                          </div>
-                          <div className="space-y-4">
-                             {salesStats.map((stat, i) => (
-                               <div key={i} className="flex flex-col gap-1 border-b border-slate-700/30 pb-3 last:border-0">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-[11px] font-black text-slate-100">{stat.name}</span>
-                                    <span className="text-[11px] font-black text-emerald-400">{stat.marketShare}</span>
-                                  </div>
-                                  <div className="flex justify-between items-center bg-slate-900/40 px-3 py-1.5 rounded-lg mt-1 border border-slate-700/30">
-                                     <span className="text-[8px] text-slate-500 font-bold">الأكثر طلباً:</span>
-                                     <span className="text-[9px] text-sky-400 font-black">{stat.topPhone}</span>
-                                  </div>
-                                  <p className="text-[9px] text-slate-500 font-bold leading-relaxed mt-1">{stat.details}</p>
-                               </div>
-                             ))}
-                          </div>
-                       </div>
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -440,7 +410,7 @@ const App: React.FC = () => {
                         <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
                           <div className="overflow-x-auto h-[300px]">
                             <table className="w-full text-right text-[10px]">
-                              <thead className="bg-slate-900/80 sticky top-0 z-20"><tr><th className="p-4 text-sky-400 border-b border-slate-700 font-black">المميزات التقنية</th><th className="p-4 border-b border-slate-700 font-black text-center">{phone1}</th><th className="p-4 border-b border-slate-700 font-black text-center">{phone2}</th></tr></thead>
+                              <thead className="bg-slate-900/80 sticky top-0 z-20"><tr><th className="p-4 text-sky-400 border-b border-slate-700 font-black">المميزات</th><th className="p-4 border-b border-slate-700 font-black text-center">{phone1}</th><th className="p-4 border-b border-slate-700 font-black text-center">{phone2}</th></tr></thead>
                               <tbody className="divide-y divide-slate-700/30">
                                 {comparisonResult.specs.map((s, i) => (
                                   <tr key={i} className="hover:bg-white/5 transition-colors">
