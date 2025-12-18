@@ -15,14 +15,30 @@ export interface SocialData {
 }
 
 export interface AINewsItem {
+  type: 'news';
   id: string;
   tool_name: string;
   category: 'llm' | 'image' | 'video' | 'audio' | 'platform' | 'other';
-  explicit_update: string; // اسم الإصدار أو الميزة التقنية المحددة
+  explicit_update: string;
   title: string;
-  content: string[]; // بالضبط 4 أسطر
-  news_date: string; // YYYY-MM-DD
+  content: string[];
+  news_date: string;
   official_link: string;
+}
+
+export interface AIFallbackHighlight {
+  type: 'fallback';
+  tool_name: string;
+  latest_version: string;
+  title: string;
+  display_rule: string;
+}
+
+export interface AINewsResponse {
+  generated_at: string;
+  expires_in_hours: number;
+  ai_news: AINewsItem[];
+  fallback_highlight?: AIFallbackHighlight;
 }
 
 export interface PhoneNewsItem {

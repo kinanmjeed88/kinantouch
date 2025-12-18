@@ -8,17 +8,17 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap
+  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap, Star
 } from 'lucide-react';
-import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
+import { AINewsItem, AIFallbackHighlight, AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v16',
-  AI_NEWS: 'techtouch_ai_v16',
-  PHONE_NEWS: 'techtouch_phones_v16'
+  JOBS: 'techtouch_jobs_v17',
+  AI_NEWS: 'techtouch_ai_v17',
+  PHONE_NEWS: 'techtouch_phones_v17'
 };
 
 const App: React.FC = () => {
@@ -26,7 +26,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [activeToolView, setActiveToolView] = useState<ToolView>('main');
   
-  const [aiNews, setAiNews] = useState<AINewsItem[]>([]);
+  const [aiNewsData, setAiNewsData] = useState<AINewsResponse | null>(null);
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
   const [salesStats, setSalesStats] = useState<CompanySalesStat[]>([]);
   const [jobs, setJobs] = useState<JobItem[]>([]);
@@ -45,7 +45,6 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // كاش صارم لمدة 6 ساعات كما هو مطلوب
       return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
@@ -87,7 +86,7 @@ const App: React.FC = () => {
 
     if (cached) {
       if (type === 'jobs') setJobs(cached);
-      else if (type === 'ai-news') setAiNews(cached);
+      else if (type === 'ai-news') setAiNewsData(cached);
       else if (type === 'phone-news') { setPhoneNews(cached.phones); setSalesStats(cached.stats); }
       setLoading(false);
       return;
@@ -100,39 +99,48 @@ const App: React.FC = () => {
       if (type === 'jobs') {
         prompt = `قائمة بـ 8 وظائف عراقية حقيقية وتاريخ إعلانها من مواقع رسمية لآخر أسبوع من تاريخ ${formattedDate}. العنوان سطر واحد. المحتوى 5-6 أسطر دقيقة. الرابط مباشر. التنسيق: {"data": [{"title": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'ai-news') {
-        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر أخبار تقني محترف لموقع Techtouch.
-مهمتك استخراج أخبار الذكاء الاصطناعي الحقيقية فقط من إعلانات رسمية مؤكدة لآخر أسبوع من ${formattedDate}.
-يجب أن يحتوي كل خبر على "explicit_update" (رقم إصدار، اسم ميزة رسمي، نموذج جديد). ارفض أي خبر عام.
-يجب أن تكون الروابط مخصصة للإعلان وليست Homepages.
-ولد 10 أخبار مرتبة من الأحدث للأقدم. إذا لم تجد 10 أخبار حقيقية، أخرج المتاح فقط أو قائمة فارغة.
-التنسيق JSON حصراً:
+        system = `أنت نظام ذكاء اصطناعي يعمل كمحرر أخبار تقني محترف لموقع Techtouch العربي.
+مهمتك جلب 10 أخبار حقيقية ومؤرخة للذكاء الاصطناعي (أحدث 10 أخبار خلال آخر أسبوع من ${formattedDate}) لجميع المنصات.
+القواعد:
+- الترتيب من الأحدث للأقدم.
+- إذا لم تجد 10 أخبار، أضف "fallback_highlight" واحد فقط يمثل أحدث إصدار مستقر لأداة معروفة.
+- الـ fallback يحتوي فقط على اسم الأداة ورقم الإصدار في العنوان.
+صيغة الإخراج JSON حصراً:
 {
   "generated_at": "${new Date().toISOString()}",
+  "expires_in_hours": 6,
   "ai_news": [
     {
+      "type": "news",
       "id": "uuid",
       "tool_name": "...",
       "category": "llm|image|video|audio|platform|other",
       "explicit_update": "اسم الإصدار أو الميزة التقنية المحددة",
       "title": "...",
-      "content": ["سطر 1 التقني", "سطر 2 الفرق التقني", "سطر 3 المستفيد", "سطر 4 الأثر"],
+      "content": ["سطر 1", "سطر 2", "سطر 3", "سطر 4"],
       "news_date": "YYYY-MM-DD",
-      "official_link": "رابط الإعلان الرسمي المخصص"
+      "official_link": "..."
     }
-  ]
+  ],
+  "fallback_highlight": {
+    "type": "fallback",
+    "tool_name": "اسم الأداة",
+    "latest_version": "رقم الإصدار الأحدث",
+    "title": "اسم الأداة + رقم الإصدار",
+    "display_rule": "same_font_size_bigger_title_only"
+  }
 }`;
-        prompt = `استخرج الآن أهم أخبار وتحديثات الذكاء الاصطناعي الحقيقية والمؤرخة خلال الأسبوع الأخير. رتبهم زمنياً.`;
+        prompt = `استخرج الآن أهم 10 أخبار تقنية للذكاء الاصطناعي موثقة وحقيقية. إذا كان العدد أقل من 10، ولد Fallback Highlight واحد لأداة كبرى.`;
       } else if (type === 'phone-news') {
         prompt = `أحدث 8 هواتف ذكية (أخبار آخر أسبوع من ${formattedDate}). تفاصيل فنية شاملة. إحصائيات مبيعات 2025: حصة السوق، الشركة الأكثر مبيعاً، والهاتف الأكثر مبيعاً لكل شركة وإحصائياته. التنسيق: {"phones": [{"title": "...", "manufacturer": "...", "launchYear": "...", "specsPoints": ["...", "..."], "imageUrl": "...", "url": "..."}], "stats": [{"name": "...", "marketShare": "...", "topPhone": "...", "details": "..."}]}`;
       }
 
       const result = await callGroqAPI(prompt, system);
-      const data = result.ai_news || result.data || result;
-      saveToCache(cacheKey, data);
+      saveToCache(cacheKey, result);
       
-      if (type === 'jobs') setJobs(data);
-      else if (type === 'ai-news') setAiNews(data);
-      else if (type === 'phone-news') { setPhoneNews(data.phones); setSalesStats(data.stats); }
+      if (type === 'jobs') setJobs(result.data || result);
+      else if (type === 'ai-news') setAiNewsData(result);
+      else if (type === 'phone-news') { setPhoneNews(result.phones); setSalesStats(result.stats); }
 
     } catch (err: any) {
       setError(err.message || "فشل في جلب البيانات.");
@@ -168,7 +176,7 @@ const App: React.FC = () => {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
     } else if (platform === 'insta') {
       navigator.clipboard.writeText(fullText);
-      alert('تم نسخ المحتوى! الصقه في Instagram.');
+      alert('تم نسخ المحتوى!');
     }
   };
 
@@ -212,41 +220,16 @@ const App: React.FC = () => {
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4 overflow-hidden">
                   <MessageCircle className="w-6 h-6 shrink-0" />
-                  {/* العنوان في سطر واحد مهما كانت الشاشة، مع تصغير الخط إذا لزم الأمر */}
                   <h2 className="font-black text-xs sm:text-sm uppercase tracking-tight whitespace-nowrap overflow-hidden text-ellipsis flex-1">بوت الطلبات على التيليكرام</h2>
                 </div>
-                
                 <div className="space-y-5">
                   <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95">
                     <Send className="w-4 h-4" />
                     <span className="text-[10px]">الدخول لبوت الطلبات</span>
                   </a>
-
                   <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50 text-[9px] text-slate-200 font-bold leading-relaxed">
                     <p>✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
                     <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
-                  </div>
-
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                    <p className="text-emerald-400 text-[8px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
-                  </div>
-
-                  <div className="space-y-3 pt-3 border-t border-slate-700/50">
-                    <h3 className="text-sky-400 font-black text-[9px] uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
-                    <ul className="space-y-2 text-[8px] text-slate-400 font-bold leading-relaxed">
-                      {[
-                        "١. ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.",
-                        "٢. اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط.",
-                        "٣. استخدم أمر البحث بكتابة كلمة \"بحث\" متبوع باسم التطبيق.",
-                        "٤. للاعلان في القناة تواصل من خلال البوت"
-                      ].map((item, i) => (
-                        <li key={i} className="pr-2 border-r-2 border-slate-700">{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-red-400 text-[8px] font-black text-center leading-relaxed">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
                   </div>
                 </div>
               </div>
@@ -259,7 +242,7 @@ const App: React.FC = () => {
                 <div className="grid gap-3">
                   {[
                     { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'آخر وظائف العراق', desc: 'تحديثات حكومية رسمية' },
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أخبار تقنية موثقة بمميزات محددة' },
+                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'محرر أخبار AI المحترف', desc: 'أحدث 10 أخبار موثقة ومؤرخة' },
                     { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات وإحصائيات 2025' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
                   ].map((tool) => (
@@ -280,7 +263,7 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between mb-4">
                     <button onClick={() => setActiveToolView('main')} className="flex items-center gap-1.5 text-slate-500 hover:text-sky-400 transition-colors"><ChevronLeft className="w-4 h-4 rotate-180" /><span className="text-[10px] font-bold">الأدوات</span></button>
-                    {!loading && activeToolView !== 'comparison' && <button onClick={() => fetchToolData(activeToolView, true)} className="text-[8px] text-sky-500 font-black border border-sky-500/20 px-3 py-1.5 rounded-xl">تحديث فوري</button>}
+                    {!loading && activeToolView !== 'comparison' && <button onClick={() => fetchToolData(activeToolView, true)} className="text-[8px] text-sky-500 font-black border border-sky-500/20 px-3 py-1.5 rounded-xl">تحديث الأخبار</button>}
                   </div>
 
                   {loading ? (
@@ -307,21 +290,37 @@ const App: React.FC = () => {
                     </div>
                   ) : activeToolView === 'ai-news' ? (
                     <div className="space-y-4">
-                      {aiNews.map((n, i) => (
-                        <div key={n.id || i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden">
-                          {/* Explicit Update Badge */}
+                      {/* Fallback Highlight Render */}
+                      {aiNewsData?.fallback_highlight && (
+                        <div className="bg-gradient-to-br from-indigo-500/10 to-sky-500/10 border-2 border-indigo-500/30 p-5 rounded-3xl shadow-xl relative overflow-hidden group">
+                           <div className="absolute -top-4 -left-4 w-24 h-24 bg-indigo-500/20 blur-2xl rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+                           <div className="flex items-center gap-3 relative z-10">
+                              <div className="p-3 bg-indigo-500/20 rounded-2xl text-indigo-400">
+                                <Star className="w-6 h-6 fill-indigo-400/20" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-1">الإصدار الأحدث المعتمد</div>
+                                <h2 className="text-xl font-black text-white tracking-tight leading-tight group-hover:text-indigo-300 transition-colors">
+                                  {aiNewsData.fallback_highlight.title}
+                                </h2>
+                              </div>
+                           </div>
+                        </div>
+                      )}
+
+                      {aiNewsData?.ai_news.map((n, i) => (
+                        <div key={n.id || i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden group hover:bg-slate-800/80 transition-all">
                           <div className="absolute top-0 left-0 bg-indigo-500/20 text-indigo-400 text-[6px] font-black px-2 py-1 rounded-br-lg uppercase tracking-tighter flex items-center gap-1">
                             <Zap className="w-2 h-2" />
                             {n.explicit_update}
                           </div>
-
                           <div className="mt-2 flex justify-between items-start mb-3 border-b border-slate-700 pb-2">
                             <div className="flex flex-col gap-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-[7px] bg-slate-700 text-sky-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name}</span>
                                 <span className="text-[6px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded-full uppercase">{n.category}</span>
                               </div>
-                              <h3 className="text-[10px] font-black text-slate-100 leading-tight pr-1 border-r-2 border-indigo-500/50">{n.title}</h3>
+                              <h3 className="text-[10px] font-black text-slate-100 leading-tight pr-1 border-r-2 border-indigo-500/50 group-hover:text-sky-400 transition-colors">{n.title}</h3>
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <div className="flex items-center gap-1 text-[8px] text-slate-500 font-black">
@@ -336,7 +335,7 @@ const App: React.FC = () => {
                           </div>
                           <div className="text-[9px] text-slate-300 mb-4 font-bold space-y-1.5 h-[95px] overflow-y-auto pr-1">
                             {n.content.map((line, idx) => (
-                              <p key={idx} className="flex items-start gap-2 leading-relaxed">
+                              <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80 group-hover:opacity-100">
                                 <span className="w-1 h-1 bg-sky-500/40 rounded-full shrink-0 mt-1.5"></span>
                                 {line}
                               </p>
@@ -353,10 +352,10 @@ const App: React.FC = () => {
                           </div>
                         </div>
                       ))}
-                      {aiNews.length === 0 && !loading && (
+                      {(!aiNewsData || aiNewsData.ai_news.length === 0) && !loading && (
                         <div className="text-center py-10 opacity-50 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
                           <Clock className="w-10 h-10 mx-auto mb-2 text-slate-600" />
-                          <p className="text-[10px] font-black">لا توجد أخبار تقنية موثقة في هذه الدورة.</p>
+                          <p className="text-[10px] font-black">لا توجد أخبار تقنية موثقة حالياً، ترقبوا التحديث القادم.</p>
                         </div>
                       )}
                     </div>
@@ -368,11 +367,6 @@ const App: React.FC = () => {
                               <h3 className="text-[12px] font-black text-sky-400">{phone.title}</h3>
                               <button onClick={() => { navigator.clipboard.writeText(phone.title); alert('تم نسخ اسم الهاتف'); }} className="p-2 bg-sky-500/10 text-sky-400 rounded-lg"><Copy className="w-3.5 h-3.5" /></button>
                             </div>
-                            <div className="flex gap-4 text-[9px] text-slate-500 font-black mb-4 uppercase tracking-tighter">
-                              <span>الشركة: {phone.manufacturer}</span>
-                              <span className="w-px h-3 bg-slate-700"></span>
-                              <span>سنة الصنع: {phone.launchYear}</span>
-                            </div>
                             <ul className="space-y-2 mb-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/30 h-[150px] overflow-y-auto">
                               {phone.specsPoints.map((point, idx) => (
                                 <li key={idx} className="text-[10px] text-slate-300 font-bold flex items-start gap-2">
@@ -381,20 +375,15 @@ const App: React.FC = () => {
                                 </li>
                               ))}
                             </ul>
-                            <div className="flex flex-col gap-3 pt-4 border-t border-slate-700/50">
-                              <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center pt-4 border-t border-slate-700/50">
                                 <div className="flex gap-2">
                                   <button onClick={() => shareContent(phone, 'fb')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-blue-400"><Facebook className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => shareContent(phone, 'insta')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-pink-400"><Instagram className="w-3.5 h-3.5" /></button>
                                   <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => shareContent(phone, 'copy')} className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200"><Copy className="w-3.5 h-3.5" /></button>
                                 </div>
                                 <a href={phone.url} target="_blank" className="text-[9px] text-sky-400 font-black px-4 py-2 border border-sky-500/30 rounded-lg flex items-center gap-2">الموقع الرسمي <ExternalLink className="w-3 h-3" /></a>
-                              </div>
                             </div>
                          </div>
                        ))}
-                       
                        <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl">
                           <div className="flex items-center gap-2 text-emerald-400 mb-4 border-b border-slate-700/50 pb-3">
                             <TrendingUp className="w-5 h-5" />
