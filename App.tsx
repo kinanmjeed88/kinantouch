@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
@@ -58,7 +57,7 @@ const App: React.FC = () => {
 
   const callGroqAPI = async (prompt: string, isJson: boolean = true) => {
     const apiKey = process.env.API_KEY;
-    if (!apiKey) throw new Error("مفتاح Groq API غير متوفر.");
+    if (!apiKey) throw new Error("مفتاح Groq API غير متوفر (VITE_GROQ_API_KEY).");
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -72,13 +71,13 @@ const App: React.FC = () => {
           {
             role: "system",
             content: isJson 
-              ? "You are a helpful assistant that strictly outputs JSON. Do not include any conversational text." 
-              : "You are a helpful tech expert."
+              ? "You are a helpful assistant that strictly outputs JSON. Return only the JSON object without any additional text or markdown code blocks." 
+              : "You are a helpful tech expert assistant."
           },
           { role: "user", content: prompt }
         ],
         response_format: isJson ? { type: "json_object" } : undefined,
-        temperature: 0.3
+        temperature: 0.1
       })
     });
 
@@ -99,14 +98,14 @@ const App: React.FC = () => {
     let prompt = "";
 
     if (type === 'phone-news') {
-      prompt = `List 10 of the ABSOLUTE LATEST smartphones released or leaked in late 2024/2025. Today is ${formattedDate}. Arabic. 
-      Return a JSON object with a key 'data' which is an array of objects: {title, manufacturer, launchDate, shortDesc, fullSpecs: string[], url}.`;
+      prompt = `List 10 of the ABSOLUTE LATEST smartphones released or leaked in late 2024/2025. Today is ${formattedDate}. Language: Arabic. 
+      Return a JSON object with a key 'data' which is an array: [{"title": "...", "manufacturer": "...", "launchDate": "...", "shortDesc": "...", "fullSpecs": ["spec1", "spec2"], "url": "..."}].`;
     } else if (type === 'jobs') {
-      prompt = `Search for REAL official Iraqi job vacancies for ${formattedDate}. Arabic. 
-      Return a JSON object with a key 'data' which is an array: {title, ministry, date, description, url, announcement_type: 'informational'|'actionable', is_link_verified: boolean}.`;
+      prompt = `Search for REAL official Iraqi job vacancies for ${formattedDate}. Focus on official government links. Language: Arabic. 
+      Return a JSON object with a key 'data' which is an array: [{"title": "...", "ministry": "...", "date": "...", "description": "...", "url": "...", "announcement_type": "actionable", "is_link_verified": true}].`;
     } else if (type === 'ai-news') {
-      prompt = `List 10 RECENT AI tools released as of ${formattedDate}. Arabic. 
-      Return a JSON object with a key 'data' which is an array: {title, description, url}.`;
+      prompt = `List 10 RECENT AI tools released as of ${formattedDate}. Language: Arabic. 
+      Return a JSON object with a key 'data' which is an array: [{"title": "...", "description": "...", "url": "..."}].`;
     }
 
     try {
@@ -225,6 +224,7 @@ const App: React.FC = () => {
             <div className="animate-fade-in">
               {activeToolView === 'main' ? (
                 <div className="grid gap-4">
+                  {/* زر الوظائف - تم تعديل المحاذاة لليسار بطلب المستخدم */}
                   <button onClick={() => fetchToolData('jobs')} className="group flex flex-row p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-xl items-center">
                     <div className="flex-shrink-0 w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors ml-4">
                       <Briefcase className="w-6 h-6 text-emerald-400" />
@@ -271,7 +271,7 @@ const App: React.FC = () => {
                   <button onClick={() => setActiveToolView('main')} className="flex items-center gap-2 text-slate-500 mb-4 hover:text-sky-400 transition-colors"><ChevronLeft className="w-5 h-5 rotate-180" /><span className="text-sm font-bold">رجوع للأدوات</span></button>
                   
                   {loading ? (
-                    <div className="py-20 flex flex-col items-center gap-4 animate-fade-in"><Loader2 className="w-12 h-12 text-sky-400 animate-spin" /><p className="text-[11px] text-slate-400 font-black tracking-widest text-center">جاري استرجاع البيانات عبر Groq API...</p></div>
+                    <div className="py-20 flex flex-col items-center gap-4 animate-fade-in"><Loader2 className="w-12 h-12 text-sky-400 animate-spin" /><p className="text-[11px] text-slate-400 font-black tracking-widest text-center">جاري استرجاع البيانات الحقيقية {formattedDate}...</p></div>
                   ) : error ? (
                     <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-4"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" /><p className="text-xs text-slate-300">{error}</p></div>
                   ) : activeToolView === 'jobs' ? (
