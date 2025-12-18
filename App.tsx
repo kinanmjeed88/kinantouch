@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
@@ -14,6 +13,7 @@ import {
   Calendar, Building2
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
+import { GoogleGenAI, Type } from "@google/genai";
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
@@ -46,7 +46,7 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 6 hours as per new master rules
+      // Cache valid for 6 hours
       return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
@@ -55,23 +55,22 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
-  const callGeminiAPI = async (prompt: string, systemInstruction: string) => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+  const callGeminiAPI = async (prompt: string, systemInstruction: string, schema: any) => {
+    if (!process.env.API_KEY) throw new Error("مفتاح API غير متوفر.");
+
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        systemInstruction,
+        systemInstruction: systemInstruction,
         responseMimeType: "application/json",
-        temperature: 0.1
+        responseSchema: schema,
       }
     });
 
-    try {
-      return JSON.parse(response.text || "{}");
-    } catch (e) {
-      throw new Error("فشل في تحليل استجابة الذكاء الاصطناعي.");
-    }
+    return JSON.parse(response.text || "{}");
   };
 
   const fetchToolData = async (type: ToolView, force: boolean = false) => {
@@ -97,22 +96,100 @@ const App: React.FC = () => {
 1. الوظائف: مصادر gov.iq فقط، منشورة حالياً، الموعد النهائي بعد ${todayStr}.
 2. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 30 يوماً.
 3. الهواتف: السنة الحالية فقط، مواصفات كاملة، سعر عراقي موثق.
-4. إذا لم توجد بيانات حقيقية، أخرج مصفوفة فارغة [].
-أخرج JSON فقط بدون شرح.`;
+4. إذا لم توجد بيانات حقيقية، أخرج مصفوفة فارغة [].`;
 
       let prompt = "";
+      let schema: any = {};
+
       if (type === 'jobs') {
-        prompt = `استخرج أحدث 8 وظائف حكومية عراقية (gov.iq) فعالة حالياً. 
-        الهيكل المطلوب: {"iraq_jobs": [{"title": "", "entity": "", "job_type": "", "conditions": [], "apply_deadline": "", "official_link": ""}]}`;
+        prompt = `استخرج أحدث 8 وظائف حكومية عراقية (gov.iq) فعالة حالياً.`;
+        schema = {
+            type: Type.OBJECT,
+            properties: {
+                iraq_jobs: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            title: { type: Type.STRING },
+                            entity: { type: Type.STRING },
+                            job_type: { type: Type.STRING },
+                            conditions: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            apply_deadline: { type: Type.STRING },
+                            official_link: { type: Type.STRING }
+                        }
+                    }
+                }
+            }
+        };
       } else if (type === 'ai-news') {
-        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي (إصدارات ونماذج جديدة) خلال آخر 30 يوماً.
-        الهيكل المطلوب: {"ai_news": [{"tool_name": "", "title": "", "summary": [], "date": "", "official_link": ""}]}`;
+        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي (إصدارات ونماذج جديدة) خلال آخر 30 يوماً.`;
+        schema = {
+            type: Type.OBJECT,
+            properties: {
+                ai_news: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            tool_name: { type: Type.STRING },
+                            title: { type: Type.STRING },
+                            summary: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            date: { type: Type.STRING },
+                            official_link: { type: Type.STRING }
+                        }
+                    }
+                }
+            }
+        };
       } else if (type === 'phone-news') {
-        prompt = `استخرج أحدث 8 هواتف ذكية صدرت في السنة الحالية بمواصفاتها الكاملة وسعرها في العراق.
-        الهيكل المطلوب: {"smartphones": [{"phone_name": "", "brand": "", "release_date": "", "specifications": {"networks": "", "dimensions": "", "weight": "", "materials": "", "water_resistance": "", "display": "", "processor": "", "gpu": "", "memory": "", "cameras": "", "video": "", "battery": "", "os": "", "connectivity": "", "sensors": "", "colors": ""}, "price_usd": "", "official_specs_link": "", "iraqi_price_source": "", "pros": [], "cons": [], "copy_payload": ""}]}`;
+        prompt = `استخرج أحدث 8 هواتف ذكية صدرت في السنة الحالية بمواصفاتها الكاملة وسعرها في العراق.`;
+        schema = {
+            type: Type.OBJECT,
+            properties: {
+                smartphones: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            phone_name: { type: Type.STRING },
+                            brand: { type: Type.STRING },
+                            release_date: { type: Type.STRING },
+                            specifications: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    networks: { type: Type.STRING },
+                                    dimensions: { type: Type.STRING },
+                                    weight: { type: Type.STRING },
+                                    materials: { type: Type.STRING },
+                                    water_resistance: { type: Type.STRING },
+                                    display: { type: Type.STRING },
+                                    processor: { type: Type.STRING },
+                                    gpu: { type: Type.STRING },
+                                    memory: { type: Type.STRING },
+                                    cameras: { type: Type.STRING },
+                                    video: { type: Type.STRING },
+                                    battery: { type: Type.STRING },
+                                    os: { type: Type.STRING },
+                                    connectivity: { type: Type.STRING },
+                                    sensors: { type: Type.STRING },
+                                    colors: { type: Type.STRING }
+                                }
+                            },
+                            price_usd: { type: Type.STRING },
+                            official_specs_link: { type: Type.STRING },
+                            iraqi_price_source: { type: Type.STRING },
+                            pros: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            cons: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            copy_payload: { type: Type.STRING }
+                        }
+                    }
+                }
+            }
+        };
       }
 
-      const result = await callGeminiAPI(prompt, systemInstruction);
+      const result = await callGeminiAPI(prompt, systemInstruction, schema);
       saveToCache(cacheKey, result);
       
       if (type === 'jobs') setJobs(result.iraq_jobs || []);
@@ -120,6 +197,7 @@ const App: React.FC = () => {
       else if (type === 'phone-news') setPhoneNews(result.smartphones || []);
 
     } catch (err: any) {
+      console.error(err);
       setError(err.message || "فشل في جلب البيانات الموثقة.");
     } finally {
       setLoading(false);
@@ -131,9 +209,29 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const system = "أنت خبير تقني محترف متخصص في المقارنات. الرد JSON فقط.";
-      const prompt = `قارن تقنياً وشاملاً بين ${phone1} و ${phone2}. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`;
-      const result = await callGeminiAPI(prompt, system);
+      const system = "أنت خبير تقني محترف متخصص في المقارنات.";
+      const prompt = `قارن تقنياً وشاملاً بين ${phone1} و ${phone2}.`;
+      
+      const schema = {
+        type: Type.OBJECT,
+        properties: {
+            specs: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        feature: { type: Type.STRING },
+                        phone1: { type: Type.STRING },
+                        phone2: { type: Type.STRING }
+                    }
+                }
+            },
+            betterPhone: { type: Type.STRING },
+            verdict: { type: Type.STRING }
+        }
+      };
+
+      const result = await callGeminiAPI(prompt, system, schema);
       setComparisonResult(result);
     } catch (err: any) { setError("فشل تحليل المقارنة."); } finally { setLoading(false); }
   };
@@ -285,7 +383,7 @@ const App: React.FC = () => {
                                <div className="flex items-center gap-2 mt-1">
                                   <Building2 className="w-3 h-3 text-slate-500" />
                                   <span className="text-[9px] text-slate-300 font-bold">{job.entity}</span>
-                               </div>
+                                </div>
                             </div>
                             <div className="bg-emerald-500/10 px-2 py-1 rounded-lg">
                                <span className="text-[8px] text-emerald-400 font-black uppercase">{job.job_type}</span>
