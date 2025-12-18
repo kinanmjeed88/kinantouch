@@ -6,7 +6,7 @@ import {
   Home, Info, AlertTriangle, 
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Facebook, Send, Search, MessageSquare, ExternalLink,
-  Briefcase, Copy, Share2, TrendingUp, ChevronDown, ChevronUp
+  Briefcase, Copy, TrendingUp, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
@@ -37,6 +37,7 @@ const App: React.FC = () => {
   }, []);
 
   const cleanAndParseJSON = (text: string) => {
+    if (!text) throw new Error("لا يوجد نص لتحليله.");
     try {
       let cleaned = text.trim();
       if (cleaned.startsWith('```')) {
@@ -71,7 +72,7 @@ const App: React.FC = () => {
     let schema: any = {};
 
     if (type === 'phone-news') {
-      prompt = "List 10 latest phones of 2024/2025. JSON array: title (1 line), manufacturer, launchDate, shortDesc, fullSpecs (array of strings), url (official).";
+      prompt = "List 10 latest phones of 2024/2025 in Arabic. JSON array: title (1 line), manufacturer, launchDate, shortDesc, fullSpecs (array of strings), url (official).";
       schema = {
         type: Type.ARRAY,
         items: {
@@ -88,7 +89,7 @@ const App: React.FC = () => {
         }
       };
     } else if (type === 'jobs') {
-      prompt = "List 10 latest government job openings in Iraq/Arab region for today. JSON array: title, ministry, date, description, url (official gov site).";
+      prompt = "List 10 latest government job openings in Iraq for today in Arabic. JSON array: title, ministry, date, description, url (official gov site).";
       schema = {
         type: Type.ARRAY,
         items: {
@@ -127,7 +128,7 @@ const App: React.FC = () => {
         config: { responseMimeType: "application/json", responseSchema: schema }
       });
       
-      const data = cleanAndParseJSON(response.text);
+      const data = cleanAndParseJSON(response.text || '');
       if (type === 'phone-news') setPhoneNews(data);
       else if (type === 'jobs') setJobs(data);
       else if (type === 'ai-news') setAiNews(data);
@@ -161,7 +162,7 @@ const App: React.FC = () => {
           }
         }
       });
-      setComparisonResult(cleanAndParseJSON(response.text));
+      setComparisonResult(cleanAndParseJSON(response.text || ''));
     } catch (err) {} finally { setLoading(false); }
   };
 
@@ -187,7 +188,10 @@ const App: React.FC = () => {
     const encodedText = encodeURIComponent(text);
     if (platform === 'tg') window.open(`https://t.me/share/url?url=${encodeURIComponent(data.url)}&text=${encodedText}`, '_blank');
     else if (platform === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(data.url)}`, '_blank');
-    else alert('انسخ النص وشاركه على انستغرام');
+    else {
+      navigator.clipboard.writeText(text);
+      alert('تم نسخ النص، شاركه يدوياً على انستغرام');
+    }
   };
 
   return (
@@ -303,7 +307,7 @@ const App: React.FC = () => {
                   <button onClick={() => setActiveToolView('main')} className="flex items-center gap-2 text-slate-500 mb-4"><ChevronLeft className="w-5 h-5 rotate-180" /><span className="text-sm">رجوع</span></button>
                   
                   {loading ? (
-                    <div className="py-20 flex flex-col items-center gap-4"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-xs">جاري جلب أحدث البيانات من الذكاء الاصطناعي...</p></div>
+                    <div className="py-20 flex flex-col items-center gap-4"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-xs">جاري جلب أحدث البيانات...</p></div>
                   ) : error ? (
                     <div className="text-center py-10"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" /><p className="text-xs text-slate-400">{error}</p></div>
                   ) : activeToolView === 'phone-news' ? (
@@ -348,7 +352,7 @@ const App: React.FC = () => {
                             <TrendingUp className="w-4 h-4" />
                             <h4 className="text-xs font-black">إحصائية مبيعات السنة</h4>
                          </div>
-                         <p className="text-[10px] text-slate-300 leading-relaxed" dir="rtl">تتصدر شركة Apple و Samsung المبيعات العالمية بهواتف iPhone 16 و Galaxy S25، مع نمو ملحوظ لهواتف Xiaomi في الشرق الأوسط.</p>
+                         <p className="text-[10px] text-slate-300 leading-relaxed" dir="rtl">تتصدر شركة Apple و Samsung المبيعات العالمية بهواتف iPhone 16 و Galaxy S25، مع نمو ملحوظ لهواتف Xiaomi في الشرق الأوسط لعام 2024.</p>
                        </div>
                     </div>
                   ) : activeToolView === 'jobs' ? (
