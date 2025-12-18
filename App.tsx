@@ -8,7 +8,7 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  ShieldCheck, HelpCircle, MessageCircle, FileText, Globe
+  ShieldCheck, HelpCircle, MessageCircle, Globe
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
 
