@@ -15,26 +15,11 @@ export interface SocialData {
 }
 
 export interface AINewsItem {
-  id: string;
   tool_name: string;
-  company: string;
-  category: 'llm' | 'image' | 'video' | 'audio' | 'platform' | 'other';
-  version: string;
   title: string;
   description: string[];
-  official_usage_link: string;
-}
-
-export interface AINewsResponse {
-  generated_at: string;
-  expires_in_hours: number;
-  items: AINewsItem[];
-  fallback_highlight?: {
-    tool_name: string;
-    latest_version: string;
-    title: string;
-    display_rule: string;
-  };
+  date: string;
+  official_link: string;
 }
 
 export interface PhoneNewsItem {
@@ -51,8 +36,7 @@ export interface PhoneNewsItem {
     processor: string;
     gpu: string;
     memory: string;
-    cameras_rear: string;
-    camera_front: string;
+    cameras: string;
     video: string;
     battery: string;
     os: string;
@@ -70,9 +54,11 @@ export interface PhoneNewsItem {
 
 export interface JobItem {
   title: string;
-  content: string[];
+  entity: string;
+  job_type: string;
+  details: string[];
+  apply_deadline: string;
   official_link: string;
-  copy_payload: string;
 }
 
 export interface PhoneComparisonResult {
