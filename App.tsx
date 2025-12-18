@@ -68,19 +68,16 @@ const App: React.FC = () => {
     setError(null);
     setActiveToolView(type);
 
-    const currentDate = new Date().toLocaleDateString('ar-IQ');
+    const today = new Date();
+    const formattedDate = `${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`;
+    
     let prompt = "";
     let schema: any = {};
 
     if (type === 'phone-news') {
-      prompt = `List 10 latest high-end smartphones announced or leaked as of late 2024 and 2025 (specifically for December 2024/January 2025). 
-      Provide in Arabic. JSON array of objects: 
-      title (exactly one short line), 
-      manufacturer, 
-      launchDate (specific date if possible), 
-      shortDesc (brief points), 
-      fullSpecs (detailed array of strings covering CPU, Camera, Battery, Screen, etc.), 
-      url (official company product page).`;
+      prompt = `List 10 latest high-end smartphones announced or leaked officially as of ${formattedDate} (2024/2025). 
+      Provide accurate and detailed info in Arabic. JSON array: 
+      title (short), manufacturer, launchDate, shortDesc, fullSpecs (detailed array covering Processor, Camera, Screen, Battery), url (official source).`;
       
       schema = {
         type: Type.ARRAY,
@@ -98,9 +95,9 @@ const App: React.FC = () => {
         }
       };
     } else if (type === 'jobs') {
-      prompt = `List 10 most recent government and public sector job announcements in Iraq (Education, Interior, Defense, etc.) updated for the date ${currentDate}. 
-      Use Arabic. JSON array of objects: 
-      title, ministry, date (today or very recent), description (detailed requirements), url (official government portal or ministry site).`;
+      prompt = `Search for REAL and OFFICIAL government job announcements in Iraq (Education, Interior, Defense, Health ministries, etc.) specifically for the date ${formattedDate}. 
+      Return only real current results in Arabic. JSON array: 
+      title, ministry, date (must be current), description (detailed requirements), url (MUST be the official government or ministry portal).`;
       
       schema = {
         type: Type.ARRAY,
@@ -117,7 +114,7 @@ const App: React.FC = () => {
         }
       };
     } else if (type === 'ai-news') {
-      prompt = "List 10 latest AI tools/news in Arabic. JSON array: title, description, url.";
+      prompt = `List 10 latest REAL AI tools and tech news released in ${formattedDate} in Arabic. JSON array: title, description, url.`;
       schema = {
         type: Type.ARRAY,
         items: {
@@ -185,10 +182,10 @@ const App: React.FC = () => {
     let text = "";
     if (type === 'phone') {
       const item = data as PhoneNewsItem;
-      text = `📱 ${item.title}\n🏢 الشركة: ${item.manufacturer}\n📅 التاريخ: ${item.launchDate}\n📝 الوصف: ${item.shortDesc}\n🛠 المواصفات التفصيلية:\n${item.fullSpecs.map(s => `• ${s}`).join('\n')}\n🔗 الرابط الرسمي: ${item.url}\n\n#Techtouch #MobileNews`;
+      text = `📱 ${item.title}\n🏢 الشركة: ${item.manufacturer}\n📅 التاريخ: ${item.launchDate}\n📝 الوصف: ${item.shortDesc}\n🛠 المواصفات:\n${item.fullSpecs.map(s => `• ${s}`).join('\n')}\n🔗 الرابط: ${item.url}\n\n#Techtouch`;
     } else if (type === 'job') {
       const item = data as JobItem;
-      text = `💼 ${item.title}\n🏛 الجهة: ${item.ministry}\n📅 التاريخ: ${item.date}\n📝 التفاصيل:\n${item.description}\n🔗 رابط التقديم: ${item.url}\n\n#Techtouch #Jobs #وظائف`;
+      text = `💼 ${item.title}\n🏛 الوزارة: ${item.ministry}\n📅 التاريخ: ${item.date}\n📝 التفاصيل:\n${item.description}\n🔗 التقديم: ${item.url}\n\n#Techtouch #وظائف`;
     } else {
       const item = data as AINewsItem;
       text = `🤖 ${item.title}\n📝 ${item.description}\n🔗 ${item.url}\n\n#Techtouch #AI`;
@@ -196,7 +193,7 @@ const App: React.FC = () => {
 
     if (platform === 'copy') {
       navigator.clipboard.writeText(text);
-      alert('تم نسخ كامل محتوى المنشور بنجاح!');
+      alert('تم نسخ المحتوى بالكامل!');
       return;
     }
 
@@ -207,7 +204,7 @@ const App: React.FC = () => {
     else if (platform === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
     else {
       navigator.clipboard.writeText(text);
-      alert('تم نسخ المنشور بالكامل، يرجى لصقه ومشاركته في Instagram');
+      alert('تم نسخ النص، يرجى لصقه في Instagram');
     }
   };
 
@@ -295,111 +292,127 @@ const App: React.FC = () => {
             <div className="animate-fade-in">
               {activeToolView === 'main' ? (
                 <div className="grid gap-4">
-                  <button onClick={() => fetchToolData('ai-news')} className="flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 text-right">
-                    <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center ml-4"><Cpu className="w-6 h-6 text-indigo-400" /></div>
-                    <div className="flex-grow pr-1"><h3 className="text-sm font-bold">أخبار الذكاء الاصطناعي</h3><p className="text-[10px] text-slate-400">أدوات ونماذج جديدة</p></div>
-                    <ArrowRight className="w-4 h-4 rotate-180" />
+                  {/* 1. الوظائف (تجريبي) */}
+                  <button onClick={() => fetchToolData('jobs')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-lg">
+                    <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-emerald-500/20 transition-colors"><Briefcase className="w-6 h-6 text-emerald-400" /></div>
+                    <div className="flex-grow pr-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold">أخبار الوظائف والتعيينات</h3>
+                        <span className="text-[8px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-black animate-pulse">تجريبي</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400">تحديثات يومية من المصادر الرسمية</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400" />
                   </button>
 
-                  <button onClick={() => fetchToolData('phone-news')} className="flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 text-right">
-                    <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center ml-4"><Smartphone className="w-6 h-6 text-sky-400" /></div>
-                    <div className="flex-grow pr-1"><h3 className="text-sm font-bold">آخر أخبار الهواتف</h3><p className="text-[10px] text-slate-400">أحدث إصدارات 2024-2025</p></div>
-                    <ArrowRight className="w-4 h-4 rotate-180" />
+                  {/* 2. أخبار الذكاء الاصطناعي */}
+                  <button onClick={() => fetchToolData('ai-news')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-lg">
+                    <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-indigo-500/20 transition-colors"><Cpu className="w-6 h-6 text-indigo-400" /></div>
+                    <div className="flex-grow pr-1">
+                      <h3 className="text-sm font-bold">أخبار الذكاء الاصطناعي</h3>
+                      <p className="text-[10px] text-slate-400">أدوات وتقنيات 2024-2025</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400" />
                   </button>
 
-                  <button onClick={() => fetchToolData('jobs')} className="flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 text-right">
-                    <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center ml-4"><Briefcase className="w-6 h-6 text-emerald-400" /></div>
-                    <div className="flex-grow pr-1"><h3 className="text-sm font-bold">آخر أخبار الوظائف والتعيينات</h3><p className="text-[10px] text-slate-400">تحديثات المواقع الحكومية يوم بيومه</p></div>
-                    <ArrowRight className="w-4 h-4 rotate-180" />
+                  {/* 3. أخبار الهواتف */}
+                  <button onClick={() => fetchToolData('phone-news')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-lg">
+                    <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-sky-500/20 transition-colors"><Smartphone className="w-6 h-6 text-sky-400" /></div>
+                    <div className="flex-grow pr-1">
+                      <h3 className="text-sm font-bold">أخبار الهواتف</h3>
+                      <p className="text-[10px] text-slate-400">أحدث الإصدارات والمواصفات</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400" />
                   </button>
 
-                  <button onClick={() => setActiveToolView('comparison')} className="flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 text-right">
-                    <div className="w-10 h-10 bg-slate-500/10 rounded-xl flex items-center justify-center ml-4"><Smartphone className="w-6 h-6 text-slate-400" /></div>
-                    <div className="flex-grow pr-1"><h3 className="text-sm font-bold">مقارنة الهواتف</h3><p className="text-[10px] text-slate-400">مقارنة ذكية بالمواصفات</p></div>
-                    <ArrowRight className="w-4 h-4 rotate-180" />
+                  {/* 4. المقارنة */}
+                  <button onClick={() => setActiveToolView('comparison')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-lg">
+                    <div className="w-10 h-10 bg-slate-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-slate-500/20 transition-colors"><Search className="w-6 h-6 text-slate-400" /></div>
+                    <div className="flex-grow pr-1">
+                      <h3 className="text-sm font-bold">المقارنة بين الهواتف</h3>
+                      <p className="text-[10px] text-slate-400">مقارنة ذكية بالمواصفات والأسعار</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400" />
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <button onClick={() => setActiveToolView('main')} className="flex items-center gap-2 text-slate-500 mb-4"><ChevronLeft className="w-5 h-5 rotate-180" /><span className="text-sm">رجوع</span></button>
+                  <button onClick={() => setActiveToolView('main')} className="flex items-center gap-2 text-slate-500 mb-4 hover:text-sky-400 transition-colors"><ChevronLeft className="w-5 h-5 rotate-180" /><span className="text-sm">رجوع للأدوات</span></button>
                   
                   {loading ? (
-                    <div className="py-20 flex flex-col items-center gap-4"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-xs">جاري جلب أحدث البيانات ليوم {new Date().toLocaleDateString('ar-IQ')}...</p></div>
+                    <div className="py-20 flex flex-col items-center gap-4"><Loader2 className="w-12 h-12 text-sky-400 animate-spin" /><p className="text-[11px] text-slate-400 font-black tracking-widest">جاري الاتصال بالمصادر الرسمية...</p></div>
                   ) : error ? (
-                    <div className="text-center py-10"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" /><p className="text-xs text-slate-400">{error}</p></div>
+                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-4"><AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" /><p className="text-xs text-slate-300">{error}</p></div>
                   ) : activeToolView === 'phone-news' ? (
                     <div className="space-y-4">
+                       <div className="flex items-center gap-2 px-1 mb-2">
+                         <div className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-pulse"></div>
+                         <p className="text-[9px] text-slate-500 font-black">أحدث الهواتف ليوم {new Date().toLocaleDateString('ar-IQ')}</p>
+                       </div>
                        {phoneNews.map((phone, i) => (
                          <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl text-right animate-slide-up">
-                            <h3 className="text-sm font-bold text-sky-400 mb-2 border-b border-slate-700 pb-1">{phone.title}</h3>
-                            <div className="space-y-1 mb-3">
-                              <p className="text-[10px] text-slate-300"><span className="text-sky-500/80">•</span> الشركة المصنعة: {phone.manufacturer}</p>
-                              <p className="text-[10px] text-slate-300"><span className="text-sky-500/80">•</span> تاريخ الإعلان: {phone.launchDate}</p>
+                            <h3 className="text-sm font-black text-sky-400 mb-3 border-b border-slate-700/30 pb-2">{phone.title}</h3>
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                              <div className="bg-slate-900/40 p-2 rounded-xl border border-slate-700/30">
+                                <p className="text-[8px] text-slate-500 mb-0.5">الشركة</p>
+                                <p className="text-[10px] text-slate-200 font-bold">{phone.manufacturer}</p>
+                              </div>
+                              <div className="bg-slate-900/40 p-2 rounded-xl border border-slate-700/30">
+                                <p className="text-[8px] text-slate-500 mb-0.5">تاريخ الإعلان</p>
+                                <p className="text-[10px] text-slate-200 font-bold">{phone.launchDate}</p>
+                              </div>
                             </div>
+                            <p className="text-[10px] text-slate-300 leading-relaxed pr-3 border-r-2 border-sky-500/20 mb-3">{phone.shortDesc}</p>
                             
-                            <button 
-                              onClick={() => setExpandedPhone(expandedPhone === i ? null : i)}
-                              className="flex items-center gap-1 text-[10px] text-sky-500 font-black mb-3 px-3 py-1 bg-sky-500/5 rounded-lg border border-sky-500/20 hover:bg-sky-500/10 transition-all"
-                            >
-                              {expandedPhone === i ? <><ChevronUp className="w-3.5 h-3.5"/> عرض أقل</> : <><ChevronDown className="w-3.5 h-3.5"/> عرض المزيد من التفاصيل</>}
+                            <button onClick={() => setExpandedPhone(expandedPhone === i ? null : i)} className="w-full flex items-center justify-between px-4 py-2 bg-sky-500/5 text-sky-400 text-[10px] font-black rounded-xl border border-sky-500/20 mb-3">
+                              <span>{expandedPhone === i ? 'عرض أقل' : 'عرض المواصفات التقنية الكاملة'}</span>
+                              {expandedPhone === i ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
                             </button>
 
                             {expandedPhone === i && (
-                              <div className="bg-slate-900/60 p-4 rounded-xl mb-3 animate-fade-in border border-slate-700/50">
-                                <p className="text-[10px] text-slate-200 font-bold mb-2">المواصفات الكاملة:</p>
-                                <ul className="space-y-1.5">
+                              <div className="bg-slate-900/80 p-4 rounded-2xl mb-4 animate-fade-in border border-slate-700/80">
+                                <p className="text-[10px] text-sky-400 font-black mb-3 border-b border-sky-900/50 pb-1.5">المواصفات التفصيلية:</p>
+                                <ul className="space-y-2">
                                   {phone.fullSpecs.map((spec, idx) => (
-                                    <li key={idx} className="text-[9.5px] text-slate-300 pr-3 border-r-2 border-sky-500/40 leading-relaxed">{spec}</li>
+                                    <li key={idx} className="text-[9.5px] text-slate-300 pr-3 border-r border-sky-500/40 flex items-start leading-relaxed"><span className="text-sky-500 ml-1.5">•</span>{spec}</li>
                                   ))}
                                 </ul>
                               </div>
                             )}
 
-                            <div className="flex justify-between items-center pt-3 border-t border-slate-700/50 mt-2">
-                              <div className="flex gap-2.5">
-                                <button onClick={() => shareFullContent(phone, 'phone', 'tg')} className="p-2 bg-sky-500/10 hover:bg-sky-500/20 rounded-xl text-sky-400 transition-colors" title="مشاركة للتيليجرام"><Send className="w-4 h-4" /></button>
-                                <button onClick={() => shareFullContent(phone, 'phone', 'fb')} className="p-2 bg-blue-600/10 hover:bg-blue-600/20 rounded-xl text-blue-400 transition-colors" title="مشاركة للفيس بوك"><Facebook className="w-4 h-4" /></button>
-                                <button onClick={() => shareFullContent(phone, 'phone', 'copy')} className="p-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-slate-200 transition-colors" title="نسخ كامل المحتوى"><Copy className="w-4 h-4" /></button>
+                            <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
+                              <div className="flex gap-2">
+                                <button onClick={() => shareFullContent(phone, 'phone', 'tg')} className="p-2 bg-sky-500/10 rounded-xl text-sky-400 transition-colors"><Send className="w-4 h-4" /></button>
+                                <button onClick={() => shareFullContent(phone, 'phone', 'fb')} className="p-2 bg-blue-600/10 rounded-xl text-blue-400 transition-colors"><Facebook className="w-4 h-4" /></button>
+                                <button onClick={() => shareFullContent(phone, 'phone', 'copy')} className="p-2 bg-slate-700 rounded-xl text-slate-200 transition-colors"><Copy className="w-4 h-4" /></button>
                               </div>
-                              <a href={phone.url} target="_blank" className="text-[10px] text-indigo-400 font-black border border-indigo-500/30 px-4 py-1.5 rounded-xl flex items-center gap-1.5 hover:bg-indigo-500/5 transition-all">
-                                الموقع الرسمي <ExternalLink className="w-3 h-3" />
-                              </a>
+                              <a href={phone.url} target="_blank" className="text-[10px] text-sky-400 font-black px-4 py-2 bg-sky-500/5 rounded-xl border border-sky-500/20 flex items-center gap-1.5">الموقع الرسمي <ExternalLink className="w-3 h-3" /></a>
                             </div>
                          </div>
                        ))}
-                       <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl text-right mt-6">
-                         <div className="flex items-center gap-2 text-emerald-400 mb-2">
-                            <TrendingUp className="w-4.5 h-4.5" />
-                            <h4 className="text-xs font-black">إحصائية الهواتف الأكثر مبيعاً لهذا العام (2024-2025)</h4>
-                         </div>
-                         <p className="text-[10px] text-slate-300 leading-relaxed" dir="rtl">
-                           تشير التقارير العالمية إلى تصدر سلسلة **iPhone 16 Pro** للمبيعات العالمية، تليها سلسلة **Samsung Galaxy S24/S25** بفضل ميزات الذكاء الاصطناعي الجديدة. كما سجلت سلسلة **Xiaomi 14/15** نمواً كبيراً في الأسواق الناشئة بنسبة 15% مقارنة بالعام الماضي.
-                         </p>
-                       </div>
                     </div>
                   ) : activeToolView === 'jobs' ? (
                     <div className="space-y-4">
-                      <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-right mb-2">
-                        <p className="text-[9px] text-amber-200/80 font-bold" dir="rtl">تنبيه: يتم تحديث هذه القائمة يومياً بناءً على المواقع الرسمية للوزارات العراقية (التربية، الداخلية، الدفاع، والعمل).</p>
+                      <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl text-right mb-2">
+                        <div className="flex items-center gap-2 text-amber-500 mb-1.5"><AlertTriangle className="w-4 h-4" /><p className="text-[10px] font-black">أحدث أخبار الوظائف الرسمية</p></div>
+                        <p className="text-[9px] text-slate-300 leading-tight">يتم استرجاع البيانات مباشرة من المواقع الوزارية والحكومية العراقية ليوم {new Date().toLocaleDateString('ar-IQ')}.</p>
                       </div>
                       {jobs.map((job, i) => (
-                        <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl text-right animate-slide-up">
-                          <h3 className="text-sm font-bold text-emerald-400 mb-2">{job.title}</h3>
-                          <div className="flex justify-between items-center mb-3">
-                             <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold">{job.ministry}</span>
-                             <span className="text-[9px] text-slate-500 font-mono">{job.date}</span>
+                        <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl text-right animate-slide-up hover:border-emerald-500/30 transition-all shadow-lg">
+                          <h3 className="text-sm font-black text-emerald-400 mb-2 leading-snug">{job.title}</h3>
+                          <div className="flex justify-between items-center mb-4">
+                             <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-xl font-black border border-emerald-500/10">{job.ministry}</span>
+                             <span className="text-[9px] text-slate-500 font-mono flex items-center gap-1">بتاريخ: {job.date}</span>
                           </div>
-                          <div className="bg-slate-900/40 p-3 rounded-xl mb-4">
-                             <p className="text-[10.5px] text-slate-300 leading-relaxed whitespace-pre-line" dir="rtl">{job.description}</p>
+                          <div className="bg-slate-900/50 p-4 rounded-2xl mb-4 border border-slate-700/30">
+                             <p className="text-[10px] text-slate-300 leading-relaxed whitespace-pre-line" dir="rtl">{job.description}</p>
                           </div>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
-                            <div className="flex gap-2.5">
-                               <button onClick={() => shareFullContent(job, 'job', 'tg')} className="p-2 bg-sky-500/10 hover:bg-sky-500/20 rounded-xl text-sky-400 transition-colors"><Send className="w-4 h-4" /></button>
-                               <button onClick={() => shareFullContent(job, 'job', 'copy')} className="p-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-slate-200 transition-colors"><Copy className="w-4 h-4" /></button>
+                            <div className="flex gap-2">
+                               <button onClick={() => shareFullContent(job, 'job', 'tg')} className="p-2 bg-sky-500/10 rounded-xl text-sky-400 transition-colors"><Send className="w-4 h-4" /></button>
+                               <button onClick={() => shareFullContent(job, 'job', 'copy')} className="p-2 bg-slate-700 rounded-xl text-slate-200 transition-colors"><Copy className="w-4 h-4" /></button>
                             </div>
-                            <a href={job.url} target="_blank" className="text-[10px] text-emerald-400 font-black border border-emerald-500/40 px-4 py-1.5 rounded-xl flex items-center gap-1.5 hover:bg-emerald-500/5 transition-all">
-                              رابط التقديم الرسمي <ExternalLink className="w-3 h-3" />
-                            </a>
+                            <a href={job.url} target="_blank" className="text-[10px] text-emerald-400 font-black px-4 py-2 bg-emerald-500/10 rounded-xl border border-emerald-500/30 flex items-center gap-1.5">المصدر الرسمي <ExternalLink className="w-3 h-3" /></a>
                           </div>
                         </div>
                       ))}
@@ -408,14 +421,14 @@ const App: React.FC = () => {
                     <div className="space-y-4">
                       {aiNews.map((n, i) => (
                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl text-right animate-slide-up">
-                          <h3 className="text-sm font-bold text-sky-400 mb-1">{n.title}</h3>
-                          <p className="text-[11px] text-slate-300 mb-4">{n.description}</p>
+                          <h3 className="text-sm font-black text-sky-400 mb-2">{n.title}</h3>
+                          <p className="text-[11px] text-slate-300 mb-4 leading-relaxed">{n.description}</p>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
                             <div className="flex gap-2">
                               <button onClick={() => shareFullContent(n, 'ai', 'tg')} className="p-1.5 bg-sky-500/10 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button>
                               <button onClick={() => shareFullContent(n, 'ai', 'copy')} className="p-1.5 bg-slate-700 rounded-lg text-slate-300"><Copy className="w-3.5 h-3.5" /></button>
                             </div>
-                            <a href={n.url} target="_blank" className="text-[10px] text-indigo-400 font-bold border border-indigo-500/30 px-3 py-1 rounded-lg">رابط الأداة</a>
+                            <a href={n.url} target="_blank" className="text-[10px] text-indigo-400 font-black border border-indigo-500/30 px-4 py-1.5 rounded-xl">رابط الأداة</a>
                           </div>
                         </div>
                       ))}
@@ -428,13 +441,13 @@ const App: React.FC = () => {
                         <button onClick={handleComparePhones} disabled={loading || !phone1 || !phone2} className="w-full bg-sky-500 text-white font-black py-3 rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20">{loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "ابدأ المقارنة الذكية"}</button>
                       </div>
                       {comparisonResult && (
-                        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden animate-slide-up border border-slate-700/50">
+                        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden animate-slide-up">
                           <table className="w-full text-right text-[10px]">
                             <thead className="bg-slate-900/80"><tr><th className="p-3 text-sky-400">الميزة</th><th className="p-3">{phone1}</th><th className="p-3">{phone2}</th></tr></thead>
                             <tbody className="divide-y divide-slate-700/30">{comparisonResult.specs.map((s, i) => <tr key={i} className="hover:bg-slate-700/10"><td className="p-3 font-bold text-slate-300">{s.feature}</td><td className="p-3 text-slate-400">{s.phone1}</td><td className="p-3 text-slate-400">{s.phone2}</td></tr>)}</tbody>
                           </table>
                           <div className="p-4 bg-emerald-500/10 border-t border-slate-700/50">
-                            <p className="text-xs text-emerald-400 font-black mb-1.5 flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5"/> النتيجة النهائية: {comparisonResult.betterPhone}</p>
+                            <p className="text-xs text-emerald-400 font-black mb-1.5 flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5"/> النتيجة: {comparisonResult.betterPhone}</p>
                             <p className="text-[10px] text-slate-300 leading-relaxed font-bold">{comparisonResult.verdict}</p>
                           </div>
                         </div>
@@ -453,7 +466,7 @@ const App: React.FC = () => {
            <div className="mt-8 pb-4">
              <a href={footerData.url} target="_blank" className="group inline-flex flex-col items-center">
                <span className="text-[10px] text-slate-500">تم التطوير بواسطة</span>
-               <span className="text-xs font-black text-slate-300 group-hover:text-sky-400 transition-colors">{footerData.text}</span>
+               <span className="text-xs font-black text-slate-300 group-hover:text-sky-400 transition-colors tracking-wide">{footerData.text}</span>
              </a>
            </div>
         </footer>
