@@ -12,7 +12,6 @@ import {
   ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
-import { GoogleGenAI, Type } from "@google/genai";
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
@@ -52,22 +51,40 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
-  const callGeminiAPI = async (prompt: string, systemInstruction: string, schema: any) => {
-    if (!process.env.API_KEY) throw new Error("مفتاح API غير متوفر.");
-
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const callGroqAPI = async (prompt: string, systemInstruction: string) => {
+    // المفتاح يتم تحميله من vite.config.ts الذي يبحث عن VITE_GROQ_API_KEY
+    const apiKey = process.env.API_KEY; 
     
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: schema,
-      }
+    if (!apiKey) throw new Error("مفتاح API غير متوفر (VITE_GROQ_API_KEY).");
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1
+      })
     });
 
-    return JSON.parse(response.text || "{}");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`خطأ في الاتصال بخوادم Groq: ${response.status} ${errorData.error?.message || ''}`);
+    }
+
+    const data = await response.json();
+    try {
+      return JSON.parse(data.choices[0].message.content);
+    } catch (e) {
+      throw new Error("فشل في تحليل استجابة JSON من Groq.");
+    }
   };
 
   const fetchToolData = async (type: ToolView, force: boolean = false) => {
@@ -91,79 +108,60 @@ const App: React.FC = () => {
 القواعد الصارمة:
 1. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 30 يوماً.
 2. الهواتف: السنة الحالية فقط، مواصفات كاملة، سعر عراقي موثق.
-3. إذا لم توجد بيانات حقيقية، أخرج مصفوفة فارغة [].`;
+3. الرد يجب أن يكون JSON صالح فقط بدون أي نصوص إضافية.
+4. إذا لم توجد بيانات، أعد مصفوفة فارغة.`;
 
       let prompt = "";
-      let schema: any = {};
-
+      
       if (type === 'ai-news') {
-        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي (إصدارات ونماذج جديدة) خلال آخر 30 يوماً.`;
-        schema = {
-            type: Type.OBJECT,
-            properties: {
-                ai_news: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: {
-                            tool_name: { type: Type.STRING },
-                            title: { type: Type.STRING },
-                            summary: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            date: { type: Type.STRING },
-                            official_link: { type: Type.STRING }
-                        }
-                    }
-                }
+        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي.
+        JSON Format Required:
+        {
+          "ai_news": [
+            {
+              "tool_name": "string",
+              "title": "string",
+              "summary": ["string", "string"],
+              "date": "YYYY-MM-DD",
+              "official_link": "url"
             }
-        };
+          ]
+        }`;
       } else if (type === 'phone-news') {
-        prompt = `استخرج أحدث 8 هواتف ذكية صدرت في السنة الحالية بمواصفاتها الكاملة وسعرها في العراق.`;
-        schema = {
-            type: Type.OBJECT,
-            properties: {
-                smartphones: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: {
-                            phone_name: { type: Type.STRING },
-                            brand: { type: Type.STRING },
-                            release_date: { type: Type.STRING },
-                            specifications: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    networks: { type: Type.STRING },
-                                    dimensions: { type: Type.STRING },
-                                    weight: { type: Type.STRING },
-                                    materials: { type: Type.STRING },
-                                    water_resistance: { type: Type.STRING },
-                                    display: { type: Type.STRING },
-                                    processor: { type: Type.STRING },
-                                    gpu: { type: Type.STRING },
-                                    memory: { type: Type.STRING },
-                                    cameras: { type: Type.STRING },
-                                    video: { type: Type.STRING },
-                                    battery: { type: Type.STRING },
-                                    os: { type: Type.STRING },
-                                    connectivity: { type: Type.STRING },
-                                    sensors: { type: Type.STRING },
-                                    colors: { type: Type.STRING }
-                                }
-                            },
-                            price_usd: { type: Type.STRING },
-                            official_specs_link: { type: Type.STRING },
-                            iraqi_price_source: { type: Type.STRING },
-                            pros: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            cons: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            copy_payload: { type: Type.STRING }
-                        }
-                    }
-                }
+        prompt = `استخرج أحدث 8 هواتف ذكية صدرت هذا العام.
+        JSON Format Required:
+        {
+          "smartphones": [
+            {
+              "phone_name": "string",
+              "brand": "string",
+              "release_date": "string",
+              "specifications": {
+                "networks": "string",
+                "dimensions": "string",
+                "weight": "string",
+                "display": "string",
+                "processor": "string",
+                "memory": "string",
+                "cameras": "string",
+                "video": "string",
+                "battery": "string",
+                "os": "string",
+                "connectivity": "string",
+                "colors": "string"
+              },
+              "price_usd": "string",
+              "official_specs_link": "url",
+              "iraqi_price_source": "url",
+              "pros": ["string"],
+              "cons": ["string"],
+              "copy_payload": "string"
             }
-        };
+          ]
+        }`;
       }
 
-      const result = await callGeminiAPI(prompt, systemInstruction, schema);
+      const result = await callGroqAPI(prompt, systemInstruction);
       saveToCache(cacheKey, result);
       
       if (type === 'ai-news') setAiNews(result.ai_news || []);
@@ -171,7 +169,7 @@ const App: React.FC = () => {
 
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "فشل في جلب البيانات الموثقة.");
+      setError(err.message || "فشل في جلب البيانات.");
     } finally {
       setLoading(false);
     }
@@ -182,31 +180,22 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const system = "أنت خبير تقني محترف متخصص في المقارنات.";
-      const prompt = `قارن تقنياً وشاملاً بين ${phone1} و ${phone2}.`;
+      const system = "أنت خبير تقني. الرد JSON فقط.";
+      const prompt = `قارن بين ${phone1} و ${phone2}.
+      JSON Format Required:
+      {
+        "specs": [{"feature": "string", "phone1": "string", "phone2": "string"}],
+        "betterPhone": "string",
+        "verdict": "string"
+      }`;
       
-      const schema = {
-        type: Type.OBJECT,
-        properties: {
-            specs: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        feature: { type: Type.STRING },
-                        phone1: { type: Type.STRING },
-                        phone2: { type: Type.STRING }
-                    }
-                }
-            },
-            betterPhone: { type: Type.STRING },
-            verdict: { type: Type.STRING }
-        }
-      };
-
-      const result = await callGeminiAPI(prompt, system, schema);
+      const result = await callGroqAPI(prompt, system);
       setComparisonResult(result);
-    } catch (err: any) { setError("فشل تحليل المقارنة."); } finally { setLoading(false); }
+    } catch (err: any) { 
+      setError("فشل تحليل المقارنة."); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
