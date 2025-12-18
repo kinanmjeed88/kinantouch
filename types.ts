@@ -42,18 +42,29 @@ export interface PhoneNewsItem {
   brand: string;
   release_date: string;
   specifications: {
+    networks: string;
+    dimensions: string;
+    weight: string;
+    materials: string;
+    water_resistance: string;
     display: string;
     processor: string;
-    ram: string;
-    storage: string;
-    cameras: string;
+    gpu: string;
+    memory: string;
+    cameras_rear: string;
+    camera_front: string;
+    video: string;
     battery: string;
     os: string;
-    features: string;
+    connectivity: string;
+    sensors: string;
+    colors: string;
   };
   price_usd: string;
-  official_link: string;
+  official_specs_link: string;
   iraqi_price_source: string;
+  pros: string[];
+  cons: string[];
   copy_payload: string;
 }
 

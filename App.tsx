@@ -9,7 +9,7 @@ import {
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
   MessageCircle, Facebook, Instagram, BadgeCheck, Zap,
-  ShieldCheck, DollarSign
+  ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2
 } from 'lucide-react';
 import { AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
 
@@ -17,9 +17,9 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v25',
+  JOBS: 'techtouch_jobs_v26',
   AI_NEWS: 'techtouch_ai_v21',
-  PHONE_NEWS: 'techtouch_phones_v25'
+  PHONE_NEWS: 'techtouch_phones_v26'
 };
 
 const App: React.FC = () => {
@@ -109,15 +109,37 @@ const App: React.FC = () => {
 JSON: {"items": [{"id": "...", "tool_name": "...", "version": "...", "title": "...", "description": ["..."], "official_usage_link": "..."}]}`;
         prompt = "استخرج أحدث 10 أدوات AI رسمية.";
       } else if (type === 'phone-news') {
-        system = `أنت محرر تقني لموقع Techtouch. ولد بيانات هواتف لآخر شهر من تاريخ ${formattedDate}.
-القواعد: العنوان: اسم الهاتف فقط. المواصفات كاملة (شاشة، معالج، رام، تخزين، كاميرات، بطارية، نظام، ميزات).
-السعر: بالدولار من مصدر عراقي رسمي.
-JSON: {"smartphones": [{
-  "phone_name": "...", "brand": "...", "release_date": "...",
-  "specifications": {"display": "...", "processor": "...", "ram": "...", "storage": "...", "cameras": "...", "battery": "...", "os": "...", "features": "..."},
-  "price_usd": "...", "official_link": "...", "iraqi_price_source": "...", "copy_payload": "..."
-}]}`;
-        prompt = "استخرج أحدث 8 هواتف ذكية بمواصفاتها الكاملة وأسعارها في السوق العراقي.";
+        system = `أنت محرر تقني متخصص في الهواتف الذكية لموقع Techtouch.
+مهمتك إنشاء محتوى موثوق 100% مبني على مصادر رسمية لآخر شهر من تاريخ ${formattedDate}.
+القواعد الصارمة: 
+1. العنوان: اسم الهاتف فقط. 
+2. المواصفات: يجب شمول (الشبكات، الأبعاد، الوزن، الخامات، مقاومة الماء، الشاشة، المعالج، الرسوميات، الذاكرة، الكاميرات الخلفية، الكاميرا الأمامية، الفيديو، البطارية والشحن، النظام، الاتصال، المستشعرات، الألوان).
+3. السعر: بالدولار من مصدر عراقي رسمي.
+4. المميزات: 4-6 نقاط. 
+5. العيوب: 3-5 نقاط.
+صيغة JSON:
+{
+  "smartphones": [
+    {
+      "phone_name": "...",
+      "brand": "...",
+      "release_date": "...",
+      "specifications": {
+        "networks": "...", "dimensions": "...", "weight": "...", "materials": "...", "water_resistance": "...",
+        "display": "...", "processor": "...", "gpu": "...", "memory": "...", "cameras_rear": "...",
+        "camera_front": "...", "video": "...", "battery": "...", "os": "...", "connectivity": "...",
+        "sensors": "...", "colors": "..."
+      },
+      "price_usd": "...",
+      "official_specs_link": "...",
+      "iraqi_price_source": "...",
+      "pros": ["...", "..."],
+      "cons": ["...", "..."],
+      "copy_payload": "..."
+    }
+  ]
+}`;
+        prompt = "استخرج أحدث 8 هواتف ذكية معلنة رسمياً بمواصفاتها الكاملة وأسعارها الموثقة عراقياً.";
       }
 
       const result = await callGroqAPI(prompt, system);
@@ -148,7 +170,7 @@ JSON: {"smartphones": [{
 
   const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
     const title = item.title || item.phone_name || item.tool_name;
-    const url = item.official_usage_link || item.official_link || item.url;
+    const url = item.official_usage_link || item.official_link || item.official_specs_link || item.url;
     const payload = item.copy_payload || `${title}\n\n🔗 الرابط: ${url}`;
     
     if (platform === 'copy') {
@@ -344,56 +366,89 @@ JSON: {"smartphones": [{
                   ) : activeToolView === 'phone-news' ? (
                     <div className="space-y-6">
                        {phoneNews.map((phone, i) => (
-                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-3xl shadow-md border-r-4 border-r-sky-500/50">
-                            <div className="flex items-center justify-between mb-4 border-b border-slate-700/50 pb-3">
+                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-[2.5rem] shadow-2xl border-r-4 border-r-sky-500/50 overflow-hidden relative group">
+                            <div className="absolute top-0 left-0 bg-sky-500/20 text-sky-400 text-[7px] font-black px-3 py-1.5 rounded-br-2xl uppercase tracking-tighter z-10">موثق رسمياً</div>
+                            
+                            <div className="flex items-center justify-between mb-6 border-b border-slate-700/50 pb-4">
                               <div className="flex flex-col">
-                                <h3 className="text-[13px] font-black text-sky-400">{phone.phone_name}</h3>
+                                <h3 className="text-lg font-black text-slate-100 group-hover:text-sky-400 transition-colors">{phone.phone_name}</h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-[8px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded-full font-black uppercase">{phone.brand}</span>
-                                  <span className="text-[8px] text-slate-500 font-bold">{phone.release_date}</span>
+                                  <span className="text-[9px] bg-slate-900 text-sky-400 px-2 py-0.5 rounded-full font-black uppercase border border-sky-500/20">{phone.brand}</span>
+                                  <span className="text-[9px] text-slate-500 font-bold">{phone.release_date}</span>
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-1">
-                                <div className="flex items-center gap-1 text-emerald-400 font-black text-[11px]">
-                                  <DollarSign className="w-3.5 h-3.5" />
+                                <div className="flex items-center gap-1 text-emerald-400 font-black text-base">
+                                  <DollarSign className="w-4 h-4" />
                                   <span>{phone.price_usd}</span>
                                 </div>
-                                <a href={phone.iraqi_price_source} target="_blank" className="text-[6px] text-slate-500 underline flex items-center gap-1">مصدر السعر العراقي <ExternalLink className="w-2 h-2" /></a>
+                                <a href={phone.iraqi_price_source} target="_blank" className="text-[7px] text-slate-500 underline flex items-center gap-1 hover:text-sky-400">سعر العراق <ExternalLink className="w-2 h-2" /></a>
                               </div>
                             </div>
                             
-                            <div className="grid grid-cols-2 gap-3 mb-5">
+                            <div className="grid grid-cols-2 gap-3 mb-6">
                                {[
                                  { icon: Smartphone, label: 'الشاشة', value: phone.specifications.display },
                                  { icon: Cpu, label: 'المعالج', value: phone.specifications.processor },
-                                 { icon: Zap, label: 'رام', value: phone.specifications.ram },
-                                 { icon: Briefcase, label: 'تخزين', value: phone.specifications.storage },
+                                 { icon: Zap, label: 'رام/تخزين', value: `${phone.specifications.memory}` },
                                  { icon: ShieldCheck, label: 'البطارية', value: phone.specifications.battery },
-                                 { icon: BadgeCheck, label: 'النظام', value: phone.specifications.os }
+                                 { icon: BadgeCheck, label: 'النظام', value: phone.specifications.os },
+                                 { icon: Search, label: 'ألوان', value: phone.specifications.colors }
                                ].map((spec, idx) => (
-                                 <div key={idx} className="bg-slate-900/40 p-2.5 rounded-xl border border-slate-700/30">
-                                   <div className="flex items-center gap-1.5 text-sky-400/70 mb-1">
-                                      <spec.icon className="w-3 h-3" />
-                                      <span className="text-[7px] font-black uppercase">{spec.label}</span>
+                                 <div key={idx} className="bg-slate-900/60 p-3 rounded-2xl border border-slate-700/30 flex flex-col gap-1">
+                                   <div className="flex items-center gap-2 text-sky-400/80">
+                                      <spec.icon className="w-3.5 h-3.5" />
+                                      <span className="text-[8px] font-black uppercase tracking-widest">{spec.label}</span>
                                    </div>
-                                   <div className="text-[8px] text-slate-300 font-bold leading-tight">{spec.value}</div>
+                                   <div className="text-[9px] text-slate-200 font-bold leading-tight line-clamp-2">{spec.value}</div>
                                  </div>
                                ))}
                             </div>
 
-                            <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-700/30 mb-5">
-                               <div className="text-sky-400/70 text-[7px] font-black uppercase mb-1">الكاميرات</div>
-                               <div className="text-[8px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras}</div>
+                            <div className="space-y-3 mb-6">
+                               <div className="bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                                  <div className="text-sky-400/70 text-[8px] font-black uppercase mb-1">التصوير والفيديو</div>
+                                  <div className="text-[9px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras_rear} • {phone.specifications.video}</div>
+                               </div>
+                               <div className="bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                                  <div className="text-sky-400/70 text-[8px] font-black uppercase mb-1">التصميم والاتصال</div>
+                                  <div className="text-[9px] text-slate-300 font-bold leading-relaxed">{phone.specifications.dimensions} • {phone.specifications.weight} • {phone.specifications.connectivity}</div>
+                               </div>
                             </div>
 
-                            <div className="flex justify-between items-center pt-4 border-t border-slate-700/50">
-                                <div className="flex gap-1.5">
-                                  <button onClick={() => shareContent(phone, 'fb')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-blue-400"><Facebook className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => shareContent(phone, 'insta')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-pink-400"><Instagram className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => shareContent(phone, 'tg')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sky-400"><Send className="w-3.5 h-3.5" /></button>
-                                  <button onClick={() => shareContent(phone, 'copy')} className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200"><Copy className="w-3.5 h-3.5" /></button>
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                               <div className="space-y-2">
+                                  <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase"><ThumbsUp className="w-3.5 h-3.5" /> المميزات</div>
+                                  <ul className="space-y-1">
+                                    {phone.pros.map((p, idx) => (
+                                      <li key={idx} className="text-[8px] text-slate-300 font-bold flex items-start gap-1.5">
+                                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500/60 shrink-0 mt-0.5" />
+                                        <span>{p}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                               </div>
+                               <div className="space-y-2">
+                                  <div className="flex items-center gap-2 text-red-400 text-[10px] font-black uppercase"><ThumbsDown className="w-3.5 h-3.5" /> العيوب</div>
+                                  <ul className="space-y-1">
+                                    {phone.cons.map((c, idx) => (
+                                      <li key={idx} className="text-[8px] text-slate-300 font-bold flex items-start gap-1.5">
+                                        <AlertCircle className="w-2.5 h-2.5 text-red-500/60 shrink-0 mt-0.5" />
+                                        <span>{c}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                               </div>
+                            </div>
+
+                            <div className="flex justify-between items-center pt-5 border-t border-slate-700/50">
+                                <div className="flex gap-2">
+                                  <button onClick={() => shareContent(phone, 'fb')} className="p-2 bg-slate-800/80 border border-slate-700/50 rounded-xl text-blue-400 hover:bg-blue-500/10 transition-colors"><Facebook className="w-4 h-4" /></button>
+                                  <button onClick={() => shareContent(phone, 'insta')} className="p-2 bg-slate-800/80 border border-slate-700/50 rounded-xl text-pink-400 hover:bg-pink-500/10 transition-colors"><Instagram className="w-4 h-4" /></button>
+                                  <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-slate-800/80 border border-slate-700/50 rounded-xl text-sky-400 hover:bg-sky-500/10 transition-colors"><Send className="w-4 h-4" /></button>
+                                  <button onClick={() => shareContent(phone, 'copy')} className="p-2 bg-slate-800/80 border border-slate-700/50 rounded-xl text-slate-200 hover:bg-slate-700 transition-colors"><Copy className="w-4 h-4" /></button>
                                 </div>
-                                <a href={phone.official_link} target="_blank" className="text-[9px] text-sky-400 font-black px-4 py-2 border border-sky-500/30 rounded-xl flex items-center gap-2 hover:bg-sky-500/5">المواصفات الرسمية <ExternalLink className="w-3 h-3" /></a>
+                                <a href={phone.official_specs_link} target="_blank" className="text-[10px] text-sky-400 font-black px-5 py-2.5 border border-sky-500/30 rounded-2xl flex items-center gap-2 hover:bg-sky-500/10 transition-all shadow-lg shadow-sky-500/5">المواصفات الرسمية <ExternalLink className="w-3.5 h-3.5" /></a>
                             </div>
                          </div>
                        ))}
