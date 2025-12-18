@@ -8,7 +8,7 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  ShieldCheck, HelpCircle, MessageCircle, Globe, Facebook, Instagram, Share2, List
+  MessageCircle, Facebook, Instagram
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
 
@@ -16,9 +16,9 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
 
 const CACHE_KEYS = {
-  JOBS: 'techtouch_jobs_v8',
-  AI_NEWS: 'techtouch_ai_v8',
-  PHONE_NEWS: 'techtouch_phones_v8'
+  JOBS: 'techtouch_jobs_v9',
+  AI_NEWS: 'techtouch_ai_v9',
+  PHONE_NEWS: 'techtouch_phones_v9'
 };
 
 const App: React.FC = () => {
@@ -55,7 +55,7 @@ const App: React.FC = () => {
 
   const callGroqAPI = async (prompt: string) => {
     const apiKey = process.env.API_KEY;
-    if (!apiKey) throw new Error("مفتاح API غير متوفر.");
+    if (!apiKey) throw new Error("مفتاح API غير متوفر. يرجى التأكد من إعدادات VITE_GROQ_API_KEY.");
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -63,7 +63,10 @@ const App: React.FC = () => {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: "أنت محرر تقني عراقي محترف. تلتزم بالتعليمات الصارمة حول طول المحتوى وصحة الروابط (رسمية وحقيقية 100%). الرد دائماً JSON." },
+          { 
+            role: 'system', 
+            content: "أنت محرر تقني عراقي محترف. تلتزم بالتعليمات الصارمة حول طول المحتوى (5 أسطر للأخبار) وصحة الروابط (رسمية وحقيقية 100% من مواقع الوزارات أو تويتر X الرسمي). الرد دائماً بصيغة JSON." 
+          },
           { role: 'user', content: prompt }
         ],
         response_format: { type: 'json_object' },
@@ -71,7 +74,7 @@ const App: React.FC = () => {
       }),
     });
 
-    if (!response.ok) throw new Error("فشل الاتصال بـ Groq.");
+    if (!response.ok) throw new Error("فشل الاتصال بـ Groq API.");
     const result = await response.json();
     return JSON.parse(result.choices[0].message.content);
   };
@@ -95,11 +98,11 @@ const App: React.FC = () => {
     try {
       let prompt = "";
       if (type === 'jobs') {
-        prompt = `قائمة بـ 8 وظائف عراقية حقيقية من مواقع وزارات أو تويتر رسمي وزارات لتاريخ ${formattedDate}. العنوان سطر واحد. المحتوى بحد أقصى 5 أسطر. الرابط رسمي ومؤكد 100%. التنسيق: {"data": [{"title": "...", "ministry": "...", "date": "...", "description": "...", "url": "..."}]}`;
+        prompt = `قائمة بـ 8 وظائف عراقية حقيقية وصارمة من مواقع وزارات أو حسابات X (تويتر) الرسمية حصراً لتاريخ ${formattedDate}. العنوان سطر واحد فقط. المحتوى 5 أسطر كحد أقصى. الرابط يجب أن يكون صحيحاً ومباشراً للتعيين 100%. التنسيق: {"data": [{"title": "...", "ministry": "...", "date": "...", "description": "...", "url": "..."}]}`;
       } else if (type === 'ai-news') {
-        prompt = `أهم 8 أخبار ذكاء اصطناعي عالمية. العنوان سطر واحد. المحتوى يجب أن يكون 5 أسطر بالضبط. الرابط يخص أدوات AI. التنسيق: {"data": [{"title": "...", "description": "السطر 1\\nالسطر 2\\nالسطر 3\\nالسطر 4\\nالسطر 5", "url": "..."}]}`;
+        prompt = `أهم 8 أخبار تقنية وذكاء اصطناعي. العنوان سطر واحد. المحتوى (description) يجب أن يتكون من 5 أسطر بالضبط. الرابط يخص أداة الذكاء الاصطناعي المذكورة. التنسيق: {"data": [{"title": "...", "description": "سطر1\\nسطر2\\nسطر3\\nسطر4\\nسطر5", "url": "..."}]}`;
       } else if (type === 'phone-news') {
-        prompt = `أحدث 8 هواتف ذكية 2024-2025. التنسيق: {"phones": [{"title": "اسم الهاتف", "manufacturer": "الشركة", "launchYear": "السنة", "specsPoints": ["نقطة 1", "نقطة 2", "نقطة 3", "نقطة 4"], "imageUrl": "رابط صورة", "url": "رابط مواصفات"}], "stats": [{"name": "شركة", "marketShare": "نسبة", "details": "تفاصيل بسيطة"}]}`;
+        prompt = `أحدث 8 هواتف ذكية تم إطلاقها. التنسيق: {"phones": [{"title": "اسم الهاتف", "manufacturer": "الشركة", "launchYear": "سنة الصنع", "specsPoints": ["ميزة 1", "ميزة 2", "ميزة 3", "ميزة 4", "ميزة 5"], "imageUrl": "رابط مباشر لصورة الهاتف", "url": "رابط المواصفات"}], "stats": [{"name": "اسم الشركة", "marketShare": "نسبة المبيعات", "details": "سبب التفوق باختصار"}]}`;
       }
 
       const result = await callGroqAPI(prompt);
@@ -111,7 +114,7 @@ const App: React.FC = () => {
       else if (type === 'phone-news') { setPhoneNews(data.phones); setSalesStats(data.stats); }
 
     } catch (err: any) {
-      setError(err.message || "فشل جلب البيانات.");
+      setError(err.message || "فشل في جلب البيانات.");
     } finally {
       setLoading(false);
     }
@@ -122,32 +125,36 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await callGroqAPI(`قارن بين ${phone1} و ${phone2}. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`);
+      const result = await callGroqAPI(`قارن تقنياً بين ${phone1} و ${phone2}. التنسيق: {"specs": [{"feature": "...", "phone1": "...", "phone2": "..."}], "betterPhone": "...", "verdict": "..."}`);
       setComparisonResult(result);
-    } catch (err: any) { setError("فشلت المقارنة."); } finally { setLoading(false); }
+    } catch (err: any) { setError("فشل تحليل المقارنة."); } finally { setLoading(false); }
   };
 
   const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
-    const text = `🔹 ${item.title}\n${item.description || item.specsPoints?.join('\n') || ''}\n🔗 ${item.url}\n#Techtouch`;
+    const contentText = item.description || (item.specsPoints ? `المواصفات:\n- ${item.specsPoints.join('\n- ')}` : '');
+    const fullText = `🔹 ${item.title}\n\n${contentText}\n\n🔗 الرابط: ${item.url}\n\n#Techtouch`;
+    
     if (platform === 'copy') {
-      navigator.clipboard.writeText(text);
-      alert('تم النسخ!');
+      navigator.clipboard.writeText(fullText);
+      alert('تم نسخ كامل المحتوى بنجاح!');
     } else if (platform === 'tg') {
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(item.url)}&text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(item.url)}&text=${encodeURIComponent(fullText)}`, '_blank');
     } else if (platform === 'fb') {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(item.url)}`, '_blank');
-    } else {
-      alert("يرجى نسخ المحتوى ومشاركته يدوياً على إنستغرام (قصص أو منشورات).");
+    } else if (platform === 'insta') {
+      navigator.clipboard.writeText(fullText);
+      alert('تم نسخ المحتوى! يمكنك الآن لصقه في Instagram (ستوري أو منشور).');
     }
   };
 
-  const copyPhoneName = (name: string) => {
-    navigator.clipboard.writeText(name);
-    alert(`تم نسخ: ${name}`);
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert(`تم النسخ: ${text}`);
   };
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right" dir="rtl">
+      {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4"></div>
@@ -185,21 +192,23 @@ const App: React.FC = () => {
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4">
                   <MessageCircle className="w-6 h-6" />
-                  <h2 className="font-black text-lg uppercase tracking-tight">دليل بوت الطلبات</h2>
+                  <h2 className="font-black text-lg uppercase tracking-tight">بخصوص بوت الطلبات على التيليكرام</h2>
                 </div>
                 
                 <div className="space-y-6">
-                  <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95 mb-6">
+                  <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95">
                     <Send className="w-5 h-5" />
                     <span>الدخول لبوت الطلبات</span>
                   </a>
 
-                  <div className="space-y-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                    <p className="text-slate-200 text-sm font-bold flex items-center gap-2">✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
-                    <p className="text-slate-200 text-sm font-bold flex items-center gap-2">✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
+                  <div className="space-y-4 bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50">
+                    <p className="text-slate-200 text-sm font-bold leading-relaxed">✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
+                    <p className="text-slate-200 text-sm font-bold leading-relaxed">✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
                   </div>
 
-                  <p className="text-emerald-400 text-[11px] font-black leading-relaxed">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <p className="text-emerald-400 text-[11px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+                  </div>
 
                   <div className="space-y-4 pt-4 border-t border-slate-700/50">
                     <h3 className="text-sky-400 font-black text-sm uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
@@ -210,7 +219,7 @@ const App: React.FC = () => {
                         "٣. استخدم أمر البحث بكتابة كلمة \"بحث\" متبوع باسم التطبيق (مثلاً: بحث ياسين).",
                         "٤. للاعلان في القناة تواصل من خلال البوت"
                       ].map((item, i) => (
-                        <li key={i} className="text-slate-400 text-xs font-bold leading-relaxed pr-2 border-r-2 border-slate-700">{item}</li>
+                        <li key={i} className="text-slate-400 text-xs font-bold leading-relaxed pr-3 border-r-2 border-slate-700">{item}</li>
                       ))}
                     </ul>
                   </div>
@@ -219,7 +228,7 @@ const App: React.FC = () => {
                     <p className="text-red-400 text-[10px] font-black text-center">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
                   </div>
 
-                  <p className="text-slate-500 text-center font-black text-xs pt-4">في النهاية دمتم برعاية الله</p>
+                  <p className="text-slate-500 text-center font-black text-xs pt-6">في النهاية دمتم برعاية الله</p>
                 </div>
               </div>
             </div>
@@ -230,9 +239,9 @@ const App: React.FC = () => {
               {activeToolView === 'main' ? (
                 <div className="grid gap-3">
                   {[
-                    { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'وظائف العراق', desc: 'تحديثات حكومية رسمية' },
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'الأخبار التقنية', desc: 'جديد الذكاء الاصطناعي' },
-                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'أخبار الهواتف', desc: 'مواصفات وإحصائيات المبيعات' },
+                    { id: 'jobs', icon: Briefcase, color: 'emerald', title: 'وظائف العراق', desc: 'صارم وموثق من المواقع الرسمية' },
+                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'الأخبار التقنية', desc: 'جديد أدوات الذكاء الاصطناعي' },
+                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'أخبار الهواتف', desc: 'مواصفات وإحصائيات الشركات' },
                     { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة ذكية', desc: 'تحليل فني دقيق' }
                   ].map((tool) => (
                     <button key={tool.id} onClick={() => tool.id === 'comparison' ? setActiveToolView('comparison') : fetchToolData(tool.id as ToolView)} className="group flex items-center p-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-md active:scale-95">
@@ -253,18 +262,18 @@ const App: React.FC = () => {
                   </div>
 
                   {loading ? (
-                    <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري جلب البيانات عبر Groq...</p></div>
+                    <div className="py-24 flex flex-col items-center gap-3"><Loader2 className="w-10 h-10 text-sky-400 animate-spin" /><p className="text-[10px] text-slate-500 font-black animate-pulse">جاري الاستعلام من Groq...</p></div>
                   ) : error ? (
-                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6"><AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" /><p className="text-[10px] text-slate-300 font-bold">{error}</p></div>
+                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6"><AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" /><p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p></div>
                   ) : activeToolView === 'jobs' ? (
                     <div className="space-y-4">
                       {jobs.map((job, i) => (
                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-lg border-r-4 border-r-emerald-500/50">
-                          <h3 className="text-[11px] font-black text-emerald-400 mb-2 leading-none border-b border-slate-700 pb-2">{job.title}</h3>
-                          <p className="text-[10px] text-slate-400 leading-relaxed mb-4 font-bold whitespace-pre-line">{job.description}</p>
+                          <h3 className="text-[11px] font-black text-emerald-400 mb-2 leading-none border-b border-slate-700 pb-2 truncate">{job.title}</h3>
+                          <p className="text-[10px] text-slate-300 leading-relaxed mb-4 font-bold whitespace-pre-line">{job.description}</p>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
                             <button onClick={() => shareContent(job, 'copy')} className="flex items-center gap-1.5 p-2 bg-slate-700 rounded-lg text-slate-200 text-[9px] font-black hover:bg-slate-600"><Copy className="w-3.5 h-3.5" /> نسخ الإعلان</button>
-                            <a href={job.url} target="_blank" className="text-[9px] font-black px-4 py-2 bg-emerald-500 text-white rounded-lg flex items-center gap-1.5">رابط رسمي <ExternalLink className="w-3 h-3" /></a>
+                            <a href={job.url} target="_blank" className="text-[9px] font-black px-4 py-2 bg-emerald-500 text-white rounded-lg flex items-center gap-1.5">الرابط الرسمي <ExternalLink className="w-3 h-3" /></a>
                           </div>
                         </div>
                       ))}
@@ -274,7 +283,7 @@ const App: React.FC = () => {
                       {aiNews.map((n, i) => (
                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-4 rounded-2xl shadow-md border-r-4 border-r-indigo-500/50">
                           <h3 className="text-[11px] font-black text-sky-400 mb-3 border-b border-slate-700 pb-2 truncate">{n.title}</h3>
-                          <p className="text-[10px] text-slate-400 mb-4 leading-relaxed font-bold whitespace-pre-line h-[80px]">{n.description}</p>
+                          <p className="text-[10px] text-slate-300 mb-4 leading-relaxed font-bold whitespace-pre-line min-h-[75px]">{n.description}</p>
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50">
                             <div className="flex gap-2">
                               <button onClick={() => shareContent(n, 'fb')} className="p-2 bg-blue-600/10 text-blue-400 rounded-lg"><Facebook className="w-3.5 h-3.5" /></button>
@@ -282,7 +291,7 @@ const App: React.FC = () => {
                               <button onClick={() => shareContent(n, 'tg')} className="p-2 bg-sky-500/10 text-sky-400 rounded-lg"><Send className="w-3.5 h-3.5" /></button>
                               <button onClick={() => shareContent(n, 'copy')} className="p-2 bg-slate-700 text-slate-200 rounded-lg"><Copy className="w-3.5 h-3.5" /></button>
                             </div>
-                            <a href={n.url} target="_blank" className="text-[9px] text-indigo-400 font-black px-3 py-2 border border-indigo-500/30 rounded-lg">المصدر</a>
+                            <a href={n.url} target="_blank" className="text-[9px] text-indigo-400 font-black px-3 py-2 border border-indigo-500/30 rounded-lg">رابط الأداة</a>
                           </div>
                         </div>
                       ))}
@@ -293,12 +302,12 @@ const App: React.FC = () => {
                          <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-2xl shadow-md border-r-4 border-r-sky-500/50">
                             <div className="flex items-center justify-between mb-3 border-b border-slate-700 pb-3">
                               <h3 className="text-[12px] font-black text-sky-400">{phone.title}</h3>
-                              <button onClick={() => copyPhoneName(phone.title)} className="p-2 bg-sky-500/10 text-sky-400 rounded-lg hover:bg-sky-500/20 transition-all"><Copy className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => copyText(phone.title)} className="p-2 bg-sky-500/10 text-sky-400 rounded-lg hover:bg-sky-500/20"><Copy className="w-3.5 h-3.5" /></button>
                             </div>
                             <div className="flex gap-4 text-[9px] text-slate-500 font-black mb-4 uppercase tracking-tighter">
                               <span>الشركة: {phone.manufacturer}</span>
                               <span className="w-px h-3 bg-slate-700"></span>
-                              <span>السنة: {phone.launchYear}</span>
+                              <span>سنة الصنع: {phone.launchYear}</span>
                             </div>
                             <ul className="space-y-2 mb-4 bg-slate-900/40 p-4 rounded-xl border border-slate-700/30">
                               {phone.specsPoints.map((point, idx) => (
@@ -319,19 +328,20 @@ const App: React.FC = () => {
                          </div>
                        ))}
                        
+                       {/* Sales Statistics Section */}
                        <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl">
-                          <div className="flex items-center gap-2 text-emerald-400 mb-4">
+                          <div className="flex items-center gap-2 text-emerald-400 mb-4 border-b border-slate-700/50 pb-3">
                             <TrendingUp className="w-5 h-5" />
-                            <h3 className="text-[12px] font-black uppercase">إحصائيات مبيعات الشركات 2024</h3>
+                            <h3 className="text-[12px] font-black uppercase">إحصائيات أكثر الشركات مبيعاً للهواتف</h3>
                           </div>
                           <div className="space-y-4">
                              {salesStats.map((stat, i) => (
-                               <div key={i} className="flex flex-col gap-1 border-b border-slate-700/50 pb-3 last:border-0">
+                               <div key={i} className="flex flex-col gap-1 border-b border-slate-700/30 pb-3 last:border-0">
                                   <div className="flex justify-between items-center">
                                     <span className="text-[11px] font-black text-slate-100">{stat.name}</span>
                                     <span className="text-[11px] font-black text-emerald-400">{stat.marketShare}</span>
                                   </div>
-                                  <p className="text-[9px] text-slate-500 font-bold">{stat.details}</p>
+                                  <p className="text-[9px] text-slate-500 font-bold leading-relaxed">{stat.details}</p>
                                </div>
                              ))}
                           </div>
