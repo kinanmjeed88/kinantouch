@@ -15,9 +15,14 @@ export interface SocialData {
 }
 
 export interface AINewsItem {
+  id: string;
+  tool_name: string;
+  category: string;
   title: string;
-  description: string;
-  url: string;
+  content: string[]; // بالضبط 4 أسطر
+  update_type: string;
+  news_date: string; // YYYY-MM-DD
+  official_link: string;
 }
 
 export interface PhoneNewsItem {
