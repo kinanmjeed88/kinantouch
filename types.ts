@@ -34,6 +34,8 @@ export interface JobItem {
   date: string;
   description: string;
   url: string;
+  announcement_type: 'informational' | 'actionable';
+  is_link_verified: boolean;
 }
 
 export interface PhoneSpec {
