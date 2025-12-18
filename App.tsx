@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
@@ -6,8 +5,8 @@ import { SocialLinks } from './components/SocialLinks';
 import { 
   Home, Info, AlertTriangle, 
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
-  AlertCircle, Facebook, Send, Search, MessageSquare, ExternalLink,
-  Briefcase, Copy, TrendingUp, ChevronDown, ChevronUp, CheckCircle2, XCircle
+  AlertCircle, Send, Search, ExternalLink,
+  Briefcase, Copy, TrendingUp, ChevronDown, ChevronUp, CheckCircle2
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, JobItem } from './types';
@@ -140,7 +139,6 @@ const App: React.FC = () => {
     }
 
     try {
-      // Initialize GoogleGenAI right before the call using the environment variable
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -168,7 +166,6 @@ const App: React.FC = () => {
     setLoading(true);
     setComparisonResult(null);
     try {
-      // Initialize GoogleGenAI right before the call using the environment variable
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -277,17 +274,19 @@ const App: React.FC = () => {
             <div className="animate-fade-in">
               {activeToolView === 'main' ? (
                 <div className="grid gap-4">
-                  {/* 1. وظائف (تجريبي) */}
-                  <button onClick={() => fetchToolData('jobs')} className="group flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all text-right shadow-xl">
-                    <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center ml-4 group-hover:bg-emerald-500/20 transition-colors"><Briefcase className="w-6 h-6 text-emerald-400" /></div>
-                    <div className="flex-grow pr-1 text-right">
-                      <div className="flex items-center gap-2 justify-end">
+                  {/* 1. تجريبي: أخبار الوظائف والتعيينات - محاذاة يسار بطلب المستخدم */}
+                  <button onClick={() => fetchToolData('jobs')} className="group flex flex-row p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-xl items-center">
+                    <div className="flex-shrink-0 w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors ml-4">
+                      <Briefcase className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div className="flex-grow text-left">
+                      <div className="flex items-center gap-2 justify-end mb-0.5">
                         <span className="text-[8px] bg-red-600/20 text-red-400 px-2 py-0.5 rounded-full font-black border border-red-600/30">تجريبي</span>
                         <h3 className="text-sm font-bold">أخبار الوظائف والتعيينات</h3>
                       </div>
-                      <p className="text-[10px] text-slate-400">تحديثات رسمية لليوم {formattedDate}</p>
+                      <p className="text-[10px] text-slate-400">نشر ما يخص التعيينات والوظائف في العراق</p>
                     </div>
-                    <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400" />
+                    <ArrowRight className="w-4 h-4 rotate-180 text-slate-600 group-hover:text-sky-400 mr-2" />
                   </button>
 
                   {/* 2. أخبار الذكاء الاصطناعي */}
