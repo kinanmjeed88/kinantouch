@@ -8,9 +8,9 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, Search, ExternalLink,
   Briefcase, Copy, TrendingUp,
-  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap, Star
+  MessageCircle, Facebook, Instagram, Calendar, BadgeCheck, Clock, Zap, Star, CheckCircle2
 } from 'lucide-react';
-import { AINewsItem, AIFallbackHighlight, AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
+import { AINewsResponse, PhoneComparisonResult, PhoneNewsItem, JobItem, CompanySalesStat } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'jobs';
