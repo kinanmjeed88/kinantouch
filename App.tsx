@@ -477,7 +477,7 @@ const App: React.FC = () => {
                      </div>
                   </div>
                </button>
-               {/* ... Other tool buttons (same as before) ... */}
+               {/* ... Other tool buttons ... */}
                <button onClick={() => fetchToolData('phone-news')} className="group p-5 bg-slate-800/40 border border-sky-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
                   <div className="flex flex-col items-start gap-3">
                      <div className="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center text-sky-400"><Smartphone className="w-5 h-5" /></div>
@@ -515,22 +515,16 @@ const App: React.FC = () => {
                      {loading && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
                      {aiNews.map((news, idx) => (
                        <div key={idx} className="bg-slate-800/40 border border-violet-500/20 rounded-2xl p-5 shadow-sm">
-                          {/* Title - Single line, full text */}
                           <h3 className={titleStyle}>{news.title}</h3>
-                          
-                          {/* 5 Lines of Content */}
                           <ul className="list-disc list-inside space-y-1.5 mb-4 border-b border-slate-700/30 pb-4">
                             {news.summary.slice(0, 5).map((point, i) => (
                               <li key={i} className="text-xs text-slate-300 leading-relaxed marker:text-violet-500">{point}</li>
                             ))}
                           </ul>
-
-                          {/* Official Site Button */}
                           <a href={news.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
                              <span>الموقع الرسمي</span>
                              <ExternalLink className="w-4 h-4" />
                           </a>
-
                           <ShareToolbar title={news.title} text={news.summary.join('\n')} url={news.official_link} />
                        </div>
                      ))}
@@ -545,7 +539,6 @@ const App: React.FC = () => {
                         <button onClick={handlePhoneSearch} className="bg-sky-500 text-white w-12 h-12 rounded-xl flex items-center justify-center">{searchLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <Search className="w-5 h-5"/>}</button>
                      </div>
                      
-                     {/* Detailed Search Result */}
                      {phoneSearchResult ? (
                         <div className="bg-slate-800/60 border border-sky-500/30 p-5 rounded-3xl animate-fade-in relative shadow-2xl">
                            <button onClick={() => setPhoneSearchResult(null)} className="absolute top-4 left-4 p-1 bg-slate-700/50 rounded-full text-slate-300 hover:text-white"><X className="w-4 h-4" /></button>
@@ -559,7 +552,6 @@ const App: React.FC = () => {
                            </div>
 
                            <div className="space-y-6">
-                              {/* Spec Details ... */}
                               {Object.entries(phoneSearchResult.specifications).length > 0 ? (
                                  SPEC_ORDER.map((key) => {
                                    if (!phoneSearchResult.specifications[key]) return null;
@@ -577,7 +569,6 @@ const App: React.FC = () => {
                               )}
                            </div>
 
-                           {/* Official Button */}
                            {phoneSearchResult.official_specs_link && (
                               <a href={phoneSearchResult.official_specs_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-xl transition-all mt-6 text-sm">
                                  <span>الموقع الرسمي</span>
@@ -611,7 +602,83 @@ const App: React.FC = () => {
                      )}
                   </div>
                 )}
-                {/* ... other views unchanged ... */}
+
+                {/* Comparison View - RE-ADDED to fix build errors */}
+                {activeToolView === 'comparison' && (
+                   <div className="space-y-4">
+                      <div className="bg-slate-800/40 p-5 rounded-2xl space-y-3 border border-slate-700/50">
+                          <h3 className="text-center font-bold text-white mb-2">مقارنة شاملة</h3>
+                          <div className="flex gap-2">
+                            <input value={phone1} onChange={e=>setPhone1(e.target.value)} placeholder="الهاتف الأول" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm focus:border-emerald-500 outline-none text-center"/>
+                            <span className="self-center font-bold text-slate-500">VS</span>
+                            <input value={phone2} onChange={e=>setPhone2(e.target.value)} placeholder="الهاتف الثاني" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm focus:border-emerald-500 outline-none text-center"/>
+                          </div>
+                          <button onClick={handleComparePhones} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3.5 rounded-xl font-bold transition-colors shadow-lg shadow-emerald-900/20">{loading ? <Loader2 className="animate-spin w-5 h-5 mx-auto"/> : 'بدء المقارنة التفصيلية'}</button>
+                      </div>
+
+                      {comparisonResult && (
+                         <div className="bg-slate-800/60 border border-emerald-500/30 p-4 rounded-2xl animate-fade-in">
+                            <h4 className="font-black text-center text-xl mb-6 text-white bg-slate-900/50 py-2 rounded-xl border border-slate-700/50">
+                               <span className="text-emerald-400">{comparisonResult.phone1_name}</span> <span className="text-slate-500 text-sm mx-2">ضد</span> <span className="text-sky-400">{comparisonResult.phone2_name}</span>
+                            </h4>
+                            
+                            <div className="space-y-1">
+                               {comparisonResult.comparison_points.map((point, i) => (
+                                  <div key={i} className="grid grid-cols-[1fr,auto,1fr] gap-2 text-xs border-b border-slate-700/50 py-3 last:border-0 items-center">
+                                      {/* Phone 1 Value */}
+                                      <div className={`text-left pl-1 leading-relaxed ${point.winner === 1 ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
+                                         {point.phone1_val}
+                                      </div>
+                                      
+                                      {/* Feature Label */}
+                                      <div className="bg-slate-900 px-2 py-1 rounded text-[10px] text-slate-500 font-bold whitespace-nowrap self-start mt-0.5">
+                                         {point.feature}
+                                      </div>
+
+                                      {/* Phone 2 Value */}
+                                      <div className={`text-right pr-1 leading-relaxed ${point.winner === 2 ? 'text-sky-400 font-bold' : 'text-slate-300'}`}>
+                                         {point.phone2_val}
+                                      </div>
+                                  </div>
+                               ))}
+                            </div>
+
+                            <div className="mt-6 bg-emerald-900/10 border border-emerald-500/20 p-4 rounded-xl">
+                               <h5 className="font-bold text-emerald-500 mb-2 text-sm">الخلاصة:</h5>
+                               <p className="text-xs text-slate-200 leading-relaxed">{comparisonResult.verdict}</p>
+                            </div>
+
+                            <ShareToolbar 
+                               title={`مقارنة: ${comparisonResult.phone1_name} vs ${comparisonResult.phone2_name}`} 
+                               text={comparisonResult.verdict} 
+                               url="" 
+                            />
+                         </div>
+                      )}
+                   </div>
+                )}
+
+                {/* Stats View - RE-ADDED to fix build errors */}
+                {activeToolView === 'stats' && (
+                   <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <input value={statsQuery} onChange={e=>setStatsQuery(e.target.value)} placeholder="أكثر الهواتف مبيعا..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm outline-none" />
+                        <button onClick={handleStatsRequest} className="bg-pink-500 text-white p-3 rounded-xl">{statsLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <PieChart className="w-5 h-5"/>}</button>
+                      </div>
+                      {statsResult && (
+                         <div className="bg-slate-800/40 p-4 rounded-2xl border border-pink-500/20">
+                            <h3 className="font-bold text-white mb-4 truncate">{statsResult.title}</h3>
+                            {statsResult.data.map((d,i)=>(
+                               <div key={i} className="mb-3">
+                                  <div className="flex justify-between text-xs mb-1"><span className="text-slate-300 truncate max-w-[70%]">{d.label}</span><span className="text-pink-400 font-bold">{d.displayValue}</span></div>
+                                  <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div style={{width:`${d.value}%`, backgroundColor:d.color}} className="h-full rounded-full"/></div>
+                               </div>
+                            ))}
+                            <ShareToolbar title={statsResult.title} text={statsResult.description} url="" />
+                         </div>
+                      )}
+                   </div>
+                )}
              </div>
           )}
 
