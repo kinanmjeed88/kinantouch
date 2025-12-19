@@ -15,10 +15,10 @@ export interface SocialData {
 }
 
 export interface AINewsItem {
-  tool_name?: string; // Optional now as strictly mapped from title
+  tool_name?: string;
   title: string;
-  summary: string[]; // Mapped from 'content' in new schema
-  date?: string; // Optional, derived from context if needed
+  summary: string[];
+  date?: string;
   official_link: string;
 }
 
@@ -26,38 +26,26 @@ export interface PhoneNewsItem {
   phone_name: string;
   brand: string;
   release_date: string;
-  specifications: {
-    networks?: string;
-    dimensions?: string;
-    weight?: string;
-    materials?: string;
-    water_resistance?: string;
-    display?: string;
-    processor?: string;
-    gpu?: string;
-    memory_storage?: string;
-    rear_cameras?: string;
-    front_camera?: string;
-    video?: string;
-    battery_charging?: string;
-    operating_system?: string;
-    connectivity?: string;
-    sensors?: string;
-    colors?: string;
-    [key: string]: string | undefined;
-  };
+  // Flexible key-value pair for detailed specs
+  specifications: Record<string, string>;
   price_usd: string;
-  official_specs_link?: string; // Mapped from generic link if needed
-  iraqi_price_source?: string; // Mapped from price_source
+  official_specs_link?: string;
+  iraqi_price_source?: string;
   pros: string[];
   cons: string[];
   copy_payload?: string;
 }
 
 export interface PhoneComparisonResult {
-  specs: { feature: string; phone1: string; phone2: string }[];
+  phone1_name: string;
+  phone2_name: string;
+  comparison_points: {
+    feature: string;
+    phone1_val: string;
+    phone2_val: string;
+    winner?: 1 | 2 | 0; // 0 for tie/neutral
+  }[];
   verdict: string;
-  betterPhone: string;
 }
 
 export interface StatsResult {
