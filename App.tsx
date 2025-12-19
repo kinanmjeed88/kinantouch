@@ -9,17 +9,16 @@ import {
   Copy,
   MessageCircle, Facebook, BadgeCheck, Zap,
   ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
-  Download, Star, X
+  Download, X
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
-type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'best-phones';
+type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
   AI_NEWS: 'techtouch_ai_v45',
-  PHONE_NEWS: 'techtouch_phones_v45',
-  BEST_PHONES: 'techtouch_best_v45'
+  PHONE_NEWS: 'techtouch_phones_v45'
 };
 
 const App: React.FC = () => {
@@ -29,7 +28,6 @@ const App: React.FC = () => {
   
   const [aiNews, setAiNews] = useState<AINewsItem[]>([]);
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
-  const [bestPhones, setBestPhones] = useState<PhoneNewsItem[]>([]); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -121,14 +119,12 @@ const App: React.FC = () => {
     let cacheKey = '';
     if (type === 'ai-news') cacheKey = CACHE_KEYS.AI_NEWS;
     else if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
-    else if (type === 'best-phones') cacheKey = CACHE_KEYS.BEST_PHONES;
 
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
 
     if (cached) {
       if (type === 'ai-news') setAiNews(cached.ai_news || []);
       else if (type === 'phone-news') setPhoneNews(cached.smartphones || []);
-      else if (type === 'best-phones') setBestPhones(cached.smartphones || []);
       setLoading(false);
       return;
     }
@@ -191,8 +187,8 @@ These titles and descriptions are FIXED and must appear exactly as written:
 1. Title: "أخبار الذكاء الاصطناعي"
    Description: "آخر التحديثات والنماذج الجديدة"
 
-2. Title: "أفضل هواتف السنة"
-   Description: "قائمة بأقوى الهواتف للعام"
+2. Title: "عالم الهواتف"
+   Description: "أحدث الأجهزة والمواصفات"
 
 3. Title: "مقارنة تقنية"
    Description: "قارن بين أي جهازين بالتفصيل"
@@ -249,7 +245,7 @@ SECTION 1: AI NEWS
 If the tool version is NOT explicitly stated on the official site → REJECT the item.
 
 ================================================
-SECTION 2: BEST SMARTPHONES OF THE YEAR
+SECTION 2: PHONE WORLD
 ================================================
 
 ⏱ Time Window:
@@ -314,6 +310,40 @@ SECTION 3: TECHNICAL COMPARISON
 - No additional content generation.
 
 ================================================
+WEB SEARCH REQUIREMENT (MANDATORY)
+================================================
+
+You MUST actively search the web before generating any content.
+
+You are NOT allowed to:
+- Rely on internal knowledge
+- Reuse previous answers
+- Infer updates without verification
+
+------------------------------------------------
+ANTI-FABRICATION GUARANTEE
+------------------------------------------------
+
+You must behave as a verification system, not a writer.
+
+If web search results are:
+- Incomplete
+- Contradictory
+- Unclear
+- Based on rumors
+
+→ Output an empty array [] for that section.
+
+------------------------------------------------
+FINAL RULE
+------------------------------------------------
+
+Accuracy > Quantity
+
+It is ALWAYS acceptable to show fewer items or no items
+if and only if verified web-based official data is not available.
+
+================================================
 FINAL OUTPUT FORMAT (STRICT)
 ================================================
 
@@ -364,9 +394,7 @@ Any item that:
       if (type === 'ai-news') {
         userPrompt = `Execute Section 1: AI News. Return JSON with key "ai_news".`;
       } else if (type === 'phone-news') {
-        userPrompt = `Execute Section 2: Best Smartphones (Latest releases). Return JSON with key "best_smartphones".`;
-      } else if (type === 'best-phones') {
-        userPrompt = `Execute Section 2: Best Smartphones of the Year (Top Rated). Return JSON with key "best_smartphones".`;
+        userPrompt = `Execute Section 2: Best Smartphones (Latest releases / Phone World). Return JSON with key "best_smartphones".`;
       }
 
       const result = await callGroqAPI(userPrompt, systemInstruction);
@@ -382,7 +410,7 @@ Any item that:
         }));
         saveToCache(cacheKey, { ai_news: mappedAI });
         setAiNews(mappedAI);
-      } else if ((type === 'phone-news' || type === 'best-phones') && result.best_smartphones) {
+      } else if (type === 'phone-news' && result.best_smartphones) {
         const mappedPhones = result.best_smartphones.map((item: any) => ({
           phone_name: item.phone_name,
           brand: item.brand,
@@ -395,8 +423,7 @@ Any item that:
           cons: item.cons
         }));
         saveToCache(cacheKey, { smartphones: mappedPhones });
-        if (type === 'phone-news') setPhoneNews(mappedPhones);
-        else setBestPhones(mappedPhones);
+        setPhoneNews(mappedPhones);
       }
 
     } catch (err: any) {
@@ -509,29 +536,56 @@ Any item that:
           {activeTab === 'home' && telegramChannels.map((ch, i) => <ChannelCard key={ch.id} channel={ch} index={i} />)}
           
           {activeTab === 'info' && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
-                <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4 overflow-hidden">
-                  <MessageCircle className="w-6 h-6 shrink-0" />
-                  <h2 className="font-black text-sm sm:text-base uppercase tracking-tight whitespace-nowrap overflow-hidden text-ellipsis flex-1">بوت الطلبات على التيليكرام</h2>
-                </div>
-                
-                <div className="space-y-5">
-                  <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-sky-500/20 group">
-                    <Send className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
-                    <span>تشغيل البوت</span>
-                  </a>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 text-center">
-                       <Zap className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-                       <span className="text-xs font-bold text-slate-300">رد سريع</span>
-                    </div>
-                    <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 text-center">
-                       <ShieldCheck className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
-                       <span className="text-xs font-bold text-slate-300">آمن 100%</span>
-                    </div>
+                <div className="space-y-5 text-right">
+                  {/* Header + Button */}
+                  <div className="flex flex-col gap-4">
+                     <h3 className="text-lg font-bold text-sky-400 text-center sm:text-right">بخصوص بوت الطلبات على التيليكرام</h3>
+                     <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-sky-500/20 group">
+                       <Send className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                       <span>الدخول لبوت الطلبات</span>
+                     </a>
                   </div>
+
+                  {/* Rules List */}
+                  <ul className="space-y-3 text-sm text-slate-300">
+                    <li className="flex items-start gap-2">
+                      <span className="text-sky-500 font-bold mt-1">✪</span>
+                      <span className="leading-relaxed">ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-sky-500 font-bold mt-1">✪</span>
+                      <span className="leading-relaxed">لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</span>
+                    </li>
+                  </ul>
+
+                  {/* Note */}
+                  <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-700/50 text-center">
+                    <p className="text-xs text-amber-400 font-bold leading-relaxed">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+                  </div>
+
+                  {/* Search Methods */}
+                  <div className="space-y-3 pt-2">
+                    <h4 className="font-bold text-slate-200 border-b border-slate-700/50 pb-2 mb-3">طرق البحث المتاحة في قنوات المناقشات في التيليكرام:</h4>
+                    <ol className="list-decimal list-inside space-y-2 text-xs sm:text-sm text-slate-300 marker:text-sky-500 marker:font-bold">
+                      <li className="leading-relaxed"><span className="text-slate-400">ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</span></li>
+                      <li className="leading-relaxed"><span className="text-slate-400">اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).</span></li>
+                      <li className="leading-relaxed"><span className="text-slate-400">استخدم أمر البحث بكتابة كلمة "بحث" متبوع باسم التطبيق (مثلاً: بحث ياسين).</span></li>
+                      <li className="leading-relaxed"><span className="text-slate-400">للاعلان في القناة تواصل من خلال البوت</span></li>
+                    </ol>
+                  </div>
+
+                  {/* Warning */}
+                  <div className="flex items-start gap-3 bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl mt-2">
+                    <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-rose-300 font-medium leading-relaxed">
+                      <span className="font-bold text-rose-400">تنبيه:</span> حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا
+                    </p>
+                  </div>
+
+                  {/* Closing */}
+                  <p className="text-center text-slate-400 text-sm font-bold pt-4 border-t border-slate-700/30 mt-2">في النهاية دمتم برعاية الله</p>
                 </div>
               </div>
               
@@ -589,23 +643,6 @@ Any item that:
                      <p className="text-xs text-slate-400">قارن بين أي جهازين بالتفصيل</p>
                    </div>
                    <ArrowRight className="mr-auto text-slate-500 group-hover:text-emerald-400 group-hover:-translate-x-1 transition-all" />
-                 </div>
-               </button>
-
-               <button 
-                onClick={() => fetchToolData('best-phones')}
-                className="group relative p-6 bg-slate-800/40 border border-slate-700/50 rounded-3xl overflow-hidden transition-all hover:bg-slate-700/60"
-               >
-                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                 <div className="relative flex items-center gap-4">
-                   <div className="w-12 h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400">
-                     <Star className="w-6 h-6" />
-                   </div>
-                   <div className="text-right">
-                     <h3 className="font-bold text-lg mb-1 group-hover:text-amber-400 transition-colors">أفضل هواتف السنة</h3>
-                     <p className="text-xs text-slate-400">قائمة بأقوى الهواتف للعام</p>
-                   </div>
-                   <ArrowRight className="mr-auto text-slate-500 group-hover:text-amber-400 group-hover:-translate-x-1 transition-all" />
                  </div>
                </button>
             </div>
@@ -667,13 +704,12 @@ Any item that:
                   </div>
                 )}
 
-                {/* --- Phone News & Best Phones View --- */}
-                {(activeToolView === 'phone-news' || activeToolView === 'best-phones') && (
+                {/* --- Phone News View --- */}
+                {activeToolView === 'phone-news' && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xl font-black text-sky-400 flex items-center gap-2">
-                        {activeToolView === 'best-phones' ? <Star className="w-6 h-6 text-amber-400" /> : <Smartphone className="w-6 h-6" />}
-                        {activeToolView === 'best-phones' ? 'أفضل الهواتف 2025' : 'عالم الهواتف الذكية'}
+                         <Smartphone className="w-6 h-6" /> عالم الهواتف الذكية
                       </h2>
                       <button onClick={() => fetchToolData(activeToolView, true)} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
                         <ArrowRight className={`w-4 h-4 rotate-180 ${loading ? 'animate-spin' : ''}`} />
@@ -685,12 +721,9 @@ Any item that:
                           <Loader2 className="w-8 h-8 animate-spin mb-3" />
                           <p className="text-xs">جاري جلب البيانات...</p>
                        </div>
-                    ) : (activeToolView === 'best-phones' ? bestPhones : phoneNews).length > 0 ? (
-                       (activeToolView === 'best-phones' ? bestPhones : phoneNews).map((phone, idx) => (
+                    ) : phoneNews.length > 0 ? (
+                       phoneNews.map((phone, idx) => (
                          <div key={idx} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 shadow-lg backdrop-blur-sm overflow-hidden relative">
-                           {activeToolView === 'best-phones' && (
-                             <div className="absolute top-0 left-0 bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-br-xl shadow-lg z-10">#{idx + 1}</div>
-                           )}
                            <div className="flex justify-between items-start mb-4 pl-8">
                              <div>
                                 <h3 className="font-black text-xl text-white mb-1">{phone.phone_name}</h3>
