@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
+import { telegramChannels, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
-import { SocialLinks } from './components/SocialLinks';
 import { 
   Home, Info, 
   Wrench, Cpu, Smartphone, Loader2, ChevronLeft, 
