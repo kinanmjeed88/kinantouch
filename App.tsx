@@ -9,7 +9,7 @@ import {
   Copy,
   Facebook, BadgeCheck,
   DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
-  Download, X
+  Download, X, Search
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
 
@@ -17,7 +17,7 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v46', // Updated version key
+  AI_NEWS: 'techtouch_ai_v46',
   PHONE_NEWS: 'techtouch_phones_v46'
 };
 
@@ -34,6 +34,12 @@ const App: React.FC = () => {
   const [phone1, setPhone1] = useState('');
   const [phone2, setPhone2] = useState('');
   const [comparisonResult, setComparisonResult] = useState<PhoneComparisonResult | null>(null);
+
+  // Phone Search State
+  const [showPhoneSearch, setShowPhoneSearch] = useState(false);
+  const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
+  const [phoneSearchResult, setPhoneSearchResult] = useState<PhoneNewsItem | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // PWA Install State
   const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -66,7 +72,6 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 6 hours
       return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
@@ -130,7 +135,6 @@ const App: React.FC = () => {
     }
 
     try {
-      // --- STRICT SYSTEM INSTRUCTION (UPDATED) ---
       const baseSystemInstruction = `You are an AI system acting as a professional technical editor for the website "Techtouch".
 
 Your task is to fetch, verify, organize, and present technology content that is 100% accurate, strictly sourced from the web, with zero speculation.
@@ -178,7 +182,7 @@ Fetch diverse smartphones released in the last 12 months.
     "release_date": "YYYY-MM",
     "price_usd": "$XXX",
     "full_specifications": {
-       "الشاشة": "Arabic description (e.g., شاشة اموليد بحجم 6.7 بوصة وتردد 120 هرتز)",
+       "الشاشة": "Arabic description",
        "المعالج": "Name + Arabic details",
        "الكاميرات": "Arabic details",
        "الذاكرة": "Arabic details",
@@ -207,7 +211,6 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
 
       const result = await callGroqAPI(userPrompt, systemInstruction);
       
-      // Map result to app state structure
       if (type === 'ai-news' && result.ai_news) {
         const mappedAI = result.ai_news.map((item: any) => ({
           tool_name: item.title ? item.title.split(' ')[0] : 'AI', 
@@ -239,6 +242,54 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
       setError(err.message || "فشل في جلب البيانات.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePhoneSearch = async () => {
+    if (!phoneSearchQuery.trim()) return;
+    setSearchLoading(true);
+    setPhoneSearchResult(null);
+    setError(null);
+
+    const systemInstruction = `أنت خبير هواتف ذكية.
+    مهمتك: جلب مواصفات هاتف محدد بدقة عالية جداً من الويب.
+    القواعد:
+    1. جميع التفاصيل (الشاشة، المعالج، الكاميرات، البطارية، الشحن، النظام، الخ) يجب أن تكون مفصلة وباللغة العربية.
+    2. التنسيق JSON حصراً.
+    3. الهيكل المطلوب:
+    {
+      "phone_name": "اسم الهاتف",
+      "brand": "الشركة المصنعة",
+      "release_date": "تاريخ الاصدار",
+      "price_usd": "السعر بالدولار تقريبيا",
+      "full_specifications": {
+         "المعالج": "تفاصيل دقيقة بالعربية",
+         "الشاشة": "تفاصيل دقيقة بالعربية",
+         "الكاميرا الخلفية": "تفاصيل دقيقة بالعربية",
+         "الكاميرا الأمامية": "تفاصيل دقيقة بالعربية",
+         "الذاكرة والتخزين": "تفاصيل دقيقة بالعربية",
+         "النظام": "تفاصيل دقيقة بالعربية",
+         "البطارية والشحن": "تفاصيل دقيقة بالعربية",
+         "خامات التصنيع": "تفاصيل دقيقة بالعربية",
+         "الاتصال والشبكات": "تفاصيل دقيقة بالعربية",
+         "ميزات إضافية": "تفاصيل دقيقة بالعربية"
+      },
+      "pros": ["ميزة 1", "ميزة 2"],
+      "cons": ["عيب 1", "عيب 2"],
+      "official_specs_link": "رابط للمواصفات إن وجد"
+    }`;
+
+    try {
+      const result = await callGroqAPI(`أعطني مواصفات كاملة دقيقة للهاتف: ${phoneSearchQuery}`, systemInstruction);
+      if (result) {
+        setPhoneSearchResult(result);
+      } else {
+        setError("لم يتم العثور على معلومات لهذا الهاتف.");
+      }
+    } catch (e) {
+      setError("حدث خطأ أثناء البحث.");
+    } finally {
+      setSearchLoading(false);
     }
   };
 
@@ -464,7 +515,11 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
           {activeTab === 'tools' && activeToolView !== 'main' && (
              <div className="space-y-4 animate-slide-up">
                 <button 
-                  onClick={() => setActiveToolView('main')}
+                  onClick={() => {
+                     setActiveToolView('main');
+                     setShowPhoneSearch(false);
+                     setPhoneSearchResult(null);
+                  }}
                   className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
                 >
                    <ChevronLeft className="w-5 h-5" />
@@ -524,67 +579,154 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
                       <h2 className="text-xl font-black text-sky-400 flex items-center gap-2">
                          <Smartphone className="w-6 h-6" /> عالم الهواتف الذكية
                       </h2>
-                      <button onClick={() => fetchToolData(activeToolView, true)} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                        <ArrowRight className={`w-4 h-4 rotate-180 ${loading ? 'animate-spin' : ''}`} />
-                      </button>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => setShowPhoneSearch(!showPhoneSearch)} 
+                          className={`p-2 rounded-lg transition-colors ${showPhoneSearch ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'}`}
+                        >
+                          <Search className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => fetchToolData(activeToolView, true)} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                          <ArrowRight className={`w-4 h-4 rotate-180 ${loading ? 'animate-spin' : ''}`} />
+                        </button>
+                      </div>
                     </div>
 
-                    {loading ? (
-                       <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                          <Loader2 className="w-8 h-8 animate-spin mb-3" />
-                          <p className="text-xs">جاري جلب البيانات...</p>
-                       </div>
-                    ) : phoneNews.length > 0 ? (
-                       phoneNews.map((phone, idx) => (
-                         <div key={idx} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 shadow-lg backdrop-blur-sm overflow-hidden relative">
-                           <div className="flex justify-between items-start mb-4 pl-8">
-                             <div>
-                                <h3 className="font-black text-xl text-white mb-1">{phone.phone_name}</h3>
-                                <p className="text-xs text-sky-400 font-bold uppercase tracking-wider">{phone.brand} • {phone.release_date}</p>
-                             </div>
-                             {phone.price_usd && (
-                                <div className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/20 text-sm font-bold flex items-center gap-1">
-                                   <DollarSign className="w-3 h-3" />{phone.price_usd}
-                                </div>
-                             )}
-                           </div>
-                           
-                           {/* Specs Grid: Updated to display arabic specs neatly */}
-                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-slate-900/30 p-3 rounded-xl">
-                              {Object.entries(phone.specifications || {}).slice(0, 6).map(([key, val], k) => (
-                                <div key={k} className="flex flex-col">
-                                   <span className="text-[10px] text-slate-500 font-bold mb-0.5">{key}</span>
-                                   <span className="text-xs text-slate-300 font-medium leading-relaxed">{String(val)}</span>
-                                </div>
-                              ))}
-                           </div>
+                    {/* Search Input Area */}
+                    {showPhoneSearch && (
+                      <div className="animate-slide-up bg-slate-800/60 border border-sky-500/30 p-4 rounded-2xl mb-6 backdrop-blur-md">
+                         <div className="relative flex items-center gap-2">
+                            <input 
+                              type="text" 
+                              value={phoneSearchQuery}
+                              onChange={(e) => setPhoneSearchQuery(e.target.value)}
+                              placeholder="أدخل اسم الهاتف للبحث عن مواصفاته الدقيقة..."
+                              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all placeholder:text-slate-500"
+                              onKeyDown={(e) => e.key === 'Enter' && handlePhoneSearch()}
+                            />
+                            <button 
+                              onClick={handlePhoneSearch}
+                              disabled={searchLoading || !phoneSearchQuery.trim()}
+                              className="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-700 disabled:text-slate-500 text-white p-3 rounded-xl transition-all shadow-lg shadow-sky-500/20"
+                            >
+                              {searchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                            </button>
+                         </div>
+                      </div>
+                    )}
 
-                           <div className="flex gap-2 mb-4">
-                             <div className="flex-1 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10">
-                               <h4 className="flex items-center gap-1 text-emerald-400 text-xs font-bold mb-2"><ThumbsUp className="w-3 h-3" /> المميزات</h4>
-                               <ul className="space-y-1">
-                                 {phone.pros.slice(0, 3).map((p, i) => <li key={i} className="text-[10px] text-slate-400 flex items-start gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500/50 shrink-0 mt-0.5" />{p}</li>)}
-                               </ul>
-                             </div>
-                             <div className="flex-1 bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">
-                               <h4 className="flex items-center gap-1 text-rose-400 text-xs font-bold mb-2"><ThumbsDown className="w-3 h-3" /> العيوب</h4>
-                               <ul className="space-y-1">
-                                 {phone.cons.slice(0, 3).map((c, i) => <li key={i} className="text-[10px] text-slate-400 flex items-start gap-1"><AlertCircle className="w-3 h-3 text-rose-500/50 shrink-0 mt-0.5" />{c}</li>)}
-                               </ul>
-                             </div>
+                    {/* Search Result Display */}
+                    {phoneSearchResult && showPhoneSearch ? (
+                      <div className="animate-fade-in bg-slate-800/40 border border-sky-500/50 rounded-2xl p-5 shadow-lg backdrop-blur-sm overflow-hidden relative">
+                         <div className="flex justify-between items-start mb-6 border-b border-slate-700/50 pb-4">
+                           <div>
+                              <h3 className="font-black text-2xl text-white mb-1">{phoneSearchResult.phone_name}</h3>
+                              <p className="text-sm text-sky-400 font-bold uppercase tracking-wider">{phoneSearchResult.brand} • {phoneSearchResult.release_date}</p>
                            </div>
+                           {phoneSearchResult.price_usd && (
+                              <div className="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-xl border border-emerald-500/20 text-base font-bold flex items-center gap-1">
+                                 <DollarSign className="w-4 h-4" />{phoneSearchResult.price_usd}
+                              </div>
+                           )}
+                         </div>
 
-                           <div className="flex items-center gap-2 pt-3 border-t border-slate-700/30">
-                              <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-[#229ED9]/10 text-[#229ED9] rounded-lg hover:bg-[#229ED9]/20"><Send className="w-4 h-4" /></button>
-                              <button onClick={() => shareContent(phone, 'copy')} className="p-2 bg-slate-700/50 text-slate-300 rounded-lg hover:bg-slate-700"><Copy className="w-4 h-4" /></button>
-                              <a href={phone.official_specs_link} target="_blank" className="ml-auto flex items-center gap-1 text-[10px] bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition-colors">
-                                 المواصفات الكاملة <ExternalLink className="w-3 h-3" />
-                              </a>
+                         {/* Full Specifications List (Zebra Striping) */}
+                         <div className="mb-6 rounded-xl overflow-hidden border border-slate-700/50">
+                            {Object.entries(phoneSearchResult.specifications || {}).map(([key, val], idx) => (
+                               <div key={idx} className={`flex flex-col sm:flex-row sm:items-center p-4 gap-2 ${idx % 2 === 0 ? 'bg-slate-900/60' : 'bg-slate-800/60'}`}>
+                                  <span className="text-sky-400 font-bold text-sm min-w-[140px] border-r-0 sm:border-r border-slate-700/50 pl-0 sm:pl-4 ml-0 sm:ml-4">{key}</span>
+                                  <span className="text-slate-200 text-sm leading-relaxed">{String(val)}</span>
+                               </div>
+                            ))}
+                         </div>
+
+                         <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                           <div className="flex-1 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10">
+                             <h4 className="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-3"><ThumbsUp className="w-4 h-4" /> المميزات</h4>
+                             <ul className="space-y-2">
+                               {phoneSearchResult.pros.map((p, i) => <li key={i} className="text-xs sm:text-sm text-slate-300 flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500/50 shrink-0 mt-0.5" />{p}</li>)}
+                             </ul>
+                           </div>
+                           <div className="flex-1 bg-rose-500/5 p-4 rounded-xl border border-rose-500/10">
+                             <h4 className="flex items-center gap-2 text-rose-400 text-sm font-bold mb-3"><ThumbsDown className="w-4 h-4" /> العيوب</h4>
+                             <ul className="space-y-2">
+                               {phoneSearchResult.cons.map((c, i) => <li key={i} className="text-xs sm:text-sm text-slate-300 flex items-start gap-2"><AlertCircle className="w-4 h-4 text-rose-500/50 shrink-0 mt-0.5" />{c}</li>)}
+                             </ul>
                            </div>
                          </div>
-                       ))
+                         
+                         <div className="flex justify-end">
+                            <button 
+                              onClick={() => {
+                                setPhoneSearchResult(null);
+                                setPhoneSearchQuery('');
+                              }}
+                              className="text-xs text-slate-500 hover:text-white underline transition-colors"
+                            >
+                              إغلاق البحث والعودة للقائمة
+                            </button>
+                         </div>
+                      </div>
                     ) : (
-                       <div className="text-center text-slate-500 py-10 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">لا توجد بيانات متاحة</div>
+                      <>
+                        {loading ? (
+                          <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                              <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                              <p className="text-xs">جاري جلب البيانات...</p>
+                          </div>
+                        ) : phoneNews.length > 0 ? (
+                          phoneNews.map((phone, idx) => (
+                            <div key={idx} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 shadow-lg backdrop-blur-sm overflow-hidden relative">
+                              <div className="flex justify-between items-start mb-4 pl-8">
+                                <div>
+                                    <h3 className="font-black text-xl text-white mb-1">{phone.phone_name}</h3>
+                                    <p className="text-xs text-sky-400 font-bold uppercase tracking-wider">{phone.brand} • {phone.release_date}</p>
+                                </div>
+                                {phone.price_usd && (
+                                    <div className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/20 text-sm font-bold flex items-center gap-1">
+                                      <DollarSign className="w-3 h-3" />{phone.price_usd}
+                                    </div>
+                                )}
+                              </div>
+                              
+                              {/* Specs Grid: Updated to display arabic specs neatly */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-slate-900/30 p-3 rounded-xl">
+                                  {Object.entries(phone.specifications || {}).slice(0, 6).map(([key, val], k) => (
+                                    <div key={k} className="flex flex-col">
+                                      <span className="text-[10px] text-slate-500 font-bold mb-0.5">{key}</span>
+                                      <span className="text-xs text-slate-300 font-medium leading-relaxed">{String(val)}</span>
+                                    </div>
+                                  ))}
+                              </div>
+
+                              <div className="flex gap-2 mb-4">
+                                <div className="flex-1 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10">
+                                  <h4 className="flex items-center gap-1 text-emerald-400 text-xs font-bold mb-2"><ThumbsUp className="w-3 h-3" /> المميزات</h4>
+                                  <ul className="space-y-1">
+                                    {phone.pros.slice(0, 3).map((p, i) => <li key={i} className="text-[10px] text-slate-400 flex items-start gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500/50 shrink-0 mt-0.5" />{p}</li>)}
+                                  </ul>
+                                </div>
+                                <div className="flex-1 bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">
+                                  <h4 className="flex items-center gap-1 text-rose-400 text-xs font-bold mb-2"><ThumbsDown className="w-3 h-3" /> العيوب</h4>
+                                  <ul className="space-y-1">
+                                    {phone.cons.slice(0, 3).map((c, i) => <li key={i} className="text-[10px] text-slate-400 flex items-start gap-1"><AlertCircle className="w-3 h-3 text-rose-500/50 shrink-0 mt-0.5" />{c}</li>)}
+                                  </ul>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-3 border-t border-slate-700/30">
+                                  <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-[#229ED9]/10 text-[#229ED9] rounded-lg hover:bg-[#229ED9]/20"><Send className="w-4 h-4" /></button>
+                                  <button onClick={() => shareContent(phone, 'copy')} className="p-2 bg-slate-700/50 text-slate-300 rounded-lg hover:bg-slate-700"><Copy className="w-4 h-4" /></button>
+                                  <a href={phone.official_specs_link} target="_blank" className="ml-auto flex items-center gap-1 text-[10px] bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition-colors">
+                                    المواصفات الكاملة <ExternalLink className="w-3 h-3" />
+                                  </a>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center text-slate-500 py-10 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">لا توجد بيانات متاحة</div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
