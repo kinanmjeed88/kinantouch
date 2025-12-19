@@ -9,7 +9,8 @@ import {
   AlertCircle, Send,
   Download, X, Search,
   BarChart3, PieChart,
-  LayoutGrid, Copy, Facebook, Instagram, ExternalLink
+  LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
+  RotateCcw
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; // Importing custom TG icon
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult } from './types';
@@ -61,6 +62,7 @@ OpenAI (openai.com), Anthropic (anthropic.com), Google Gemini/DeepMind (deepmind
 2. يجب أن يتضمن الخبر: اسم الأداة، رقم الإصدار، وتاريخ الإعلان.
 3. أي خبر بلا رابط رسمي صالح يُرفض.
 4. يمنع استخدام مواقع أخبار تقنية عامة أو تسريبات.
+5. المخرجات يجب أن تكون باللغة العربية الفصحى حصراً (ترجم المحتوى بدقة).
 
 في حال عدم وجود أخبار رسمية، لا تقم بتأليف محتوى.
 `;
@@ -103,6 +105,11 @@ const App: React.FC = () => {
   const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
   const [phoneSearchResult, setPhoneSearchResult] = useState<PhoneNewsItem | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  // New State for AI Search
+  const [aiSearchQuery, setAiSearchQuery] = useState('');
+  const [aiSearchResult, setAiSearchResult] = useState<AINewsItem | null>(null);
+  const [aiSearchLoading, setAiSearchLoading] = useState(false);
 
   const [statsQuery, setStatsQuery] = useState('');
   const [statsResult, setStatsResult] = useState<StatsResult | null>(null);
@@ -218,6 +225,7 @@ const App: React.FC = () => {
         systemInstruction = AI_SYSTEM_PROMPT;
         userPrompt = `Fetch 8 latest AI news updates from official sources. 
         Verify existence. 
+        IMPORTANT: Translate all content, titles, and summaries to ARABIC Language.
         Format JSON: { "ai_news": [{ "title": "Tool Name vX.X", "content": ["Line 1: Main update", "Line 2: Feature A", "Line 3: Feature B", "Line 4: Improvement", "Line 5: Availability"], "official_link": "URL" }] }`;
       } else if (type === 'phone-news') {
         systemInstruction = PHONE_SYSTEM_PROMPT;
@@ -278,6 +286,38 @@ const App: React.FC = () => {
       setError(e.message);
     } finally {
       setSearchLoading(false);
+    }
+  };
+
+  const handleAISearch = async () => {
+    if (!aiSearchQuery.trim()) return;
+    setAiSearchLoading(true);
+    setAiSearchResult(null);
+    setError(null);
+
+    const systemInstruction = AI_SYSTEM_PROMPT;
+
+    try {
+      const prompt = `
+        Provide detailed information about the AI tool: "${aiSearchQuery}".
+        Include official website link, latest version features, and general description.
+        Output MUST BE IN ARABIC language completely.
+        Format JSON: { "title": "Tool Name + Version", "summary": ["Line 1: Description", "Line 2: Key Feature 1", "Line 3: Key Feature 2", "Line 4: Pricing/Availability", "Line 5: Interesting fact"], "official_link": "URL" }
+      `;
+      const result = await callGroqAPI(prompt, systemInstruction);
+      if (result) {
+        setAiSearchResult({
+           title: result.title,
+           summary: result.summary,
+           official_link: result.official_link
+        });
+      } else {
+        setError("لم يتم العثور على معلومات عن هذه الأداة.");
+      }
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setAiSearchLoading(false);
     }
   };
 
@@ -505,29 +545,63 @@ const App: React.FC = () => {
           {/* Sub-Tools Views */}
           {activeTab === 'tools' && activeToolView !== 'main' && (
              <div className="space-y-4 animate-slide-up pb-8">
-                <button onClick={() => { setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
+                <button onClick={() => { setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setAiSearchResult(null); }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
                    <ChevronLeft className="w-5 h-5" /> <span className="text-sm font-bold">رجوع</span>
                 </button>
 
                 {/* AI News View */}
                 {activeToolView === 'ai-news' && (
                   <div className="space-y-4">
-                     {loading && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
-                     {aiNews.map((news, idx) => (
-                       <div key={idx} className="bg-slate-800/40 border border-violet-500/20 rounded-2xl p-5 shadow-sm">
-                          <h3 className={titleStyle}>{news.title}</h3>
-                          <ul className="list-disc list-inside space-y-1.5 mb-4 border-b border-slate-700/30 pb-4">
-                            {news.summary.slice(0, 5).map((point, i) => (
-                              <li key={i} className="text-xs text-slate-300 leading-relaxed marker:text-violet-500">{point}</li>
+                     {/* Search & Refresh Toolbar */}
+                     <div className="flex gap-2">
+                        <input type="text" value={aiSearchQuery} onChange={(e)=>setAiSearchQuery(e.target.value)} placeholder="ابحث عن أداة (مثلاً: ChatGPT 5)..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-violet-500 outline-none h-12" />
+                        <button onClick={handleAISearch} className="bg-violet-600 hover:bg-violet-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/20">{aiSearchLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <Search className="w-5 h-5"/>}</button>
+                        <button onClick={() => fetchToolData('ai-news', true)} className="bg-slate-800 hover:bg-slate-700 text-violet-400 w-12 h-12 rounded-xl flex items-center justify-center border border-slate-700" title="تحديث الأخبار"><RotateCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
+                     </div>
+
+                     {/* AI Search Result */}
+                     {aiSearchResult ? (
+                       <div className="bg-slate-800/60 border border-violet-500/30 p-5 rounded-3xl animate-fade-in relative shadow-2xl">
+                          <button onClick={() => setAiSearchResult(null)} className="absolute top-4 left-4 p-1 bg-slate-700/50 rounded-full text-slate-300 hover:text-white"><X className="w-4 h-4" /></button>
+                          
+                          <h3 className={titleStyle}>{aiSearchResult.title}</h3>
+                          
+                          <ul className="list-disc list-inside space-y-2 mb-6 border-b border-slate-700/30 pb-4">
+                            {aiSearchResult.summary.map((point, i) => (
+                              <li key={i} className="text-sm text-slate-200 leading-relaxed marker:text-violet-500">{point}</li>
                             ))}
                           </ul>
-                          <a href={news.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
-                             <span>الموقع الرسمي</span>
-                             <ExternalLink className="w-4 h-4" />
-                          </a>
-                          <ShareToolbar title={news.title} text={news.summary.join('\n')} url={news.official_link} />
+
+                          {aiSearchResult.official_link && (
+                            <a href={aiSearchResult.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
+                               <span>الموقع الرسمي</span>
+                               <ExternalLink className="w-4 h-4" />
+                            </a>
+                          )}
+
+                          <ShareToolbar title={aiSearchResult.title} text={aiSearchResult.summary.join('\n')} url={aiSearchResult.official_link} />
                        </div>
-                     ))}
+                     ) : (
+                       /* Standard AI News List */
+                       <div className="space-y-4">
+                          {loading && !aiNews.length && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
+                          {aiNews.map((news, idx) => (
+                            <div key={idx} className="bg-slate-800/40 border border-violet-500/20 rounded-2xl p-5 shadow-sm">
+                                <h3 className={titleStyle}>{news.title}</h3>
+                                <ul className="list-disc list-inside space-y-1.5 mb-4 border-b border-slate-700/30 pb-4">
+                                  {news.summary.slice(0, 5).map((point, i) => (
+                                    <li key={i} className="text-xs text-slate-300 leading-relaxed marker:text-violet-500">{point}</li>
+                                  ))}
+                                </ul>
+                                <a href={news.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
+                                  <span>الموقع الرسمي</span>
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                                <ShareToolbar title={news.title} text={news.summary.join('\n')} url={news.official_link} />
+                            </div>
+                          ))}
+                       </div>
+                     )}
                   </div>
                 )}
                 
@@ -537,6 +611,7 @@ const App: React.FC = () => {
                      <div className="flex gap-2">
                         <input type="text" value={phoneSearchQuery} onChange={(e)=>setPhoneSearchQuery(e.target.value)} placeholder="اكتب اسم الهاتف للبحث..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-sky-500 outline-none h-12" />
                         <button onClick={handlePhoneSearch} className="bg-sky-500 text-white w-12 h-12 rounded-xl flex items-center justify-center">{searchLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <Search className="w-5 h-5"/>}</button>
+                        <button onClick={() => fetchToolData('phone-news', true)} className="bg-slate-800 hover:bg-slate-700 text-sky-400 w-12 h-12 rounded-xl flex items-center justify-center border border-slate-700" title="تحديث الهواتف"><RotateCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
                      </div>
                      
                      {phoneSearchResult ? (
@@ -584,7 +659,7 @@ const App: React.FC = () => {
                         </div>
                      ) : (
                         <div className="space-y-3">
-                           {loading && <div className="text-center py-4"><Loader2 className="w-8 h-8 animate-spin mx-auto text-sky-500" /></div>}
+                           {loading && !phoneNews.length && <div className="text-center py-4"><Loader2 className="w-8 h-8 animate-spin mx-auto text-sky-500" /></div>}
                            {phoneNews.map((phone, idx) => (
                               <div key={idx} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-all cursor-pointer group" onClick={() => setPhoneSearchResult(phone)}>
                                  <div className="flex justify-between items-start mb-2 overflow-hidden">
