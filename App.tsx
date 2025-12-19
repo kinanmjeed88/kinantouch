@@ -17,8 +17,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v41', // Incremented version
-  PHONE_NEWS: 'techtouch_phones_v41'
+  AI_NEWS: 'techtouch_ai_v42', // Updated version for new schema
+  PHONE_NEWS: 'techtouch_phones_v42'
 };
 
 const App: React.FC = () => {
@@ -51,8 +51,8 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
+  // --- Backend Logic Simulation ---
   const callGroqAPI = async (prompt: string, systemInstruction: string) => {
-    // المفتاح يتم تحميله من vite.config.ts الذي يبحث عن VITE_GROQ_API_KEY
     const apiKey = process.env.API_KEY; 
     
     if (!apiKey) throw new Error("مفتاح API غير متوفر (VITE_GROQ_API_KEY).");
@@ -70,7 +70,7 @@ const App: React.FC = () => {
           { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.1
+        temperature: 0.1 // Low temperature for factual accuracy
       })
     });
 
@@ -103,76 +103,220 @@ const App: React.FC = () => {
     }
 
     try {
+      // --- STRICT SYSTEM INSTRUCTION (AS REQUESTED) ---
       const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني احترافي لموقع Techtouch.
-التاريخ الحالي المرجعي: ${todayStr}.
-مهمتك جلب وتنظيم محتوى تقني موثوق 100% فقط من مصادر رسمية.
+مهمتك جلب وتنظيم محتوى تقني موثوق 100% فقط من مصادر رسمية،
+دون أي توليد تخميني أو اعتماد على معرفة عامة أو ذكاء اصطناعي آخر.
 
-القواعد الصارمة:
-1. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 5 أشهر.
-2. الهواتف: السنة الحالية فقط، مواصفات كاملة، سعر عراقي موثق.
-3. الترتيب من الأحدث للأقدم.
-4. عدم اختلاق أي معلومات غير موجودة.
-5. الرد JSON فقط حسب الهيكل المطلوب.`;
+================================================
+المرحلة الأولى: تحديد التاريخ (إلزامي قبل أي إجراء)
+================================================
 
-      let prompt = "";
+قبل البدء بأي جلب أو تحليل أو توليد محتوى:
+1. حدّد التاريخ الحالي الفعلي للنظام.
+2. اعتمده كمرجع زمني صارم.
+
+- التاريخ الحالي = ${todayStr}
+
+❗ يمنع البدء بأي خطوة لاحقة قبل تثبيت هذا التاريخ.
+
+================================================
+المرحلة الثانية: القواعد العامة (تنطبق على كل الأقسام)
+================================================
+
+1. يُمنع منعاً باتاً:
+   - اختلاق أخبار أو معلومات
+   - الاعتماد على معرفة عامة أو محتوى مولّد
+   - استخدام مصادر غير رسمية أو غير مباشرة
+   - استخدام أخبار خارج الإطار الزمني المحدد
+2. جميع المعلومات يجب أن تكون:
+   - منشورة في مواقع رسمية فقط
+   - مرتبطة مباشرة بالخبر أو الأداة أو الهاتف
+3. أي عنصر بلا رابط رسمي صالح → يُرفض.
+4. الترتيب دائماً من الأحدث إلى الأقدم.
+5. عند عدم توفر محتوى صالح:
+   - أخرج مصفوفة فارغة []
+   - ولا تُنشئ بديلاً.
+
+================================================
+القسم الأول: أخبار الذكاء الاصطناعي
+(أحداث وإصدارات تقنية موثقة فقط)
+================================================
+
+🔹 الإطار الزمني:
+- الأخبار يجب أن تكون ضمن آخر **5 أشهر** فقط
+- محسوبة من ${todayStr}
+- أي خبر أقدم → يُرفض فوراً
+
+🔹 المصادر المسموحة:
+- المواقع الرسمية للشركات فقط
+  (OpenAI – Google – Meta – Microsoft – NVIDIA – Anthropic – Amazon – Apple …)
+- صفحات الإعلانات الرسمية
+- المدونات الرسمية للشركات
+
+❌ يُمنع:
+- مواقع أخبار عامة
+- مدونات تقنية غير رسمية
+- أي محتوى من ذكاء اصطناعي آخر
+
+🔹 عدد المنشورات:
+- 10 منشورات فقط
+
+🔹 كل منشور يجب أن يحتوي على:
+1. عنوان بحجم كبير
+   - سطر واحد أو سطرين كحد أقصى
+2. محتوى من 5 إلى 6 أسطر:
+   - ما هو الحدث؟
+   - ما الجديد؟
+   - متى أُعلن؟
+   - لمن متاح؟
+3. رابط واحد فقط:
+   - يخص الخبر أو التحديث نفسه
+4. أزرار تفاعل صغيرة:
+   - مشاركة فيسبوك
+   - مشاركة إنستغرام
+   - مشاركة تيليغرام
+   - زر نسخ كامل المنشور
+   - زر "الموقع الرسمي"
+
+================================================
+القسم الثاني: عالم الهواتف الذكية
+(مواصفات كاملة وأسعار السنة الحالية)
+================================================
+
+🔹 الإطار الزمني:
+- الهواتف الصادرة خلال **السنة الحالية فقط**
+- أي هاتف خارج السنة → يُرفض
+
+🔹 عدد المنشورات:
+- 10 هواتف فقط
+
+🔹 كل منشور هاتف يجب أن يحتوي على:
+1. عنوان:
+   - اسم الهاتف فقط
+2. معلومات أساسية:
+   - الشركة المصنعة
+   - تاريخ الإطلاق الرسمي
+3. مواصفات تفصيلية كاملة (بدون تحديد عدد أسطر):
+   - الشبكات
+   - الأبعاد
+   - الوزن
+   - الخامات
+   - مقاومة الماء والغبار
+   - الشاشة
+   - المعالج
+   - المعالج الرسومي
+   - الذاكرة والتخزين
+   - الكاميرات
+   - الفيديو
+   - البطارية والشحن
+   - نظام التشغيل
+   - الاتصال
+   - المستشعرات
+   - الألوان
+4. السعر:
+   - بالدولار الأمريكي
+   - من مصدر رسمي أو متجر عراقي موثوق
+5. الإيجابيات (بالعربية):
+   - نقاط واضحة ومختصرة
+6. العيوب (بالعربية):
+   - نقاط واضحة وموضوعية
+
+🔹 اللغة:
+- العربية الفصحى فقط
+- يمنع استخدام الإنجليزية في المواصفات
+
+🔹 نهاية قسم الهواتف:
+- تبقى الإحصائيات كما هي بدون أي تعديل
+
+================================================
+القسم الثالث: المقارنة الفنية الشاملة
+================================================
+
+- يبقى هذا القسم دون أي تغيير
+- لا يتم تعديل منطق المقارنة
+- لا يتم توليد محتوى إضافي له
+
+================================================
+المرحلة الأخيرة: صيغة الإخراج (إلزامية)
+================================================
+
+أخرج النتيجة بصيغة JSON فقط دون أي شرح.
+
+{
+  "current_date": "${todayStr}",
+
+  "ai_news": [
+    {
+      "title": "",
+      "content": [],
+      "official_link": "",
+      "share_buttons": {
+        "facebook": true,
+        "instagram": true,
+        "telegram": true,
+        "copy": true,
+        "official_site": true
+      }
+    }
+  ],
+
+  "smartphones": [
+    {
+      "phone_name": "",
+      "brand": "",
+      "release_date": "",
+      "full_specifications": {},
+      "price_usd": "",
+      "price_source": "",
+      "pros": [],
+      "cons": []
+    }
+  ]
+}
+
+أي عنصر:
+- خارج الإطار الزمني
+- بلا رابط رسمي
+- أو مصدر غير موثوق
+→ يُرفض ولا يُعرض.`;
+
+      let userPrompt = "";
       
       if (type === 'ai-news') {
-        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي (آخر 5 أشهر).
-        JSON Format Required:
-        {
-          "ai_news": [
-            {
-              "tool_name": "اسم الأداة أو الشركة",
-              "title": "عنوان الخبر (سطر أو سطرين)",
-              "summary": ["نقطة 1: تفاصيل الحدث", "نقطة 2: ما الجديد", "نقطة 3: تاريخ الاعلان", "نقطة 4: التوفر"],
-              "date": "YYYY-MM-DD",
-              "official_link": "رابط رسمي"
-            }
-          ]
-        }`;
+        userPrompt = `نفذ التعليمات بدقة. استخرج أحدث 10 أخبار ذكاء اصطناعي (آخر 5 أشهر) من المصادر الرسمية فقط. التنسيق المطلوب JSON.`;
       } else if (type === 'phone-news') {
-        prompt = `استخرج أحدث 10 هواتف ذكية صدرت في ${new Date().getFullYear()}.
-        JSON Format Required:
-        {
-          "smartphones": [
-            {
-              "phone_name": "اسم الهاتف",
-              "brand": "الشركة المصنعة",
-              "release_date": "تاريخ الاطلاق",
-              "specifications": {
-                "networks": "الشبكات",
-                "dimensions": "الابعاد",
-                "weight": "الوزن",
-                "materials": "الخامات",
-                "water_resistance": "مقاومة الماء والغبار",
-                "display": "الشاشة",
-                "processor": "المعالج",
-                "gpu": "المعالج الرسومي",
-                "memory": "الذاكرة والتخزين",
-                "cameras": "الكاميرات",
-                "video": "الفيديو",
-                "battery": "البطارية والشحن",
-                "os": "نظام التشغيل",
-                "connectivity": "الاتصال",
-                "sensors": "المستشعرات",
-                "colors": "الالوان"
-              },
-              "price_usd": "السعر بالدولار",
-              "official_specs_link": "رابط المواصفات الرسمي",
-              "iraqi_price_source": "رابط متجر عراقي او مصدر سعر",
-              "pros": ["ميزة 1", "ميزة 2"],
-              "cons": ["عيب 1", "عيب 2"],
-              "copy_payload": "نص كامل وجذاب للنسخ يحتوي الملخص والمواصفات"
-            }
-          ]
-        }`;
+        userPrompt = `نفذ التعليمات بدقة. استخرج أحدث 10 هواتف ذكية لسنة ${new Date().getFullYear()}. التنسيق المطلوب JSON.`;
       }
 
-      const result = await callGroqAPI(prompt, systemInstruction);
-      saveToCache(cacheKey, result);
+      const result = await callGroqAPI(userPrompt, systemInstruction);
       
-      if (type === 'ai-news') setAiNews(result.ai_news || []);
-      else if (type === 'phone-news') setPhoneNews(result.smartphones || []);
+      // Map result to app state structure
+      if (type === 'ai-news' && result.ai_news) {
+        const mappedAI = result.ai_news.map((item: any) => ({
+          tool_name: item.title ? item.title.split(' ')[0] : 'AI', // Fallback for tool_name
+          title: item.title,
+          summary: item.content || [],
+          date: result.current_date || todayStr,
+          official_link: item.official_link
+        }));
+        saveToCache(cacheKey, { ai_news: mappedAI });
+        setAiNews(mappedAI);
+      } else if (type === 'phone-news' && result.smartphones) {
+        const mappedPhones = result.smartphones.map((item: any) => ({
+          phone_name: item.phone_name,
+          brand: item.brand,
+          release_date: item.release_date,
+          specifications: item.full_specifications || {},
+          price_usd: item.price_usd,
+          official_specs_link: item.official_link || '', // Use official link if available
+          iraqi_price_source: item.price_source,
+          pros: item.pros,
+          cons: item.cons
+        }));
+        saveToCache(cacheKey, { smartphones: mappedPhones });
+        setPhoneNews(mappedPhones);
+      }
 
     } catch (err: any) {
       console.error(err);
@@ -208,7 +352,8 @@ const App: React.FC = () => {
   const shareContent = (item: any, platform: 'tg' | 'fb' | 'insta' | 'copy') => {
     const title = item.title || item.phone_name || item.tool_name;
     const url = item.official_link || item.official_specs_link || item.url || '';
-    const payload = item.copy_payload || `${title}\n\n🔗 الرابط: ${url}`;
+    const summaryText = item.summary ? item.summary.join('\n') : '';
+    const payload = item.copy_payload || `${title}\n${summaryText}\n\n🔗 الرابط: ${url}`;
     
     if (platform === 'copy') {
       navigator.clipboard.writeText(payload);
@@ -263,27 +408,27 @@ const App: React.FC = () => {
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4 overflow-hidden">
                   <MessageCircle className="w-6 h-6 shrink-0" />
-                  <h2 className="font-black text-xs sm:text-sm uppercase tracking-tight whitespace-nowrap overflow-hidden text-ellipsis flex-1">بوت الطلبات على التيليكرام</h2>
+                  <h2 className="font-black text-sm sm:text-base uppercase tracking-tight whitespace-nowrap overflow-hidden text-ellipsis flex-1">بوت الطلبات على التيليكرام</h2>
                 </div>
                 
                 <div className="space-y-5">
                   <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95">
                     <Send className="w-4 h-4" />
-                    <span className="text-[10px]">الدخول لبوت الطلبات</span>
+                    <span className="text-[12px]">الدخول لبوت الطلبات</span>
                   </a>
 
-                  <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50 text-[9px] text-slate-200 font-bold leading-relaxed">
+                  <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50 text-[11px] text-slate-200 font-bold leading-relaxed">
                     <p>✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
                     <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
                   </div>
 
                   <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                    <p className="text-emerald-400 text-[8px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+                    <p className="text-emerald-400 text-[10px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
                   </div>
 
                   <div className="space-y-3 pt-3 border-t border-slate-700/50">
-                    <h3 className="text-sky-400 font-black text-[9px] uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
-                    <ul className="space-y-2 text-[8px] text-slate-400 font-bold leading-relaxed">
+                    <h3 className="text-sky-400 font-black text-[11px] uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
+                    <ul className="space-y-2 text-[10px] text-slate-400 font-bold leading-relaxed">
                       {[
                         "١. ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.",
                         "٢. اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط.",
@@ -296,7 +441,7 @@ const App: React.FC = () => {
                   </div>
 
                   <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-red-400 text-[8px] font-black text-center leading-relaxed">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
+                    <p className="text-red-400 text-[10px] font-black text-center leading-relaxed">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
                   </div>
                 </div>
               </div>
@@ -352,7 +497,7 @@ const App: React.FC = () => {
                           <div className="mt-4 flex justify-between items-start mb-4 border-b border-slate-700/50 pb-3">
                             <div className="flex flex-col gap-1.5">
                               <div className="flex items-center gap-2">
-                                <span className="text-[8px] bg-slate-700 text-sky-400 px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name}</span>
+                                <span className="text-[8px] bg-slate-700 text-sky-400 px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name || 'AI NEWS'}</span>
                               </div>
                               <h3 className="text-sm font-black text-slate-100 group-hover:text-sky-400 transition-colors">{n.title}</h3>
                             </div>
@@ -411,19 +556,19 @@ const App: React.FC = () => {
                             
                             <div className="grid grid-cols-2 gap-3 mb-6">
                                {[
-                                 { icon: Smartphone, label: 'الشاشة', value: phone.specifications.display },
-                                 { icon: Cpu, label: 'المعالج', value: phone.specifications.processor },
-                                 { icon: Zap, label: 'الذاكرة', value: phone.specifications.memory },
-                                 { icon: ShieldCheck, label: 'البطارية', value: phone.specifications.battery },
-                                 { icon: BadgeCheck, label: 'النظام', value: phone.specifications.os },
-                                 { icon: Search, label: 'الألوان', value: phone.specifications.colors }
+                                 { icon: Smartphone, label: 'الشاشة', key: 'display' },
+                                 { icon: Cpu, label: 'المعالج', key: 'processor' },
+                                 { icon: Zap, label: 'الذاكرة', key: 'memory' },
+                                 { icon: ShieldCheck, label: 'البطارية', key: 'battery' },
+                                 { icon: BadgeCheck, label: 'النظام', key: 'os' },
+                                 { icon: Search, label: 'الألوان', key: 'colors' }
                                ].map((spec, idx) => (
                                  <div key={idx} className="bg-slate-900/60 p-3.5 rounded-[1.2rem] border border-slate-700/30 flex flex-col gap-1 transition-all group-hover:bg-slate-900/80">
                                    <div className="flex items-center gap-2 text-sky-400/80">
                                       <spec.icon className="w-4 h-4" />
                                       <span className="text-[9px] font-black uppercase tracking-widest">{spec.label}</span>
                                    </div>
-                                   <div className="text-[10px] text-slate-200 font-bold leading-tight line-clamp-2">{spec.value}</div>
+                                   <div className="text-[10px] text-slate-200 font-bold leading-tight line-clamp-2">{phone.specifications[spec.key] || 'غير محدد'}</div>
                                  </div>
                                ))}
                             </div>
@@ -431,11 +576,11 @@ const App: React.FC = () => {
                             <div className="space-y-3 mb-6">
                                <div className="bg-slate-900/40 p-4 rounded-[1.2rem] border border-slate-700/30">
                                   <div className="text-sky-400/70 text-[9px] font-black uppercase mb-1.5 flex items-center gap-2 tracking-widest">الكاميرات والفيديو</div>
-                                  <div className="text-[10px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras} • {phone.specifications.video}</div>
+                                  <div className="text-[10px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras || ''} • {phone.specifications.video || ''}</div>
                                </div>
                                <div className="bg-slate-900/40 p-4 rounded-[1.2rem] border border-slate-700/30">
                                   <div className="text-sky-400/70 text-[9px] font-black uppercase mb-1.5 flex items-center gap-2 tracking-widest">التصميم والاتصال</div>
-                                  <div className="text-[10px] text-slate-300 font-bold leading-relaxed">{phone.specifications.dimensions} • {phone.specifications.weight} • {phone.specifications.connectivity}</div>
+                                  <div className="text-[10px] text-slate-300 font-bold leading-relaxed">{phone.specifications.dimensions || ''} • {phone.specifications.weight || ''} • {phone.specifications.connectivity || ''}</div>
                                </div>
                             </div>
 

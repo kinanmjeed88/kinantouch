@@ -15,10 +15,10 @@ export interface SocialData {
 }
 
 export interface AINewsItem {
-  tool_name: string;
+  tool_name?: string; // Optional now as strictly mapped from title
   title: string;
-  summary: string[];
-  date: string;
+  summary: string[]; // Mapped from 'content' in new schema
+  date?: string; // Optional, derived from context if needed
   official_link: string;
 }
 
@@ -27,29 +27,14 @@ export interface PhoneNewsItem {
   brand: string;
   release_date: string;
   specifications: {
-    networks: string;
-    dimensions: string;
-    weight: string;
-    materials: string;
-    water_resistance: string;
-    display: string;
-    processor: string;
-    gpu: string;
-    memory: string;
-    cameras: string;
-    video: string;
-    battery: string;
-    os: string;
-    connectivity: string;
-    sensors: string;
-    colors: string;
+    [key: string]: string; // Flexible key-value for full_specifications
   };
   price_usd: string;
-  official_specs_link: string;
-  iraqi_price_source: string;
+  official_specs_link?: string; // Mapped from generic link if needed
+  iraqi_price_source?: string; // Mapped from price_source
   pros: string[];
   cons: string[];
-  copy_payload: string;
+  copy_payload?: string;
 }
 
 export interface PhoneComparisonResult {
