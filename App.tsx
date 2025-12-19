@@ -9,16 +9,38 @@ import {
   Copy,
   Facebook, BadgeCheck,
   DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
-  Download, X, Search
+  Download, X, Search,
+  BarChart3, PieChart
 } from 'lucide-react';
-import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
+import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
-type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
+type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v46',
-  PHONE_NEWS: 'techtouch_phones_v46'
+  AI_NEWS: 'techtouch_ai_v47',
+  PHONE_NEWS: 'techtouch_phones_v47'
+};
+
+// Mapping for strict specification keys to Arabic Labels
+const SPEC_LABELS: Record<string, string> = {
+  networks: "الشبكات والاتصال",
+  dimensions: "أبعاد الهاتف",
+  weight: "الوزن",
+  materials: "خامات التصنيع",
+  water_resistance: "مقاومة الماء والغبار",
+  display: "الشاشة",
+  processor: "المعالج (CPU)",
+  gpu: "معالج الرسوميات (GPU)",
+  memory_storage: "الذاكرة والتخزين",
+  rear_cameras: "الكاميرات الخلفية",
+  front_camera: "الكاميرا الأمامية",
+  video: "تصوير الفيديو",
+  battery_charging: "البطارية والشحن",
+  operating_system: "نظام التشغيل",
+  connectivity: "الواي فاي والبلوتوث",
+  sensors: "المستشعرات",
+  colors: "الألوان المتوفرة"
 };
 
 const App: React.FC = () => {
@@ -40,6 +62,11 @@ const App: React.FC = () => {
   const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
   const [phoneSearchResult, setPhoneSearchResult] = useState<PhoneNewsItem | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  // Stats State
+  const [statsQuery, setStatsQuery] = useState('');
+  const [statsResult, setStatsResult] = useState<StatsResult | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // PWA Install State
   const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -182,11 +209,11 @@ Fetch diverse smartphones released in the last 12 months.
     "release_date": "YYYY-MM",
     "price_usd": "$XXX",
     "full_specifications": {
-       "الشاشة": "Arabic description",
-       "المعالج": "Name + Arabic details",
-       "الكاميرات": "Arabic details",
-       "الذاكرة": "Arabic details",
-       "الطاربة": "Arabic details"
+       "display": "Arabic description",
+       "processor": "Name + Arabic details",
+       "rear_cameras": "Arabic details",
+       "battery_charging": "Arabic details"
+       // Add minimum necessary specs for list view
     },
     "pros": ["Arabic point"],
     "cons": ["Arabic point"],
@@ -254,25 +281,33 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
     const systemInstruction = `أنت خبير هواتف ذكية.
     مهمتك: جلب مواصفات هاتف محدد بدقة عالية جداً من الويب.
     القواعد:
-    1. جميع التفاصيل (الشاشة، المعالج، الكاميرات، البطارية، الشحن، النظام، الخ) يجب أن تكون مفصلة وباللغة العربية.
-    2. التنسيق JSON حصراً.
-    3. الهيكل المطلوب:
+    1. القيم يجب أن تكون باللغة العربية.
+    2. المفاتيح يجب أن تكون بالإنجليزية تماماً كما هو مطلوب أدناه.
+    3. التنسيق JSON حصراً.
+    4. الهيكل المطلوب:
     {
       "phone_name": "اسم الهاتف",
       "brand": "الشركة المصنعة",
       "release_date": "تاريخ الاصدار",
       "price_usd": "السعر بالدولار تقريبيا",
       "full_specifications": {
-         "المعالج": "تفاصيل دقيقة بالعربية",
-         "الشاشة": "تفاصيل دقيقة بالعربية",
-         "الكاميرا الخلفية": "تفاصيل دقيقة بالعربية",
-         "الكاميرا الأمامية": "تفاصيل دقيقة بالعربية",
-         "الذاكرة والتخزين": "تفاصيل دقيقة بالعربية",
-         "النظام": "تفاصيل دقيقة بالعربية",
-         "البطارية والشحن": "تفاصيل دقيقة بالعربية",
-         "خامات التصنيع": "تفاصيل دقيقة بالعربية",
-         "الاتصال والشبكات": "تفاصيل دقيقة بالعربية",
-         "ميزات إضافية": "تفاصيل دقيقة بالعربية"
+        "networks": "تفاصيل الشبكات",
+        "dimensions": "تفاصيل الأبعاد",
+        "weight": "تفاصيل الوزن",
+        "materials": "خامات التصنيع",
+        "water_resistance": "مقاومة الماء",
+        "display": "تفاصيل الشاشة",
+        "processor": "المعالج",
+        "gpu": "معالج الرسوميات",
+        "memory_storage": "الذاكرة",
+        "rear_cameras": "الكاميرات الخلفية",
+        "front_camera": "الكاميرا الأمامية",
+        "video": "الفيديو",
+        "battery_charging": "البطارية والشحن",
+        "operating_system": "نظام التشغيل",
+        "connectivity": "الاتصال",
+        "sensors": "المستشعرات",
+        "colors": "الألوان"
       },
       "pros": ["ميزة 1", "ميزة 2"],
       "cons": ["عيب 1", "عيب 2"],
@@ -290,6 +325,54 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
       setError("حدث خطأ أثناء البحث.");
     } finally {
       setSearchLoading(false);
+    }
+  };
+
+  const handleStatsRequest = async () => {
+    if (!statsQuery.trim()) return;
+    setStatsLoading(true);
+    setStatsResult(null);
+    setError(null);
+
+    const systemInstruction = `أنت محلل بيانات تقني محترف.
+    مهمتك: إنشاء إحصائيات دقيقة ورسوم بيانية بناءً على طلب المستخدم.
+    استخدم بيانات الويب الحقيقية (ابحث عن أحدث التقارير من IDC, Canalys, Statista, etc).
+    
+    القواعد:
+    1. العناوين والنصوص بالعربية.
+    2. الأرقام دقيقة.
+    3. الهيكل JSON حصراً:
+    {
+      "title": "عنوان الإحصائية",
+      "description": "وصف قصير للفترة الزمنية والمصدر",
+      "total_samples": "إجمالي العدد (اختياري)",
+      "chart_type": "bar",
+      "data": [
+        { "label": "اسم العنصر", "value": 25, "displayValue": "25% أو 50 مليون" },
+        { "label": "اسم العنصر", "value": 75, "displayValue": "..." }
+      ],
+      "insight": "استنتاج ذكي قصير من سطرين حول هذه البيانات"
+    }
+    
+    ملاحظة: تأكد أن values هي أرقام (نسب مئوية تقريبية لتناسب الرسم البياني من 100) و displayValue هو النص الظاهر.`;
+
+    try {
+      const result = await callGroqAPI(`قم بإنشاء إحصائية لـ: ${statsQuery}`, systemInstruction);
+      if (result) {
+         // Assign colors dynamically if not provided
+         const colors = ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', '#a78bfa'];
+         result.data = result.data.map((item: any, index: number) => ({
+            ...item,
+            color: colors[index % colors.length]
+         }));
+         setStatsResult(result);
+      } else {
+         setError("لم أتمكن من استخراج إحصائيات لهذا الطلب.");
+      }
+    } catch (e) {
+      setError("فشل في تحليل طلب الإحصائيات.");
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -509,6 +592,23 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
                    <ArrowRight className="mr-auto text-slate-500 group-hover:text-emerald-400 group-hover:-translate-x-1 transition-all" />
                  </div>
                </button>
+
+               <button 
+                onClick={() => setActiveToolView('stats')}
+                className="group relative p-6 bg-slate-800/40 border border-slate-700/50 rounded-3xl overflow-hidden transition-all hover:bg-slate-700/60"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <div className="relative flex items-center gap-4">
+                   <div className="w-12 h-12 bg-pink-500/20 rounded-2xl flex items-center justify-center text-pink-400">
+                     <BarChart3 className="w-6 h-6" />
+                   </div>
+                   <div className="text-right">
+                     <h3 className="font-bold text-lg mb-1 group-hover:text-pink-400 transition-colors">إحصائيات بيانية</h3>
+                     <p className="text-xs text-slate-400">رسوم بيانية لأكثر الهواتف والأعطال</p>
+                   </div>
+                   <ArrowRight className="mr-auto text-slate-500 group-hover:text-pink-400 group-hover:-translate-x-1 transition-all" />
+                 </div>
+               </button>
             </div>
           )}
 
@@ -519,6 +619,8 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
                      setActiveToolView('main');
                      setShowPhoneSearch(false);
                      setPhoneSearchResult(null);
+                     setStatsResult(null);
+                     setStatsQuery('');
                   }}
                   className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
                 >
@@ -632,12 +734,16 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
 
                          {/* Full Specifications List (Zebra Striping) */}
                          <div className="mb-6 rounded-xl overflow-hidden border border-slate-700/50">
-                            {Object.entries(phoneSearchResult.specifications || {}).map(([key, val], idx) => (
-                               <div key={idx} className={`flex flex-col sm:flex-row sm:items-center p-4 gap-2 ${idx % 2 === 0 ? 'bg-slate-900/60' : 'bg-slate-800/60'}`}>
-                                  <span className="text-sky-400 font-bold text-sm min-w-[140px] border-r-0 sm:border-r border-slate-700/50 pl-0 sm:pl-4 ml-0 sm:ml-4">{key}</span>
-                                  <span className="text-slate-200 text-sm leading-relaxed">{String(val)}</span>
-                               </div>
-                            ))}
+                            {Object.entries(phoneSearchResult.specifications || {}).map(([key, val], idx) => {
+                               // Translate Key if exists in map, else use key as is (if valid)
+                               const label = SPEC_LABELS[key] || key;
+                               return (
+                                 <div key={idx} className={`flex flex-col sm:flex-row sm:items-center p-4 gap-2 ${idx % 2 === 0 ? 'bg-slate-900/60' : 'bg-slate-800/60'}`}>
+                                    <span className="text-sky-400 font-bold text-sm min-w-[140px] border-r-0 sm:border-r border-slate-700/50 pl-0 sm:pl-4 ml-0 sm:ml-4">{label}</span>
+                                    <span className="text-slate-200 text-sm leading-relaxed">{String(val)}</span>
+                                 </div>
+                               );
+                            })}
                          </div>
 
                          <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -693,7 +799,7 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-slate-900/30 p-3 rounded-xl">
                                   {Object.entries(phone.specifications || {}).slice(0, 6).map(([key, val], k) => (
                                     <div key={k} className="flex flex-col">
-                                      <span className="text-[10px] text-slate-500 font-bold mb-0.5">{key}</span>
+                                      <span className="text-[10px] text-slate-500 font-bold mb-0.5">{SPEC_LABELS[key] || key}</span>
                                       <span className="text-xs text-slate-300 font-medium leading-relaxed">{String(val)}</span>
                                     </div>
                                   ))}
@@ -803,6 +909,85 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
                            </div>
                         </div>
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* --- Stats View (New) --- */}
+                {activeToolView === 'stats' && (
+                  <div className="space-y-6">
+                     <h2 className="text-xl font-black text-pink-400 flex items-center gap-2">
+                       <BarChart3 className="w-6 h-6" /> إحصائيات تقنية
+                    </h2>
+
+                    <div className="bg-slate-800/60 border border-pink-500/30 p-4 rounded-2xl backdrop-blur-md">
+                       <div className="relative flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            value={statsQuery}
+                            onChange={(e) => setStatsQuery(e.target.value)}
+                            placeholder="مثال: أكثر الهواتف مبيعا في 2024"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all placeholder:text-slate-500"
+                            onKeyDown={(e) => e.key === 'Enter' && handleStatsRequest()}
+                          />
+                          <button 
+                            onClick={handleStatsRequest}
+                            disabled={statsLoading || !statsQuery.trim()}
+                            className="bg-pink-500 hover:bg-pink-600 disabled:bg-slate-700 disabled:text-slate-500 text-white p-3 rounded-xl transition-all shadow-lg shadow-pink-500/20"
+                          >
+                            {statsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <PieChart className="w-5 h-5" />}
+                          </button>
+                       </div>
+                       
+                       {/* Predefined Chips */}
+                       <div className="flex flex-wrap gap-2 mt-3">
+                          {['أكثر الهواتف عطلاً', 'أفضل معالجات 2024', 'نسبة استخدام iOS vs Android', 'أكثر الحواسيب مبيعا'].map((q) => (
+                             <button 
+                                key={q}
+                                onClick={() => { setStatsQuery(q); handleStatsRequest(); }} // Will trigger next render
+                                className="text-[10px] bg-slate-700/50 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full transition-colors border border-slate-600"
+                             >
+                                {q}
+                             </button>
+                          ))}
+                       </div>
+                    </div>
+
+                    {statsResult && (
+                       <div className="animate-slide-up bg-slate-800/40 border border-pink-500/20 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
+                          <div className="mb-6">
+                             <h3 className="text-lg font-bold text-white mb-1">{statsResult.title}</h3>
+                             <p className="text-xs text-slate-400">{statsResult.description}</p>
+                          </div>
+
+                          {/* Bar Chart Visualization */}
+                          <div className="space-y-4 mb-6">
+                             {statsResult.data.map((item, idx) => (
+                                <div key={idx} className="relative">
+                                   <div className="flex justify-between text-xs mb-1">
+                                      <span className="text-slate-200 font-bold">{item.label}</span>
+                                      <span className="text-pink-300 font-medium">{item.displayValue}</span>
+                                   </div>
+                                   <div className="h-3 w-full bg-slate-900/50 rounded-full overflow-hidden">
+                                      <div 
+                                         className="h-full rounded-full transition-all duration-1000 ease-out"
+                                         style={{ 
+                                            width: `${item.value}%`, 
+                                            backgroundColor: item.color || '#f472b6',
+                                            animation: `slideInRight 1s ease-out ${idx * 0.1}s backwards`
+                                         }}
+                                      />
+                                   </div>
+                                </div>
+                             ))}
+                          </div>
+
+                          {/* Insight Box */}
+                          <div className="bg-slate-900/40 border border-slate-700/50 rounded-xl p-4 flex gap-3">
+                             <div className="mt-1"><Info className="w-5 h-5 text-pink-400" /></div>
+                             <p className="text-sm text-slate-300 leading-relaxed">{statsResult.insight}</p>
+                          </div>
+                       </div>
                     )}
                   </div>
                 )}

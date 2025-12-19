@@ -27,7 +27,24 @@ export interface PhoneNewsItem {
   brand: string;
   release_date: string;
   specifications: {
-    [key: string]: string; // Flexible key-value for full_specifications
+    networks?: string;
+    dimensions?: string;
+    weight?: string;
+    materials?: string;
+    water_resistance?: string;
+    display?: string;
+    processor?: string;
+    gpu?: string;
+    memory_storage?: string;
+    rear_cameras?: string;
+    front_camera?: string;
+    video?: string;
+    battery_charging?: string;
+    operating_system?: string;
+    connectivity?: string;
+    sensors?: string;
+    colors?: string;
+    [key: string]: string | undefined;
   };
   price_usd: string;
   official_specs_link?: string; // Mapped from generic link if needed
@@ -41,4 +58,18 @@ export interface PhoneComparisonResult {
   specs: { feature: string; phone1: string; phone2: string }[];
   verdict: string;
   betterPhone: string;
+}
+
+export interface StatsResult {
+  title: string;
+  description: string;
+  total_samples?: string;
+  chart_type: 'bar' | 'list';
+  data: {
+    label: string;
+    value: number; // Percentage 0-100
+    displayValue: string; // e.g., "50M Units" or "25%"
+    color?: string;
+  }[];
+  insight: string;
 }
