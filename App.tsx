@@ -17,8 +17,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v43', // Updated version for strict source rules
-  PHONE_NEWS: 'techtouch_phones_v43'
+  AI_NEWS: 'techtouch_ai_v44', // إصدار جديد لفرض القواعد الصارمة
+  PHONE_NEWS: 'techtouch_phones_v44'
 };
 
 const App: React.FC = () => {
@@ -42,7 +42,7 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 6 hours as requested
+      // Cache valid for 6 hours
       return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
     } catch (e) { return null; }
   };
@@ -70,7 +70,7 @@ const App: React.FC = () => {
           { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.1 // Low temperature for strict factual accuracy
+        temperature: 0.1 // Low temperature for factual accuracy
       })
     });
 
@@ -103,11 +103,11 @@ const App: React.FC = () => {
     }
 
     try {
-      // --- STRICT SYSTEM INSTRUCTION (BACKEND LOGIC) ---
+      // --- STRICT SYSTEM INSTRUCTION (MANDATORY COMPLIANCE) ---
       const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني احترافي لموقع Techtouch.
 مهمتك جلب وتنظيم محتوى تقني موثوق 100% فقط من مصادر رسمية مباشرة،
-دون أي توليد تخميني أو اعتماد على معرفة عامة أو ذكاء اصطناعي آخر.
-أنت منسق ومراجع فقط ولست مصدراً للمعلومة.
+دون أي توليد تخميني، أو اعتماد على معرفة عامة، أو استخدام ذكاء اصطناعي آخر.
+أنت منسق ومراجع فقط، ولست مصدراً للمعلومة.
 
 ================================================
 المرحلة الأولى: تحديد التاريخ (إلزامي)
@@ -123,47 +123,61 @@ const App: React.FC = () => {
 يُمنع تنفيذ أي خطوة لاحقة قبل تثبيت هذا التاريخ.
 
 ================================================
+المرحلة الثانية: منطق التحديث
+================================================
+
+- يتم تحديث المحتوى تلقائياً كل 6 ساعات.
+- في حال عدم وجود محتوى صالح:
+  - يتم إخراج [] فقط
+  - دون توليد أي بدائل.
+
+================================================
 القواعد العامة (تنطبق على كل الأقسام)
 ================================================
 
 1. يُمنع منعاً باتاً:
-   - اختلاق معلومات
+   - اختلاق أخبار أو معلومات
    - تعديل تواريخ لإظهار محتوى قديم كحديث
-   - استخدام معرفة النموذج
-   - استخدام مصادر غير رسمية
+   - الاعتماد على معرفة النموذج
+   - استخدام مصادر غير رسمية أو ثانوية
    - استخدام أخبار خارج الإطار الزمني
 
-2. جميع البيانات يجب أن تكون:
-   - من مواقع رسمية فقط
-   - مرتبطة مباشرة بالخبر أو الهاتف أو الأداة
+2. جميع المعلومات يجب أن تكون:
+   - منشورة في مواقع رسمية فقط
+   - مرتبطة مباشرة بالخبر أو الأداة أو الهاتف
 
-3. أي عنصر:
-   - بلا رابط رسمي مباشر
-   - أو برابط عام غير مخصص للتحديث
-   → يُرفض فوراً.
+3. أي عنصر بلا رابط رسمي مباشر صالح → يُرفض فوراً.
 
 4. الترتيب دائماً من الأحدث إلى الأقدم.
 
-5. عند عدم توفر محتوى صالح:
-   - أخرج [] فقط
-   - دون إنشاء محتوى بديل.
+================================================
+قاعدة التطابق الإجباري مع الموقع الرسمي
+================================================
+
+1. المصدر الرسمي هو المرجع الوحيد المعتمد.
+2. يجب أن يحدث تطابق صريح بين:
+   - عنوان الخبر المعروض
+   - محتوى الخبر
+   - اسم المنتج أو النموذج
+   - رقم الإصدار
+   - تاريخ الإعلان
+   وبين ما هو منشور في الصفحة الرسمية نفسها.
+
+3. في حال عدم العثور على نفس الخبر في الموقع الرسمي أو اختلاف رقم الإصدار → يُرفض الخبر فوراً.
+
+4. الذكاء الاصطناعي لا يملك صلاحية تأكيد صحة الخبر أو افتراض وجود إصدار.
 
 ================================================
 القسم الأول: أخبار الذكاء الاصطناعي
 ================================================
 
-الإطار الزمني:
-- آخر 5 أشهر فقط محسوبة من ${todayStr}
-- أي خبر أقدم يُرفض.
+الإطار الزمني: آخر 5 أشهر فقط محسوبة من ${todayStr}.
 
 شرط إلزامي:
-- يجب أن يحتوي العنوان على:
-  اسم الأداة + رقم الإصدار الصريح
-  (مثال: ChatGPT 5.2 – Gemini 3.0 – Claude 3.5)
+- يجب أن يحتوي العنوان على: اسم الأداة + رقم الإصدار الصريح (مثل: ChatGPT 4.5 – Gemini 1.5 Pro).
+- أي خبر بدون رقم إصدار رسمي مذكور نصاً → يُرفض.
 
-أي خبر بدون رقم إصدار → مرفوض.
-
-المصادر الرسمية المعتمدة فقط:
+المصادر الرسمية فقط:
 - openai.com/news
 - platform.openai.com/docs/release-notes
 - blog.google/technology/ai
@@ -171,15 +185,13 @@ const App: React.FC = () => {
 - anthropic.com/news
 - ai.meta.com/blog
 - microsoft.com/ai/blog
-- learn.microsoft.com/azure/ai-services
 - nvidia.com/ai-data-science/blog
 - aws.amazon.com/blogs/machine-learning
 
-عدد المنشورات:
-- 10 فقط
+عدد المنشورات: 10 فقط.
 
-تنسيق كل منشور (JSON):
-- title: عنوان كبير (اسم الاداة + الاصدار)
+تنسيق (JSON):
+- title: عنوان كبير
 - content: مصفوفة نصوص 5-6 أسطر عربية
 - official_link: رابط رسمي واحد فقط
 
@@ -189,57 +201,49 @@ const App: React.FC = () => {
 
 شرط الحداثة (إلزامي):
 لا يُعرض الهاتف إلا إذا:
-- الإطلاق في السنة الحالية فقط
+- الإطلاق الرسمي خلال السنة الحالية فقط
 - المعالج من جيل السنة الحالية
 - النظام: Android 15+ أو iOS 18+
 
 تغيير التاريخ لا يجعل الهاتف حديثاً.
 
-عدد الهواتف:
-- 10 فقط
+عدد الهواتف: 10 فقط.
 
-المصادر الرسمية حسب الشركة فقط:
-- news.samsung.com/global
-- apple.com/newsroom
-- blog.google/products/pixel
-- mi.com/global/news
-- oppo.com/en/newsroom
-- vivo.com/en/about-vivo/news
-- consumer.huawei.com/global/news
-- hihonor.com/global/news
+المصادر الرسمية: (Samsung, Apple, Google, Xiaomi, Oppo, Vivo, Huawei, Honor official sites only).
 
-تنسيق منشور الهاتف (JSON):
-- phone_name: اسم الهاتف فقط
+تنسيق (JSON):
+- phone_name: اسم الهاتف
 - brand: الشركة
 - release_date: تاريخ الإطلاق
-- full_specifications: كائن يحتوي المفاتيح العربية (الشبكات, الأبعاد, الوزن, الخامات, مقاومة الماء والغبار, الشاشة, المعالج, المعالج الرسومي, الذاكرة والتخزين, الكاميرات, الفيديو, البطارية والشحن, نظام التشغيل, الاتصال, المستشعرات, الألوان)
-- price_usd: السعر بالدولار مع ملاحظة "السعر تقريبي وقد يختلف حسب السوق العراقي وسعة التخزين"
-- official_link: صفحة المواصفات الرسمية
-- pros: مصفوفة إيجابيات بالعربية
-- cons: مصفوفة عيوب بالعربية
+- full_specifications: كائن (الشبكات, الأبعاد, الوزن, الخامات, مقاومة الماء, الشاشة, المعالج, الرسومي, الذاكرة, الكاميرات, الفيديو, البطارية, النظام, الاتصال, المستشعرات, الألوان)
+- price_usd: السعر بالدولار
+- official_link: رابط المواصفات الرسمي
+- pros: مصفوفة إيجابيات
+- cons: مصفوفة عيوب
 
 ================================================
 صيغة الإخراج النهائية
 ================================================
 
-أخرج النتيجة بصيغة JSON فقط دون أي نص إضافي:
+أخرج النتيجة بصيغة JSON فقط:
 
 {
   "current_date": "${todayStr}",
-  "ai_news": [
-    { "title": "...", "content": ["...", "..."], "official_link": "..." }
-  ],
-  "smartphones": [
-     { "phone_name": "...", "brand": "...", "release_date": "...", "full_specifications": {}, "price_usd": "...", "official_link": "...", "pros": [], "cons": [] }
-  ]
+  "ai_news": [],
+  "smartphones": []
 }
 
-أي عنصر خارج الإطار الزمني أو بلا رابط رسمي أو بلا رقم إصدار (AI) أو هاتف غير حديث فعلياً (نظام قديم) → يُرفض ولا يُعرض.`;
+أي عنصر:
+- غير مطابق للموقع الرسمي
+- بلا رابط مباشر
+- بلا رقم إصدار
+- أو هاتف غير حديث فعلياً
+→ يُرفض ولا يُعرض.`;
 
       let userPrompt = "";
       
       if (type === 'ai-news') {
-        userPrompt = `نفذ التعليمات بدقة. استخرج أحدث 10 أخبار ذكاء اصطناعي (آخر 5 أشهر) من المصادر الرسمية فقط. تأكد من وجود رقم الإصدار في العنوان.`;
+        userPrompt = `نفذ التعليمات بدقة. استخرج أحدث 10 أخبار ذكاء اصطناعي (آخر 5 أشهر) من المصادر الرسمية. تأكد من وجود رقم الإصدار في العنوان.`;
       } else if (type === 'phone-news') {
         userPrompt = `نفذ التعليمات بدقة. استخرج أحدث 10 هواتف ذكية (أندرويد 15+ أو iOS 18+) لسنة ${new Date().getFullYear()}.`;
       }
@@ -265,7 +269,7 @@ const App: React.FC = () => {
           specifications: item.full_specifications || {},
           price_usd: item.price_usd,
           official_specs_link: item.official_link || '',
-          iraqi_price_source: '', // Can be kept generic or added if prompt provides
+          iraqi_price_source: '',
           pros: item.pros,
           cons: item.cons
         }));
@@ -331,8 +335,8 @@ const App: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/4"></div>
       </div>
 
-      <div className="relative z-10 max-w-lg mx-auto px-5 pb-8 min-h-screen flex flex-col">
-        <header className="pt-12 pb-6 text-center">
+      <div className="relative z-10 max-w-lg mx-auto px-4 pb-8 min-h-screen flex flex-col">
+        <header className="pt-10 pb-6 text-center">
           <div className="inline-block relative mb-6">
              <div className="absolute inset-0 bg-sky-500/20 blur-xl rounded-full"></div>
              <div className="relative w-24 h-24 mx-auto bg-slate-800 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-center overflow-hidden">
@@ -461,7 +465,8 @@ const App: React.FC = () => {
                               <span>حدث رسمي</span>
                             </div>
                           </div>
-                          <div className="text-[12px] text-slate-300 mb-5 font-bold space-y-2 h-[100px] overflow-y-auto pr-1">
+                          {/* UPDATED: Font size increased to text-[13px] */}
+                          <div className="text-[13px] text-slate-300 mb-5 font-bold space-y-2 h-[100px] overflow-y-auto pr-1">
                             {n.summary.map((line, idx) => (
                               <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80">
                                 <span className="w-1 h-1 bg-sky-500/40 rounded-full shrink-0 mt-1.5"></span>
@@ -469,12 +474,13 @@ const App: React.FC = () => {
                               </p>
                             ))}
                           </div>
+                          {/* UPDATED: Share buttons smaller (p-1.5, w-3.5 h-3.5) and wrapped to prevent overflow */}
                           <div className="flex justify-between items-center pt-3 border-t border-slate-700/50 flex-wrap gap-y-2">
-                            <div className="flex gap-1.5 sm:gap-2">
-                              <button onClick={() => shareContent(n, 'fb')} className="p-1.5 sm:p-2 bg-slate-700/40 text-blue-400 rounded-xl hover:bg-slate-700 transition-colors"><Facebook className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
-                              <button onClick={() => shareContent(n, 'insta')} className="p-1.5 sm:p-2 bg-slate-700/40 text-pink-400 rounded-xl hover:bg-slate-700 transition-colors"><Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
-                              <button onClick={() => shareContent(n, 'tg')} className="p-1.5 sm:p-2 bg-slate-700/40 text-sky-400 rounded-xl hover:bg-slate-700 transition-colors"><Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
-                              <button onClick={() => shareContent(n, 'copy')} className="p-1.5 sm:p-2 bg-slate-700/40 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors"><Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></button>
+                            <div className="flex gap-1.5">
+                              <button onClick={() => shareContent(n, 'fb')} className="p-1.5 bg-slate-700/40 text-blue-400 rounded-xl hover:bg-slate-700 transition-colors"><Facebook className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => shareContent(n, 'insta')} className="p-1.5 bg-slate-700/40 text-pink-400 rounded-xl hover:bg-slate-700 transition-colors"><Instagram className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => shareContent(n, 'tg')} className="p-1.5 bg-slate-700/40 text-sky-400 rounded-xl hover:bg-slate-700 transition-colors"><Send className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => shareContent(n, 'copy')} className="p-1.5 bg-slate-700/40 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
                             </div>
                             <a href={n.official_link} target="_blank" className="text-[9px] text-indigo-400 font-black px-4 py-2.5 border border-indigo-500/30 rounded-2xl bg-indigo-500/5 flex items-center gap-2 hover:bg-indigo-500/10 transition-all">رابط الإعلان <ExternalLink className="w-3.5 h-3.5" /></a>
                           </div>
@@ -523,7 +529,8 @@ const App: React.FC = () => {
                                       <spec.icon className="w-4 h-4" />
                                       <span className="text-[11px] font-black uppercase tracking-widest">{spec.label}</span>
                                    </div>
-                                   <div className="text-[12px] text-slate-200 font-bold leading-tight line-clamp-2">{phone.specifications[spec.key] || 'غير محدد'}</div>
+                                   {/* UPDATED: Font size increased to text-[13px] */}
+                                   <div className="text-[13px] text-slate-200 font-bold leading-tight line-clamp-2">{phone.specifications[spec.key] || 'غير محدد'}</div>
                                  </div>
                                ))}
                             </div>
@@ -531,11 +538,13 @@ const App: React.FC = () => {
                             <div className="space-y-3 mb-6">
                                <div className="bg-slate-900/40 p-4 rounded-[1.2rem] border border-slate-700/30">
                                   <div className="text-sky-400/70 text-[11px] font-black uppercase mb-1.5 flex items-center gap-2 tracking-widest">الكاميرات والفيديو</div>
-                                  <div className="text-[12px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras || ''} • {phone.specifications.video || ''}</div>
+                                  {/* UPDATED: Font size increased to text-[13px] */}
+                                  <div className="text-[13px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras || ''} • {phone.specifications.video || ''}</div>
                                </div>
                                <div className="bg-slate-900/40 p-4 rounded-[1.2rem] border border-slate-700/30">
                                   <div className="text-sky-400/70 text-[11px] font-black uppercase mb-1.5 flex items-center gap-2 tracking-widest">التصميم والاتصال</div>
-                                  <div className="text-[12px] text-slate-300 font-bold leading-relaxed">{phone.specifications.dimensions || ''} • {phone.specifications.weight || ''} • {phone.specifications.connectivity || ''}</div>
+                                  {/* UPDATED: Font size increased to text-[13px] */}
+                                  <div className="text-[13px] text-slate-300 font-bold leading-relaxed">{phone.specifications.dimensions || ''} • {phone.specifications.weight || ''} • {phone.specifications.connectivity || ''}</div>
                                </div>
                             </div>
 
@@ -544,7 +553,8 @@ const App: React.FC = () => {
                                   <div className="flex items-center gap-2 text-emerald-400 text-[11px] font-black uppercase tracking-widest"><ThumbsUp className="w-4 h-4" /> المميزات</div>
                                   <ul className="space-y-1.5">
                                     {phone.pros.map((p, idx) => (
-                                      <li key={idx} className="text-[11px] text-slate-300 font-bold flex items-start gap-2">
+                                      /* UPDATED: Font size increased to text-[12px] */
+                                      <li key={idx} className="text-[12px] text-slate-300 font-bold flex items-start gap-2">
                                         <CheckCircle2 className="w-3 h-3 text-emerald-500/60 shrink-0 mt-0.5" />
                                         <span>{p}</span>
                                       </li>
@@ -555,7 +565,8 @@ const App: React.FC = () => {
                                   <div className="flex items-center gap-2 text-red-400 text-[11px] font-black uppercase tracking-widest"><ThumbsDown className="w-4 h-4" /> العيوب</div>
                                   <ul className="space-y-1.5">
                                     {phone.cons.map((c, idx) => (
-                                      <li key={idx} className="text-[11px] text-slate-300 font-bold flex items-start gap-2">
+                                      /* UPDATED: Font size increased to text-[12px] */
+                                      <li key={idx} className="text-[12px] text-slate-300 font-bold flex items-start gap-2">
                                         <AlertCircle className="w-3 h-3 text-red-500/60 shrink-0 mt-0.5" />
                                         <span>{c}</span>
                                       </li>
@@ -564,14 +575,15 @@ const App: React.FC = () => {
                                </div>
                             </div>
 
+                            {/* UPDATED: Share buttons smaller and wrapped */}
                             <div className="flex justify-between items-center pt-6 border-t border-slate-700/50 flex-wrap gap-y-3">
-                                <div className="flex gap-1.5 sm:gap-2">
-                                  <button onClick={() => shareContent(phone, 'fb')} className="p-1.5 sm:p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-blue-400 hover:bg-blue-500/10 transition-colors"><Facebook className="w-4 h-4 sm:w-5 sm:h-5" /></button>
-                                  <button onClick={() => shareContent(phone, 'insta')} className="p-1.5 sm:p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-pink-400 hover:bg-pink-500/10 transition-colors"><Instagram className="w-4 h-4 sm:w-5 sm:h-5" /></button>
-                                  <button onClick={() => shareContent(phone, 'tg')} className="p-1.5 sm:p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-sky-400 hover:bg-sky-500/10 transition-colors"><Send className="w-4 h-4 sm:w-5 sm:h-5" /></button>
-                                  <button onClick={() => shareContent(phone, 'copy')} className="p-1.5 sm:p-2.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-slate-200 hover:bg-slate-700 transition-colors"><Copy className="w-4 h-4 sm:w-5 sm:h-5" /></button>
+                                <div className="flex gap-1.5">
+                                  <button onClick={() => shareContent(phone, 'fb')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-blue-400 hover:bg-blue-500/10 transition-colors"><Facebook className="w-4 h-4" /></button>
+                                  <button onClick={() => shareContent(phone, 'insta')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-pink-400 hover:bg-pink-500/10 transition-colors"><Instagram className="w-4 h-4" /></button>
+                                  <button onClick={() => shareContent(phone, 'tg')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-sky-400 hover:bg-sky-500/10 transition-colors"><Send className="w-4 h-4" /></button>
+                                  <button onClick={() => shareContent(phone, 'copy')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-slate-200 hover:bg-slate-700 transition-colors"><Copy className="w-4 h-4" /></button>
                                 </div>
-                                <a href={phone.official_specs_link} target="_blank" className="text-[10px] text-sky-400 font-black px-4 sm:px-6 py-2.5 sm:py-3 border border-sky-500/30 rounded-[1.5rem] flex items-center gap-2.5 hover:bg-sky-500/10 transition-all shadow-xl shadow-sky-500/5">المواصفات <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></a>
+                                <a href={phone.official_specs_link} target="_blank" className="text-[10px] text-sky-400 font-black px-4 py-2.5 border border-sky-500/30 rounded-[1.5rem] flex items-center gap-2.5 hover:bg-sky-500/10 transition-all shadow-xl shadow-sky-500/5">المواصفات <ExternalLink className="w-3.5 h-3.5" /></a>
                             </div>
                          </div>
                        )) : (
