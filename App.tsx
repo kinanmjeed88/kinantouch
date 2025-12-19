@@ -8,7 +8,7 @@ import {
   AlertCircle, Send,
   Download, X, Search,
   BarChart3, PieChart,
-  LayoutGrid, Share2, Copy, Facebook, Instagram
+  LayoutGrid, Copy, Facebook, Instagram
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; // Importing custom TG icon
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult } from './types';
