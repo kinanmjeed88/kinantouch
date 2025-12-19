@@ -4,7 +4,8 @@ const urlsToCache = [
   './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap'
+  'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap',
+  'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg'
 ];
 
 self.addEventListener('install', event => {

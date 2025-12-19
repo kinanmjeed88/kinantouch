@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
@@ -9,7 +8,8 @@ import {
   AlertCircle, Send, Search, ExternalLink,
   Copy, TrendingUp,
   MessageCircle, Facebook, Instagram, BadgeCheck, Zap,
-  ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2
+  ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
+  Download
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
 
@@ -17,7 +17,7 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v44', // إصدار جديد لفرض القواعد الصارمة
+  AI_NEWS: 'techtouch_ai_v44',
   PHONE_NEWS: 'techtouch_phones_v44'
 };
 
@@ -35,7 +35,28 @@ const App: React.FC = () => {
   const [phone2, setPhone2] = useState('');
   const [comparisonResult, setComparisonResult] = useState<PhoneComparisonResult | null>(null);
 
+  // PWA Install State
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
   const todayStr = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   const getCachedData = (key: string) => {
     const cached = localStorage.getItem(key);
@@ -336,7 +357,19 @@ const App: React.FC = () => {
       </div>
 
       <div className="relative z-10 max-w-lg mx-auto px-4 pb-8 min-h-screen flex flex-col">
-        <header className="pt-10 pb-6 text-center">
+        <header className="pt-10 pb-6 text-center relative">
+          
+          {/* PWA Install Button */}
+          {installPrompt && (
+            <button 
+              onClick={handleInstallClick}
+              className="absolute top-4 left-4 p-2 bg-sky-500/10 border border-sky-500/30 text-sky-400 rounded-full animate-pulse hover:bg-sky-500/20 transition-all shadow-lg shadow-sky-500/10"
+              title="تثبيت التطبيق"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          )}
+
           <div className="inline-block relative mb-6">
              <div className="absolute inset-0 bg-sky-500/20 blur-xl rounded-full"></div>
              <div className="relative w-24 h-24 mx-auto bg-slate-800 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-center overflow-hidden">
