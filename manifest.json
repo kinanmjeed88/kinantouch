@@ -1,7 +1,9 @@
 {
+  "id": "techtouch-hub",
   "name": "TechTouch Hub",
   "short_name": "TechTouch",
-  "start_url": "/",
+  "description": "TechTouch official portal for Telegram channels, apps, games, and social media.",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
@@ -10,7 +12,8 @@
     {
       "src": "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
       "type": "image/svg+xml",
-      "sizes": "192x192 512x512"
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
     }
   ]
 }

@@ -9,16 +9,17 @@ import {
   Copy, TrendingUp,
   MessageCircle, Facebook, Instagram, BadgeCheck, Zap,
   ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
-  Download
+  Download, Star, X
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
-type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
+type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'best-phones';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v44',
-  PHONE_NEWS: 'techtouch_phones_v44'
+  AI_NEWS: 'techtouch_ai_v45',
+  PHONE_NEWS: 'techtouch_phones_v45',
+  BEST_PHONES: 'techtouch_best_v45'
 };
 
 const App: React.FC = () => {
@@ -28,6 +29,7 @@ const App: React.FC = () => {
   
   const [aiNews, setAiNews] = useState<AINewsItem[]>([]);
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
+  const [bestPhones, setBestPhones] = useState<PhoneNewsItem[]>([]); // reusing PhoneNewsItem structure partially or adapt
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -37,6 +39,7 @@ const App: React.FC = () => {
 
   // PWA Install State
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -44,6 +47,7 @@ const App: React.FC = () => {
     const handler = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
+      setShowInstallBanner(true);
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -55,6 +59,7 @@ const App: React.FC = () => {
     const { outcome } = await installPrompt.userChoice;
     if (outcome === 'accepted') {
       setInstallPrompt(null);
+      setShowInstallBanner(false);
     }
   };
 
@@ -91,7 +96,7 @@ const App: React.FC = () => {
           { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.1 // Low temperature for factual accuracy
+        temperature: 0.1 
       })
     });
 
@@ -113,160 +118,339 @@ const App: React.FC = () => {
     setError(null);
     setActiveToolView(type);
     
-    const cacheKey = type === 'ai-news' ? CACHE_KEYS.AI_NEWS : CACHE_KEYS.PHONE_NEWS;
-    const cached = !force ? getCachedData(cacheKey) : null;
+    let cacheKey = '';
+    if (type === 'ai-news') cacheKey = CACHE_KEYS.AI_NEWS;
+    else if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
+    else if (type === 'best-phones') cacheKey = CACHE_KEYS.BEST_PHONES;
+
+    const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
 
     if (cached) {
       if (type === 'ai-news') setAiNews(cached.ai_news || []);
       else if (type === 'phone-news') setPhoneNews(cached.smartphones || []);
+      else if (type === 'best-phones') setBestPhones(cached.smartphones || []);
       setLoading(false);
       return;
     }
 
     try {
       // --- STRICT SYSTEM INSTRUCTION (MANDATORY COMPLIANCE) ---
-      const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني احترافي لموقع Techtouch.
-مهمتك جلب وتنظيم محتوى تقني موثوق 100% فقط من مصادر رسمية مباشرة،
-دون أي توليد تخميني، أو اعتماد على معرفة عامة، أو استخدام ذكاء اصطناعي آخر.
-أنت منسق ومراجع فقط، ولست مصدراً للمعلومة.
+      const baseSystemInstruction = `You are an AI assistant acting as a professional technology editor for the website “Techtouch”.
+
+Your role is to organize, validate, and present technology content that is 100% accurate and sourced ONLY from official websites using tools like browse_page or web_search.
+You are NOT allowed to generate, infer, estimate, or invent any information.
+You are a formatter and verifier ONLY, not a source of facts.
 
 ================================================
-المرحلة الأولى: تحديد التاريخ (إلزامي)
+PHASE 1: DATE DETERMINATION (MANDATORY)
 ================================================
 
-قبل أي جلب أو تحليل أو إخراج:
-1. حدّد التاريخ الحالي الفعلي للنظام.
-2. اعتمده كمرجع زمني صارم.
-3. خزّن التاريخ في متغير ثابت.
+Before performing any action:
 
-التاريخ الحالي = ${todayStr}
+1. Determine the actual system date.
+2. Fix it as the single authoritative reference date.
+3. Store it as a constant value.
 
-يُمنع تنفيذ أي خطوة لاحقة قبل تثبيت هذا التاريخ.
+Current date = {{TODAY_DATE}}
 
-================================================
-المرحلة الثانية: منطق التحديث
-================================================
-
-- يتم تحديث المحتوى تلقائياً كل 6 ساعات.
-- في حال عدم وجود محتوى صالح:
-  - يتم إخراج [] فقط
-  - دون توليد أي بدائل.
+No further step is allowed before fixing this date.
 
 ================================================
-القواعد العامة (تنطبق على كل الأقسام)
+PHASE 2: UPDATE LOGIC
 ================================================
 
-1. يُمنع منعاً باتاً:
-   - اختلاق أخبار أو معلومات
-   - تعديل تواريخ لإظهار محتوى قديم كحديث
-   - الاعتماد على معرفة النموذج
-   - استخدام مصادر غير رسمية أو ثانوية
-   - استخدام أخبار خارج الإطار الزمني
-
-2. جميع المعلومات يجب أن تكون:
-   - منشورة في مواقع رسمية فقط
-   - مرتبطة مباشرة بالخبر أو الأداة أو الهاتف
-
-3. أي عنصر بلا رابط رسمي مباشر صالح → يُرفض فوراً.
-
-4. الترتيب دائماً من الأحدث إلى الأقدم.
+- Content must be refreshed automatically every 6 hours by using browse_page or web_search tools to fetch latest data from official sources.
+- Between refresh cycles:
+  - All content remains static.
+- On manual refresh or if data is older than 6 hours:
+  - Re-execute the entire prompt from Phase 1, calling tools to update ai_news and smartphones sections.
+- If no valid content exists or tool calls fail:
+  - Output empty arrays []
+  - Do NOT generate replacements or filler content.
 
 ================================================
-قاعدة التطابق الإجباري مع الموقع الرسمي
+GLOBAL RULES (APPLY TO ALL SECTIONS)
 ================================================
 
-1. المصدر الرسمي هو المرجع الوحيد المعتمد.
-2. يجب أن يحدث تطابق صريح بين:
-   - عنوان الخبر المعروض
-   - محتوى الخبر
-   - اسم المنتج أو النموذج
-   - رقم الإصدار
-   - تاريخ الإعلان
-   وبين ما هو منشور في الصفحة الرسمية نفسها.
+1. It is strictly forbidden to:
+   - Invent news, versions, or specifications
+   - Modify dates to make old content look recent
+   - Use model knowledge or assumptions
+   - Use non-official or secondary sources
+   - Use content outside the defined time range
 
-3. في حال عدم العثور على نفس الخبر في الموقع الرسمي أو اختلاف رقم الإصدار → يُرفض الخبر فوراً.
+2. All information MUST:
+   - Exist verbatim on an official website, fetched via tools
+   - Be directly related to the specific product or update
+   - Be translated to Arabic for specifications if original is English (use exact terms, no inference)
 
-4. الذكاء الاصطناعي لا يملك صلاحية تأكيد صحة الخبر أو افتراض وجود إصدار.
+3. Any item without a valid official direct link fetched via tool → REJECT.
 
-================================================
-القسم الأول: أخبار الذكاء الاصطناعي
-================================================
+4. Sorting is always from newest to oldest based on tool-fetched dates.
 
-الإطار الزمني: آخر 5 أشهر فقط محسوبة من ${todayStr}.
-
-شرط إلزامي:
-- يجب أن يحتوي العنوان على: اسم الأداة + رقم الإصدار الصريح (مثل: ChatGPT 4.5 – Gemini 1.5 Pro).
-- أي خبر بدون رقم إصدار رسمي مذكور نصاً → يُرفض.
-
-المصادر الرسمية فقط:
-- openai.com/news
-- platform.openai.com/docs/release-notes
-- blog.google/technology/ai
-- deepmind.google/discover/blog
-- anthropic.com/news
-- ai.meta.com/blog
-- microsoft.com/ai/blog
-- nvidia.com/ai-data-science/blog
-- aws.amazon.com/blogs/machine-learning
-
-عدد المنشورات: 10 فقط.
-
-تنسيق (JSON):
-- title: عنوان كبير
-- content: مصفوفة نصوص 5-6 أسطر عربية
-- official_link: رابط رسمي واحد فقط
+5. For Arabic translations: Use standard Arabic for specs (e.g., "الشاشة" for display), but keep technical terms in English if standard (e.g., "Snapdragon 8 Gen 4").
 
 ================================================
-القسم الثاني: عالم الهواتف الذكية
+OFFICIAL SOURCE MATCHING RULE (CRITICAL)
 ================================================
 
-شرط الحداثة (إلزامي):
-لا يُعرض الهاتف إلا إذا:
-- الإطلاق الرسمي خلال السنة الحالية فقط
-- المعالج من جيل السنة الحالية
-- النظام: Android 15+ أو iOS 18+
+1. The official website is the single source of truth. Use browse_page to fetch and verify.
+2. A news item is valid ONLY if it exists verbatim on the official site.
 
-تغيير التاريخ لا يجعل الهاتف حديثاً.
+3. The following must match exactly with the official page:
+   - Title
+   - Product or model name
+   - Version number
+   - Announcement date
+   - Content meaning
 
-عدد الهواتف: 10 فقط.
+4. If there is:
+   - Any mismatch in version number
+   - Any mismatch in product name
+   - Any mismatch in date
+   - Or the content cannot be found on the official site via tool
 
-المصادر الرسمية: (Samsung, Apple, Google, Xiaomi, Oppo, Vivo, Huawei, Honor official sites only).
+   → Reject the item completely.
 
-تنسيق (JSON):
-- phone_name: اسم الهاتف
-- brand: الشركة
-- release_date: تاريخ الإطلاق
-- full_specifications: كائن (الشبكات, الأبعاد, الوزن, الخامات, مقاومة الماء, الشاشة, المعالج, الرسومي, الذاكرة, الكاميرات, الفيديو, البطارية, النظام, الاتصال, المستشعرات, الألوان)
-- price_usd: السعر بالدولار
-- official_link: رابط المواصفات الرسمي
-- pros: مصفوفة إيجابيات
-- cons: مصفوفة عيوب
+5. AI is NOT allowed to:
+   - Confirm news validity
+   - Infer versions
+   - Fill missing details
+
+6. If no full match exists:
+   - Output []
+   - Do not create alternative news.
 
 ================================================
-صيغة الإخراج النهائية
+SECTION 1: ARTIFICIAL INTELLIGENCE NEWS
 ================================================
 
-أخرج النتيجة بصيغة JSON فقط:
+Timeframe:
+- Only news from the last 5 months relative to {{TODAY_DATE}}.
+- Anything older → REJECT.
+
+Mandatory condition:
+- The title MUST include:
+  Product name + explicit official version number.
+
+Examples of ACCEPTED titles:
+- ChatGPT 4.5
+- Gemini 1.5 Pro
+- Claude 3.5 Sonnet
+- LLaMA 3 70B
+
+Examples of REJECTED titles:
+- Google AI 3.1
+- Microsoft AI Update
+- NVIDIA AI 1.9
+- AWS AI Platform
+
+Official sources ONLY (fetch via browse_page):
+- https://openai.com/news
+- https://platform.openai.com/docs/release-notes
+- https://blog.google/technology/ai
+- https://deepmind.google/discover/blog
+- https://www.anthropic.com/news
+- https://ai.meta.com/blog
+- https://www.microsoft.com/ai/blog
+- https://learn.microsoft.com/azure/ai-services
+- https://www.nvidia.com/ai-data-science/blog
+- https://aws.amazon.com/blogs/machine-learning
+
+Quantity:
+- Exactly 10 items maximum, fetched and verified via parallel tool calls.
+
+Each item must include:
+- Large title (1–2 lines max)
+- 5–6 factual lines describing the update (verbatim from tool fetch)
+- ONE official link only
+- Small interaction buttons:
+  Facebook, Instagram, Telegram, Copy, Official Site
+
+================================================
+SECTION 2: SMARTPHONE WORLD (CURRENT YEAR ONLY)
+================================================
+
+A smartphone is considered valid ONLY if ALL conditions apply:
+1. Official release year == current year (fetched via tool)
+2. Processor belongs to the current generation (e.g., Snapdragon 8 Gen 4, A19, etc.)
+3. OS is modern:
+   - Android 15+ OR iOS 18+
+
+Changing the date alone does NOT make a phone modern.
+
+Quantity:
+- Exactly 10 smartphones maximum, fetched via browse_page.
+
+Official sources by brand ONLY (fetch via browse_page):
+
+Samsung:
+- https://news.samsung.com/global
+- https://www.samsung.com/global/galaxy
+
+Apple:
+- https://www.apple.com/newsroom
+- https://www.apple.com/iphone
+
+Google:
+- https://blog.google/products/pixel
+- https://store.google.com/category/phones
+
+Xiaomi:
+- https://www.mi.com/global/news
+- https://www.mi.com/global/phone
+
+Oppo:
+- https://www.oppo.com/en/newsroom
+
+Vivo:
+- https://www.vivo.com/en/about-vivo/news
+
+Huawei:
+- https://consumer.huawei.com/global/news
+
+Honor:
+- https://www.hihonor.com/global/news
+
+Phone post structure:
+- Title: Phone name only
+- Brand
+- Official release date
+
+Specifications (Arabic language only, translated from fetched data):
+- الشبكات
+- الأبعاد
+- الوزن
+- المواد
+- مقاومة الماء/الغبار
+- الشاشة
+- المعالج
+- معالج الرسوميات
+- الذاكرة والتخزين
+- الكاميرات
+- الفيديو
+- البطارية والشحن
+- نظام التشغيل
+- الاتصال
+- المستشعرات
+- الألوان
+
+Price:
+- USD only, fetched from official source or trusted Iraqi retailer (e.g., via web_search site:iraqimarket.com if official)
+- Mandatory note:
+  "The price is approximate and may vary depending on the Iraqi market and storage option." (translated to Arabic if needed)
+
+Pros:
+- Short, clear bullet points (Arabic, fetched or summarized verbatim)
+
+Cons:
+- Short, objective bullet points (Arabic, fetched or summarized verbatim)
+
+Link:
+- Official specification page ONLY
+
+End of section:
+- Existing statistics remain unchanged.
+
+================================================
+SECTION 3: TECHNICAL COMPARISON
+================================================
+
+- No changes allowed
+- No additional content generation
+- Existing logic remains intact
+
+================================================
+SECTION 4: BEST SMARTPHONES OF THE CURRENT YEAR (SPECIAL RULE)
+================================================
+
+When a user explicitly asks for:
+"Best smartphones of the current year"
+
+Follow these EXACT steps:
+
+1. Assume the current year is 2025 unless stated otherwise.
+   Reference date: December 19, 2025.
+
+2. Fetch data using tools ONLY:
+   - web_search query:
+     "best smartphones 2025 list"
+     with num_results = 20
+   - Use browse_page on top URLs to extract details.
+
+3. Optionally use browse_page on specific URLs to extract:
+   - Models
+   - Brands
+   - Ratings
+   - Key features
+
+4. Analyze ONLY reliable sources:
+   - PCMag
+   - CNET
+   - GSMArena
+   - Tom’s Guide
+   - What Hi-Fi
+   - TechAdvisor
+   - NotebookCheck
+   - Reddit (user insights only)
+   - YouTube (review consensus, not opinions)
+   - UL Benchmarks
+
+5. Processing rules:
+   - Remove duplicates
+   - Normalize regional model names
+   - Rank top 10 by consensus (mentions + ratings from fetched data)
+
+6. Presentation:
+   - Start with a numbered Top 10 list
+   - Include brief reasons for ranking (verbatim from sources)
+   - Use inline citations after each phone:
+     [web:citation_id]
+
+7. Notes:
+   - Rankings are review-based and subjective
+   - Suggest category-specific requests if needed
+
+8. Do NOT invent rankings or phones.
+   All data must come from fetched sources.
+
+================================================
+UI / UX RULES
+================================================
+
+- Share icons must be small and responsive
+- No element may overflow container boundaries
+- No horizontal overflow is allowed
+
+================================================
+FINAL OUTPUT FORMAT
+================================================
+
+Output JSON only, no additional text:
 
 {
-  "current_date": "${todayStr}",
-  "ai_news": [],
-  "smartphones": []
+  "current_date": "{{TODAY_DATE}}",
+  "ai_news": [array of items],
+  "smartphones": [array of items]
 }
 
-أي عنصر:
-- غير مطابق للموقع الرسمي
-- بلا رابط مباشر
-- بلا رقم إصدار
-- أو هاتف غير حديث فعلياً
-→ يُرفض ولا يُعرض.`;
+Any item that:
+- Does not fully match the official source
+- Lacks a direct official link
+- Has an unverified version number
+- Is not truly current-year hardware
 
+→ MUST BE REJECTED.`;
+
+      const systemInstruction = baseSystemInstruction.replace('{{TODAY_DATE}}', todayStr);
       let userPrompt = "";
       
       if (type === 'ai-news') {
-        userPrompt = `نفذ التعليمات بدقة. استخرج أحدث 10 أخبار ذكاء اصطناعي (آخر 5 أشهر) من المصادر الرسمية. تأكد من وجود رقم الإصدار في العنوان.`;
+        userPrompt = `Execute Phase 2: Update AI News (Section 1). Return JSON.`;
       } else if (type === 'phone-news') {
-        userPrompt = `نفذ التعليمات بدقة. استخرج أحدث 10 هواتف ذكية (أندرويد 15+ أو iOS 18+) لسنة ${new Date().getFullYear()}.`;
+        userPrompt = `Execute Phase 2: Update Smartphone World (Section 2). Return JSON.`;
+      } else if (type === 'best-phones') {
+        userPrompt = `Execute Section 4: Best Smartphones of the Current Year (2025). Return JSON with key "smartphones".`;
       }
 
       const result = await callGroqAPI(userPrompt, systemInstruction);
@@ -282,7 +466,7 @@ const App: React.FC = () => {
         }));
         saveToCache(cacheKey, { ai_news: mappedAI });
         setAiNews(mappedAI);
-      } else if (type === 'phone-news' && result.smartphones) {
+      } else if ((type === 'phone-news' || type === 'best-phones') && result.smartphones) {
         const mappedPhones = result.smartphones.map((item: any) => ({
           phone_name: item.phone_name,
           brand: item.brand,
@@ -295,7 +479,8 @@ const App: React.FC = () => {
           cons: item.cons
         }));
         saveToCache(cacheKey, { smartphones: mappedPhones });
-        setPhoneNews(mappedPhones);
+        if (type === 'phone-news') setPhoneNews(mappedPhones);
+        else setBestPhones(mappedPhones);
       }
 
     } catch (err: any) {
@@ -357,19 +542,8 @@ const App: React.FC = () => {
       </div>
 
       <div className="relative z-10 max-w-lg mx-auto px-4 pb-8 min-h-screen flex flex-col">
-        <header className="pt-10 pb-6 text-center relative">
+        <header className="pt-8 pb-6 text-center relative">
           
-          {/* PWA Install Button */}
-          {installPrompt && (
-            <button 
-              onClick={handleInstallClick}
-              className="absolute top-4 left-4 p-2 bg-sky-500/10 border border-sky-500/30 text-sky-400 rounded-full animate-pulse hover:bg-sky-500/20 transition-all shadow-lg shadow-sky-500/10"
-              title="تثبيت التطبيق"
-            >
-              <Download className="w-5 h-5" />
-            </button>
-          )}
-
           <div className="inline-block relative mb-6">
              <div className="absolute inset-0 bg-sky-500/20 blur-xl rounded-full"></div>
              <div className="relative w-24 h-24 mx-auto bg-slate-800 rounded-3xl border border-white/10 shadow-2xl flex items-center justify-center overflow-hidden">
@@ -379,11 +553,22 @@ const App: React.FC = () => {
                   <span className="text-4xl font-black text-sky-400">{profileConfig.initials}</span>
                 )}
              </div>
+             
+             {/* Small PWA Install Button integrated near profile (Hidden if banner is shown) */}
+             {installPrompt && !showInstallBanner && (
+                <button 
+                  onClick={() => setShowInstallBanner(true)}
+                  className="absolute -bottom-2 -right-2 p-2 bg-sky-500 text-white rounded-full shadow-lg shadow-sky-500/30 animate-bounce"
+                  title="تثبيت التطبيق"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+             )}
           </div>
           <h1 className="text-3xl font-black mb-1 tracking-tight">Techtouch</h1>
           <p className="text-slate-400 text-sm font-bold tracking-[0.2em] uppercase">كنان مجيد</p>
 
-          <nav className="flex justify-center items-center gap-4 mt-8 px-4 py-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl backdrop-blur-md shadow-lg">
+          <nav className="flex justify-center items-center gap-4 mt-8 px-4 py-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl backdrop-blur-md shadow-lg sticky top-4 z-50">
             <button onClick={() => { setActiveTab('home'); setActiveToolView('main'); }} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'home' ? 'text-sky-400 scale-110' : 'text-slate-500'}`}><Home className="w-5 h-5" /><span className="text-[9px] font-black">الرئيسية</span></button>
             <div className="w-px h-6 bg-slate-700/50" />
             <button onClick={() => { setActiveTab('info'); setActiveToolView('main'); }} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'info' ? 'text-sky-400 scale-110' : 'text-slate-500'}`}><Info className="w-5 h-5" /><span className="text-[9px] font-black">معلومات</span></button>
@@ -392,11 +577,11 @@ const App: React.FC = () => {
           </nav>
         </header>
 
-        <main className="flex-grow py-4">
+        <main className="flex-grow py-4 animate-fade-in">
           {activeTab === 'home' && telegramChannels.map((ch, i) => <ChannelCard key={ch.id} channel={ch} index={i} />)}
           
           {activeTab === 'info' && (
-            <div className="space-y-4 animate-fade-in">
+            <div className="space-y-4">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="flex items-center gap-3 text-sky-400 mb-6 border-b border-slate-700/50 pb-4 overflow-hidden">
                   <MessageCircle className="w-6 h-6 shrink-0" />
@@ -404,276 +589,346 @@ const App: React.FC = () => {
                 </div>
                 
                 <div className="space-y-5">
-                  <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-95">
-                    <Send className="w-4 h-4" />
-                    <span className="text-[12px]">الدخول لبوت الطلبات</span>
+                  <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-3 w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-sky-500/20 group">
+                    <Send className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                    <span>تشغيل البوت</span>
                   </a>
-
-                  <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50 text-[11px] text-slate-200 font-bold leading-relaxed">
-                    <p>✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
-                    <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
-                  </div>
-
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                    <p className="text-emerald-400 text-[10px] font-black text-center">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
-                  </div>
-
-                  <div className="space-y-3 pt-3 border-t border-slate-700/50">
-                    <h3 className="text-sky-400 font-black text-[11px] uppercase">طرق البحث المتاحة في قنوات المناقشات:</h3>
-                    <ul className="space-y-2 text-[10px] text-slate-400 font-bold leading-relaxed">
-                      {[
-                        "١. ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.",
-                        "٢. اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط.",
-                        "٣. استخدم أمر البحث بكتابة كلمة \"بحث\" متبوع باسم التطبيق.",
-                        "٤. للاعلان في القناة تواصل من خلال البوت"
-                      ].map((item, i) => (
-                        <li key={i} className="pr-2 border-r-2 border-slate-700">{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-red-400 text-[10px] font-black text-center leading-relaxed">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 text-center">
+                       <Zap className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
+                       <span className="text-xs font-bold text-slate-300">رد سريع</span>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 text-center">
+                       <ShieldCheck className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
+                       <span className="text-xs font-bold text-slate-300">آمن 100%</span>
+                    </div>
                   </div>
                 </div>
               </div>
+              
+              <SocialLinks links={socialLinks} />
             </div>
           )}
 
-          {activeTab === 'tools' && (
-            <div className="animate-fade-in">
-              {activeToolView === 'main' ? (
-                <div className="grid gap-3">
-                  {[
-                    { id: 'ai-news', icon: Cpu, color: 'indigo', title: 'أخبار الذكاء الاصطناعي', desc: 'أحداث وإصدارات تقنية موثقة' },
-                    { id: 'phone-news', icon: Smartphone, color: 'sky', title: 'عالم الهواتف الذكية', desc: 'مواصفات كاملة وأسعار السنة الحالية' },
-                    { id: 'comparison', icon: Search, color: 'slate', title: 'مقارنة فنية شاملة', desc: 'تحليل معمق ومفصل' }
-                  ].map((tool) => (
-                    <button key={tool.id} onClick={() => tool.id === 'comparison' ? setActiveToolView('comparison') : fetchToolData(tool.id as ToolView)} className="group flex items-center p-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-700/60 transition-all shadow-md active:scale-95">
-                      <div className={`w-8 h-8 bg-${tool.color}-500/10 rounded-lg flex items-center justify-center ml-3 shrink-0`}><tool.icon className={`w-4 h-4 text-${tool.color}-400`} /></div>
-                      <div className="flex-grow text-right">
-                        <div className="flex items-center gap-2">
-                           <h3 className="text-[10px] font-black text-slate-100 group-hover:text-sky-400 transition-colors uppercase">{tool.title}</h3>
-                        </div>
-                        <p className="text-[8px] text-slate-500 mt-0.5 font-bold">{tool.desc}</p>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 rotate-180 text-slate-600 group-hover:text-sky-400" />
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <button onClick={() => setActiveToolView('main')} className="flex items-center gap-1.5 text-slate-500 hover:text-sky-400 transition-colors"><ChevronLeft className="w-4 h-4 rotate-180" /><span className="text-[10px] font-bold">الأدوات</span></button>
-                    {!loading && activeToolView !== 'comparison' && <button onClick={() => fetchToolData(activeToolView, true)} className="text-[8px] text-sky-500 font-black border border-sky-500/20 px-3 py-1.5 rounded-xl">تحديث الآن</button>}
-                  </div>
+          {activeTab === 'tools' && activeToolView === 'main' && (
+            <div className="grid gap-4">
+               <button 
+                onClick={() => fetchToolData('ai-news')}
+                className="group relative p-6 bg-slate-800/40 border border-slate-700/50 rounded-3xl overflow-hidden transition-all hover:bg-slate-700/60"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <div className="relative flex items-center gap-4">
+                   <div className="w-12 h-12 bg-violet-500/20 rounded-2xl flex items-center justify-center text-violet-400">
+                     <Cpu className="w-6 h-6" />
+                   </div>
+                   <div className="text-right">
+                     <h3 className="font-bold text-lg mb-1 group-hover:text-violet-400 transition-colors">أخبار الذكاء الاصطناعي</h3>
+                     <p className="text-xs text-slate-400">آخر التحديثات والنماذج الجديدة</p>
+                   </div>
+                   <ArrowRight className="mr-auto text-slate-500 group-hover:text-violet-400 group-hover:-translate-x-1 transition-all" />
+                 </div>
+               </button>
 
-                  {loading ? (
-                    <div className="py-24 flex flex-col items-center gap-3">
-                      <Loader2 className="w-10 h-10 text-sky-400 animate-spin" />
-                      <p className="text-[10px] text-slate-500 font-black animate-pulse">جاري التحقق من المصادر الرسمية والتاريخ المرجعي...</p>
-                    </div>
-                  ) : error ? (
-                    <div className="text-center py-10 bg-red-500/5 rounded-2xl border border-red-500/20 px-6">
-                      <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                      <p className="text-[10px] text-slate-300 font-bold leading-relaxed">{error}</p>
-                    </div>
-                  ) : activeToolView === 'ai-news' ? (
-                    <div className="space-y-4">
-                      {aiNews.length > 0 ? aiNews.map((n, i) => (
-                        <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-[2rem] shadow-md border-r-4 border-r-indigo-500/50 relative overflow-hidden group">
-                          <div className="absolute top-0 left-0 bg-indigo-500/20 text-indigo-400 text-[7px] font-black px-3 py-1.5 rounded-br-2xl uppercase tracking-tighter flex items-center gap-1">
-                            <Zap className="w-3 h-3" />
-                            {n.date}
-                          </div>
-                          <div className="mt-4 flex justify-between items-start mb-4 border-b border-slate-700/50 pb-3">
-                            <div className="flex flex-col gap-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[8px] bg-slate-700 text-sky-400 px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest">{n.tool_name || 'AI NEWS'}</span>
-                              </div>
-                              <h3 className="text-sm font-black text-slate-100 group-hover:text-sky-400 transition-colors">{n.title}</h3>
-                            </div>
-                            <div className="flex items-center gap-1 text-[7px] text-emerald-500 font-black uppercase">
-                              <BadgeCheck className="w-3 h-3" />
-                              <span>حدث رسمي</span>
-                            </div>
-                          </div>
-                          {/* UPDATED: Font size increased to text-[13px] */}
-                          <div className="text-[13px] text-slate-300 mb-5 font-bold space-y-2 h-[100px] overflow-y-auto pr-1">
-                            {n.summary.map((line, idx) => (
-                              <p key={idx} className="flex items-start gap-2 leading-relaxed opacity-80">
-                                <span className="w-1 h-1 bg-sky-500/40 rounded-full shrink-0 mt-1.5"></span>
-                                {line}
-                              </p>
-                            ))}
-                          </div>
-                          {/* UPDATED: Share buttons smaller (p-1.5, w-3.5 h-3.5) and wrapped to prevent overflow */}
-                          <div className="flex justify-between items-center pt-3 border-t border-slate-700/50 flex-wrap gap-y-2">
-                            <div className="flex gap-1.5">
-                              <button onClick={() => shareContent(n, 'fb')} className="p-1.5 bg-slate-700/40 text-blue-400 rounded-xl hover:bg-slate-700 transition-colors"><Facebook className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => shareContent(n, 'insta')} className="p-1.5 bg-slate-700/40 text-pink-400 rounded-xl hover:bg-slate-700 transition-colors"><Instagram className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => shareContent(n, 'tg')} className="p-1.5 bg-slate-700/40 text-sky-400 rounded-xl hover:bg-slate-700 transition-colors"><Send className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => shareContent(n, 'copy')} className="p-1.5 bg-slate-700/40 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
-                            </div>
-                            <a href={n.official_link} target="_blank" className="text-[9px] text-indigo-400 font-black px-4 py-2.5 border border-indigo-500/30 rounded-2xl bg-indigo-500/5 flex items-center gap-2 hover:bg-indigo-500/10 transition-all">رابط الإعلان <ExternalLink className="w-3.5 h-3.5" /></a>
-                          </div>
-                        </div>
-                      )) : (
-                        <div className="py-20 text-center opacity-40">
-                          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
-                          <p className="text-[11px] font-black">لا توجد أخبار ذكاء اصطناعي موثقة حالياً.</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : activeToolView === 'phone-news' ? (
-                    <div className="space-y-6">
-                       {phoneNews.length > 0 ? phoneNews.map((phone, i) => (
-                         <div key={i} className="bg-slate-800/60 border border-slate-700/50 p-5 rounded-[2.5rem] shadow-2xl border-r-4 border-r-sky-500/50 overflow-hidden relative group">
-                            <div className="absolute top-0 left-0 bg-sky-500/20 text-sky-400 text-[8px] font-black px-4 py-2 rounded-br-[1.5rem] uppercase tracking-tighter z-10">إصدار رسمي {new Date().getFullYear()}</div>
-                            
-                            <div className="flex items-center justify-between mb-6 border-b border-slate-700/50 pb-5 mt-4">
-                              <div className="flex flex-col">
-                                <h3 className="text-xl font-black text-slate-100 group-hover:text-sky-400 transition-colors tracking-tight">{phone.phone_name}</h3>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-[10px] bg-slate-900 text-sky-400 px-3 py-0.5 rounded-full font-black uppercase border border-sky-500/20">{phone.brand}</span>
-                                  <span className="text-[10px] text-slate-500 font-bold">{phone.release_date}</span>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end gap-1">
-                                <div className="flex items-center gap-1.5 text-emerald-400 font-black text-xl">
-                                  <DollarSign className="w-5 h-5" />
-                                  <span>{phone.price_usd}</span>
-                                </div>
-                                <span className="text-[8px] text-slate-500 font-bold text-center leading-tight max-w-[100px]">السعر تقريبي</span>
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3 mb-6">
-                               {[
-                                 { icon: Smartphone, label: 'الشاشة', key: 'display' },
-                                 { icon: Cpu, label: 'المعالج', key: 'processor' },
-                                 { icon: Zap, label: 'الذاكرة', key: 'memory' },
-                                 { icon: ShieldCheck, label: 'البطارية', key: 'battery' },
-                                 { icon: BadgeCheck, label: 'النظام', key: 'os' },
-                                 { icon: Search, label: 'الألوان', key: 'colors' }
-                               ].map((spec, idx) => (
-                                 <div key={idx} className="bg-slate-900/60 p-3.5 rounded-[1.2rem] border border-slate-700/30 flex flex-col gap-1 transition-all group-hover:bg-slate-900/80">
-                                   <div className="flex items-center gap-2 text-sky-400/80">
-                                      <spec.icon className="w-4 h-4" />
-                                      <span className="text-[11px] font-black uppercase tracking-widest">{spec.label}</span>
-                                   </div>
-                                   {/* UPDATED: Font size increased to text-[13px] */}
-                                   <div className="text-[13px] text-slate-200 font-bold leading-tight line-clamp-2">{phone.specifications[spec.key] || 'غير محدد'}</div>
-                                 </div>
-                               ))}
-                            </div>
+               <button 
+                onClick={() => fetchToolData('phone-news')}
+                className="group relative p-6 bg-slate-800/40 border border-slate-700/50 rounded-3xl overflow-hidden transition-all hover:bg-slate-700/60"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <div className="relative flex items-center gap-4">
+                   <div className="w-12 h-12 bg-sky-500/20 rounded-2xl flex items-center justify-center text-sky-400">
+                     <Smartphone className="w-6 h-6" />
+                   </div>
+                   <div className="text-right">
+                     <h3 className="font-bold text-lg mb-1 group-hover:text-sky-400 transition-colors">عالم الهواتف</h3>
+                     <p className="text-xs text-slate-400">أحدث الأجهزة والمواصفات</p>
+                   </div>
+                   <ArrowRight className="mr-auto text-slate-500 group-hover:text-sky-400 group-hover:-translate-x-1 transition-all" />
+                 </div>
+               </button>
 
-                            <div className="space-y-3 mb-6">
-                               <div className="bg-slate-900/40 p-4 rounded-[1.2rem] border border-slate-700/30">
-                                  <div className="text-sky-400/70 text-[11px] font-black uppercase mb-1.5 flex items-center gap-2 tracking-widest">الكاميرات والفيديو</div>
-                                  {/* UPDATED: Font size increased to text-[13px] */}
-                                  <div className="text-[13px] text-slate-300 font-bold leading-relaxed">{phone.specifications.cameras || ''} • {phone.specifications.video || ''}</div>
-                               </div>
-                               <div className="bg-slate-900/40 p-4 rounded-[1.2rem] border border-slate-700/30">
-                                  <div className="text-sky-400/70 text-[11px] font-black uppercase mb-1.5 flex items-center gap-2 tracking-widest">التصميم والاتصال</div>
-                                  {/* UPDATED: Font size increased to text-[13px] */}
-                                  <div className="text-[13px] text-slate-300 font-bold leading-relaxed">{phone.specifications.dimensions || ''} • {phone.specifications.weight || ''} • {phone.specifications.connectivity || ''}</div>
-                               </div>
-                            </div>
+               <button 
+                onClick={() => setActiveToolView('comparison')}
+                className="group relative p-6 bg-slate-800/40 border border-slate-700/50 rounded-3xl overflow-hidden transition-all hover:bg-slate-700/60"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <div className="relative flex items-center gap-4">
+                   <div className="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400">
+                     <ArrowRight className="w-6 h-6 rotate-45" />
+                   </div>
+                   <div className="text-right">
+                     <h3 className="font-bold text-lg mb-1 group-hover:text-emerald-400 transition-colors">مقارنة تقنية</h3>
+                     <p className="text-xs text-slate-400">قارن بين أي جهازين بالتفصيل</p>
+                   </div>
+                   <ArrowRight className="mr-auto text-slate-500 group-hover:text-emerald-400 group-hover:-translate-x-1 transition-all" />
+                 </div>
+               </button>
 
-                            <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-slate-900/20 rounded-[1.5rem] border border-slate-700/20">
-                               <div className="space-y-3">
-                                  <div className="flex items-center gap-2 text-emerald-400 text-[11px] font-black uppercase tracking-widest"><ThumbsUp className="w-4 h-4" /> المميزات</div>
-                                  <ul className="space-y-1.5">
-                                    {phone.pros.map((p, idx) => (
-                                      /* UPDATED: Font size increased to text-[12px] */
-                                      <li key={idx} className="text-[12px] text-slate-300 font-bold flex items-start gap-2">
-                                        <CheckCircle2 className="w-3 h-3 text-emerald-500/60 shrink-0 mt-0.5" />
-                                        <span>{p}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                               </div>
-                               <div className="space-y-3">
-                                  <div className="flex items-center gap-2 text-red-400 text-[11px] font-black uppercase tracking-widest"><ThumbsDown className="w-4 h-4" /> العيوب</div>
-                                  <ul className="space-y-1.5">
-                                    {phone.cons.map((c, idx) => (
-                                      /* UPDATED: Font size increased to text-[12px] */
-                                      <li key={idx} className="text-[12px] text-slate-300 font-bold flex items-start gap-2">
-                                        <AlertCircle className="w-3 h-3 text-red-500/60 shrink-0 mt-0.5" />
-                                        <span>{c}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                               </div>
-                            </div>
-
-                            {/* UPDATED: Share buttons smaller and wrapped */}
-                            <div className="flex justify-between items-center pt-6 border-t border-slate-700/50 flex-wrap gap-y-3">
-                                <div className="flex gap-1.5">
-                                  <button onClick={() => shareContent(phone, 'fb')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-blue-400 hover:bg-blue-500/10 transition-colors"><Facebook className="w-4 h-4" /></button>
-                                  <button onClick={() => shareContent(phone, 'insta')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-pink-400 hover:bg-pink-500/10 transition-colors"><Instagram className="w-4 h-4" /></button>
-                                  <button onClick={() => shareContent(phone, 'tg')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-sky-400 hover:bg-sky-500/10 transition-colors"><Send className="w-4 h-4" /></button>
-                                  <button onClick={() => shareContent(phone, 'copy')} className="p-1.5 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-slate-200 hover:bg-slate-700 transition-colors"><Copy className="w-4 h-4" /></button>
-                                </div>
-                                <a href={phone.official_specs_link} target="_blank" className="text-[10px] text-sky-400 font-black px-4 py-2.5 border border-sky-500/30 rounded-[1.5rem] flex items-center gap-2.5 hover:bg-sky-500/10 transition-all shadow-xl shadow-sky-500/5">المواصفات <ExternalLink className="w-3.5 h-3.5" /></a>
-                            </div>
-                         </div>
-                       )) : (
-                        <div className="py-20 text-center opacity-40">
-                          <AlertCircle className="w-12 h-12 mx-auto mb-4" />
-                          <p className="text-[11px] font-black">لا توجد هواتف موثقة صادرة في {new Date().getFullYear()}.</p>
-                        </div>
-                       )}
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl space-y-4 shadow-2xl">
-                        <div className="flex items-center gap-2 text-sky-400 mb-1"><Search className="w-4 h-4" /><h3 className="text-[11px] font-black uppercase tracking-widest">مقارنة فنية شاملة</h3></div>
-                        <input type="text" placeholder="اسم الهاتف الأول" value={phone1} onChange={(e) => setPhone1(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-[10px] outline-none focus:border-sky-500/50 font-bold" />
-                        <input type="text" placeholder="اسم الهاتف الثاني" value={phone2} onChange={(e) => setPhone2(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-[10px] outline-none focus:border-sky-500/50 font-bold" />
-                        <button onClick={handleComparePhones} disabled={loading || !phone1 || !phone2} className="w-full bg-sky-500 text-white font-black py-4 rounded-xl text-[10px] shadow-lg shadow-sky-500/20 active:scale-95 transition-all">بدء المقارنة الذكية</button>
-                      </div>
-                      {comparisonResult && (
-                        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
-                          <div className="overflow-x-auto h-[300px]">
-                            <table className="w-full text-right text-[10px]">
-                              <thead className="bg-slate-900/80 sticky top-0 z-20"><tr><th className="p-4 text-sky-400 border-b border-slate-700 font-black">المميزات</th><th className="p-4 border-b border-slate-700 font-black text-center">{phone1}</th><th className="p-4 border-b border-slate-700 font-black text-center">{phone2}</th></tr></thead>
-                              <tbody className="divide-y divide-slate-700/30">
-                                {comparisonResult.specs.map((s, i) => (
-                                  <tr key={i} className="hover:bg-white/5 transition-colors">
-                                    <td className="p-4 font-black text-slate-300 border-l border-slate-700/30">{s.feature}</td>
-                                    <td className="p-4 text-slate-400 font-bold text-center">{s.phone1}</td>
-                                    <td className="p-4 text-slate-400 font-bold text-center">{s.phone2}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                          <div className="p-6 bg-emerald-500/10 border-t border-slate-700/50">
-                            <p className="text-[11px] text-emerald-400 font-black mb-2 flex items-center gap-2"><TrendingUp className="w-5 h-5"/> الخيار الأفضل: {comparisonResult.betterPhone}</p>
-                            <p className="text-[10px] text-slate-300 leading-relaxed font-bold whitespace-pre-line">{comparisonResult.verdict}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+               <button 
+                onClick={() => fetchToolData('best-phones')}
+                className="group relative p-6 bg-slate-800/40 border border-slate-700/50 rounded-3xl overflow-hidden transition-all hover:bg-slate-700/60"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                 <div className="relative flex items-center gap-4">
+                   <div className="w-12 h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400">
+                     <Star className="w-6 h-6" />
+                   </div>
+                   <div className="text-right">
+                     <h3 className="font-bold text-lg mb-1 group-hover:text-amber-400 transition-colors">أفضل هواتف السنة</h3>
+                     <p className="text-xs text-slate-400">قائمة بأقوى الهواتف لعام 2025</p>
+                   </div>
+                   <ArrowRight className="mr-auto text-slate-500 group-hover:text-amber-400 group-hover:-translate-x-1 transition-all" />
+                 </div>
+               </button>
             </div>
+          )}
+
+          {activeTab === 'tools' && activeToolView !== 'main' && (
+             <div className="space-y-4 animate-slide-up">
+                <button 
+                  onClick={() => setActiveToolView('main')}
+                  className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+                >
+                   <ChevronLeft className="w-5 h-5" />
+                   <span className="text-sm font-bold">رجوع للأدوات</span>
+                </button>
+
+                {/* --- AI News View --- */}
+                {activeToolView === 'ai-news' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-black text-violet-400 flex items-center gap-2">
+                        <Cpu className="w-6 h-6" /> أخبار الذكاء الاصطناعي
+                      </h2>
+                      <button onClick={() => fetchToolData('ai-news', true)} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                        <ArrowRight className={`w-4 h-4 rotate-180 ${loading ? 'animate-spin' : ''}`} />
+                      </button>
+                    </div>
+                    
+                    {loading ? (
+                       <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                          <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                          <p className="text-xs">جاري جلب أحدث الأخبار...</p>
+                       </div>
+                    ) : aiNews.length > 0 ? (
+                       aiNews.map((news, idx) => (
+                         <div key={idx} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
+                           <div className="flex justify-between items-start mb-3">
+                              <span className="bg-violet-500/10 text-violet-300 text-[10px] font-bold px-2 py-1 rounded-md border border-violet-500/20">{news.tool_name}</span>
+                              <span className="text-[10px] text-slate-500">{news.date}</span>
+                           </div>
+                           <h3 className="font-bold text-lg mb-2 text-slate-100 leading-snug">{news.title}</h3>
+                           <ul className="space-y-1 mb-4">
+                             {news.summary.map((line, i) => (
+                               <li key={i} className="text-xs text-slate-400 leading-relaxed list-disc list-inside marker:text-violet-500">{line}</li>
+                             ))}
+                           </ul>
+                           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-700/30">
+                              <button onClick={() => shareContent(news, 'tg')} className="p-2 bg-[#229ED9]/10 text-[#229ED9] rounded-lg hover:bg-[#229ED9]/20"><Send className="w-4 h-4" /></button>
+                              <button onClick={() => shareContent(news, 'fb')} className="p-2 bg-[#1877F2]/10 text-[#1877F2] rounded-lg hover:bg-[#1877F2]/20"><Facebook className="w-4 h-4" /></button>
+                              <button onClick={() => shareContent(news, 'copy')} className="p-2 bg-slate-700/50 text-slate-300 rounded-lg hover:bg-slate-700"><Copy className="w-4 h-4" /></button>
+                              <a href={news.official_link} target="_blank" className="ml-auto flex items-center gap-1 text-[10px] bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition-colors">
+                                 المصدر الرسمي <ExternalLink className="w-3 h-3" />
+                              </a>
+                           </div>
+                         </div>
+                       ))
+                    ) : (
+                       <div className="text-center text-slate-500 py-10 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">لا توجد أخبار حالياً</div>
+                    )}
+                  </div>
+                )}
+
+                {/* --- Phone News & Best Phones View --- */}
+                {(activeToolView === 'phone-news' || activeToolView === 'best-phones') && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-black text-sky-400 flex items-center gap-2">
+                        {activeToolView === 'best-phones' ? <Star className="w-6 h-6 text-amber-400" /> : <Smartphone className="w-6 h-6" />}
+                        {activeToolView === 'best-phones' ? 'أفضل الهواتف 2025' : 'عالم الهواتف الذكية'}
+                      </h2>
+                      <button onClick={() => fetchToolData(activeToolView, true)} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                        <ArrowRight className={`w-4 h-4 rotate-180 ${loading ? 'animate-spin' : ''}`} />
+                      </button>
+                    </div>
+
+                    {loading ? (
+                       <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                          <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                          <p className="text-xs">جاري جلب البيانات...</p>
+                       </div>
+                    ) : (activeToolView === 'best-phones' ? bestPhones : phoneNews).length > 0 ? (
+                       (activeToolView === 'best-phones' ? bestPhones : phoneNews).map((phone, idx) => (
+                         <div key={idx} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 shadow-lg backdrop-blur-sm overflow-hidden relative">
+                           {activeToolView === 'best-phones' && (
+                             <div className="absolute top-0 left-0 bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-br-xl shadow-lg z-10">#{idx + 1}</div>
+                           )}
+                           <div className="flex justify-between items-start mb-4 pl-8">
+                             <div>
+                                <h3 className="font-black text-xl text-white mb-1">{phone.phone_name}</h3>
+                                <p className="text-xs text-sky-400 font-bold uppercase tracking-wider">{phone.brand} • {phone.release_date}</p>
+                             </div>
+                             {phone.price_usd && (
+                                <div className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/20 text-sm font-bold flex items-center gap-1">
+                                   <DollarSign className="w-3 h-3" />{phone.price_usd}
+                                </div>
+                             )}
+                           </div>
+                           
+                           {/* Specs Grid */}
+                           <div className="grid grid-cols-2 gap-2 mb-4 bg-slate-900/30 p-3 rounded-xl">
+                              {Object.entries(phone.specifications || {}).slice(0, 6).map(([key, val], k) => (
+                                <div key={k} className="flex flex-col">
+                                   <span className="text-[10px] text-slate-500">{key}</span>
+                                   <span className="text-xs text-slate-300 font-medium truncate">{String(val)}</span>
+                                </div>
+                              ))}
+                           </div>
+
+                           <div className="flex gap-2 mb-4">
+                             <div className="flex-1 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10">
+                               <h4 className="flex items-center gap-1 text-emerald-400 text-xs font-bold mb-2"><ThumbsUp className="w-3 h-3" /> المميزات</h4>
+                               <ul className="space-y-1">
+                                 {phone.pros.slice(0, 3).map((p, i) => <li key={i} className="text-[10px] text-slate-400 flex items-start gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500/50 shrink-0 mt-0.5" />{p}</li>)}
+                               </ul>
+                             </div>
+                             <div className="flex-1 bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">
+                               <h4 className="flex items-center gap-1 text-rose-400 text-xs font-bold mb-2"><ThumbsDown className="w-3 h-3" /> العيوب</h4>
+                               <ul className="space-y-1">
+                                 {phone.cons.slice(0, 3).map((c, i) => <li key={i} className="text-[10px] text-slate-400 flex items-start gap-1"><AlertCircle className="w-3 h-3 text-rose-500/50 shrink-0 mt-0.5" />{c}</li>)}
+                               </ul>
+                             </div>
+                           </div>
+
+                           <div className="flex items-center gap-2 pt-3 border-t border-slate-700/30">
+                              <button onClick={() => shareContent(phone, 'tg')} className="p-2 bg-[#229ED9]/10 text-[#229ED9] rounded-lg hover:bg-[#229ED9]/20"><Send className="w-4 h-4" /></button>
+                              <button onClick={() => shareContent(phone, 'copy')} className="p-2 bg-slate-700/50 text-slate-300 rounded-lg hover:bg-slate-700"><Copy className="w-4 h-4" /></button>
+                              <a href={phone.official_specs_link} target="_blank" className="ml-auto flex items-center gap-1 text-[10px] bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg transition-colors">
+                                 المواصفات الكاملة <ExternalLink className="w-3 h-3" />
+                              </a>
+                           </div>
+                         </div>
+                       ))
+                    ) : (
+                       <div className="text-center text-slate-500 py-10 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">لا توجد بيانات متاحة</div>
+                    )}
+                  </div>
+                )}
+
+                {/* --- Comparison View --- */}
+                {activeToolView === 'comparison' && (
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-black text-emerald-400 flex items-center gap-2">
+                       <ArrowRight className="w-6 h-6 rotate-45" /> مقارنة الأجهزة
+                    </h2>
+                    
+                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 shadow-lg backdrop-blur-sm space-y-4">
+                       <div>
+                         <label className="text-xs text-slate-400 block mb-1">الهاتف الأول</label>
+                         <input 
+                           type="text" 
+                           value={phone1}
+                           onChange={(e) => setPhone1(e.target.value)}
+                           placeholder="مثال: iPhone 15 Pro Max"
+                           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder:text-slate-600"
+                         />
+                       </div>
+                       <div>
+                         <label className="text-xs text-slate-400 block mb-1">الهاتف الثاني</label>
+                         <input 
+                           type="text" 
+                           value={phone2}
+                           onChange={(e) => setPhone2(e.target.value)}
+                           placeholder="مثال: Samsung S24 Ultra"
+                           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder:text-slate-600"
+                         />
+                       </div>
+                       <button 
+                         onClick={handleComparePhones}
+                         disabled={loading || !phone1 || !phone2}
+                         className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex justify-center items-center gap-2"
+                       >
+                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'بدء المقارنة'}
+                       </button>
+                    </div>
+
+                    {comparisonResult && (
+                      <div className="animate-slide-up space-y-4">
+                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden">
+                          <table className="w-full text-xs sm:text-sm">
+                            <thead>
+                              <tr className="bg-slate-900/50 text-slate-400">
+                                <th className="p-3 text-right">المواصفات</th>
+                                <th className="p-3 text-center w-1/3">{phone1}</th>
+                                <th className="p-3 text-center w-1/3">{phone2}</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-700/50">
+                              {comparisonResult.specs.map((row, idx) => (
+                                <tr key={idx} className="hover:bg-slate-700/20 transition-colors">
+                                  <td className="p-3 font-bold text-slate-300">{row.feature}</td>
+                                  <td className="p-3 text-center text-slate-400">{row.phone1}</td>
+                                  <td className="p-3 text-center text-slate-400">{row.phone2}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-emerald-500/10 to-slate-800/40 border border-emerald-500/20 rounded-2xl p-5">
+                           <h3 className="font-bold text-emerald-400 mb-2 flex items-center gap-2"><BadgeCheck className="w-5 h-5" /> الحكم النهائي</h3>
+                           <p className="text-sm text-slate-300 leading-relaxed mb-3">{comparisonResult.verdict}</p>
+                           <div className="bg-slate-900/50 rounded-xl p-3 flex justify-between items-center">
+                              <span className="text-xs text-slate-400">الأفضل هو:</span>
+                              <span className="font-black text-white">{comparisonResult.betterPhone}</span>
+                           </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+             </div>
           )}
         </main>
 
-        <footer className="mt-10 pt-8 border-t border-slate-800/50 text-center">
-           <SocialLinks links={socialLinks} />
-           <div className="mt-8 pb-4">
-             <a href={footerData.url} target="_blank" className="group inline-flex flex-col items-center">
-               <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 opacity-60">تطوير وبرمجة</span>
-               <span className="text-[12px] font-black text-slate-300 group-hover:text-sky-400 transition-colors tracking-tighter">{footerData.text}</span>
-             </a>
-           </div>
+        <footer className="mt-8 pt-6 border-t border-slate-800 text-center pb-24 sm:pb-8">
+          <p className="text-slate-500 text-xs font-medium">
+            {footerData.text}
+            <a href={footerData.url} className="text-sky-500 hover:text-sky-400 mr-1 transition-colors">@kinanmjeed</a>
+          </p>
         </footer>
       </div>
+
+      {/* --- PWA Install Banner --- */}
+      {showInstallBanner && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 animate-slide-up">
+          <div className="bg-slate-800/95 border border-sky-500/30 backdrop-blur-md p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-sky-500/20 rounded-xl flex items-center justify-center shrink-0">
+                <Download className="w-6 h-6 text-sky-400" />
+              </div>
+              <div className="text-right">
+                <h3 className="font-bold text-sm text-white">تثبيت التطبيق</h3>
+                <p className="text-[10px] text-slate-400">أضف TechTouch إلى شاشتك الرئيسية لتجربة أسرع</p>
+              </div>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button 
+                onClick={() => setShowInstallBanner(false)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={handleInstallClick}
+                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold rounded-xl transition-colors shadow-lg shadow-sky-500/20"
+              >
+                تثبيت
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
