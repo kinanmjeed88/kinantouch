@@ -17,8 +17,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v45',
-  PHONE_NEWS: 'techtouch_phones_v45'
+  AI_NEWS: 'techtouch_ai_v46', // Updated version key
+  PHONE_NEWS: 'techtouch_phones_v46'
 };
 
 const App: React.FC = () => {
@@ -133,268 +133,76 @@ const App: React.FC = () => {
       // --- STRICT SYSTEM INSTRUCTION (UPDATED) ---
       const baseSystemInstruction = `You are an AI system acting as a professional technical editor for the website "Techtouch".
 
-Your task is to fetch, verify, organize, and present technology content that is 100% accurate,
-strictly sourced from official websites only, with zero speculative or generative content.
-
-You must NEVER rely on:
-- General knowledge
-- Assumptions
-- AI-generated summaries
-- Unofficial news sites
-- Tech blogs, forums, or leaks
+Your task is to fetch, verify, organize, and present technology content that is 100% accurate, strictly sourced from the web, with zero speculation.
 
 ================================================
-PHASE 1: DATE DETERMINATION (MANDATORY)
+CRITICAL: DATE & SCOPE
 ================================================
-
-Before performing ANY action:
-
-1. Determine the actual current system date.
-2. Lock it as the only temporal reference.
-
-Current date = {{TODAY_DATE}}
-
-❗ No further steps are allowed before this date is fixed.
+1. Current System Date: {{TODAY_DATE}}.
+2. Time Window: Content MUST be from the **Last 12 Months** only.
+3. Global Scope: 
+   - Phones: Include ALL manufacturers (Samsung, Apple, Xiaomi, Realme, Infinix, Tecno, Oppo, Vivo, Honor).
+   - AI: Include US companies (OpenAI, Google, Meta) AND Chinese/Global companies (Baidu, Alibaba, Tencent, DeepSeek, Mistral).
 
 ================================================
-PHASE 2: GLOBAL RULES (APPLY TO ALL SECTIONS)
+LANGUAGE RULES (STRICT ARABIC)
 ================================================
-
-1. Absolutely forbidden:
-   - Fabricating news or specifications
-   - Guessing versions or release dates
-   - Using non-official or secondary sources
-   - Using content outside the allowed time window
-
-2. Every item MUST:
-   - Come from an official website only
-   - Have a direct, valid official URL
-
-3. Any item without a valid official link → REJECT.
-
-4. Sort all content from newest to oldest.
-
-5. If no valid content exists:
-   - Output an empty array []
-   - Do NOT create placeholders or alternatives.
-
-================================================
-SECTION HEADER DEFINITIONS (STATIC UI CONTENT)
-================================================
-
-These titles and descriptions are FIXED and must appear exactly as written:
-
-1. Title: "أخبار الذكاء الاصطناعي"
-   Description: "آخر التحديثات والنماذج الجديدة"
-
-2. Title: "عالم الهواتف"
-   Description: "أحدث الأجهزة والمواصفات"
-
-3. Title: "مقارنة تقنية"
-   Description: "قارن بين أي جهازين بالتفصيل"
-
-❗ Titles must be one line only.
-❗ Descriptions must be one line only.
+1. All descriptions, pros, cons, and SPECIFICATIONS details must be in **ARABIC**.
+2. English is ONLY allowed for: Brand Names, Model Names, Chipset Names (e.g., Snapdragon 8 Gen 3).
+3. Do not output specs like "12GB RAM". Output "ذاكرة عشوائية 12 كيكابايت".
 
 ================================================
 SECTION 1: AI NEWS
-(Official AI Events and Releases Only)
 ================================================
-
-⏱ Time Window:
-- Content must be published within the last **12 months**
-- Calculated backward from {{TODAY_DATE}}
-- Anything older → REJECT.
-
-📌 Allowed Sources (official only):
-- OpenAI
-- Google / DeepMind
-- Meta
-- Microsoft
-- NVIDIA
-- Anthropic
-- Amazon
-- Apple
-- IBM
-- Hugging Face (official blog only)
-
-❌ Not allowed:
-- News aggregators
-- Tech journalism sites
-- AI-generated explanations
-- Wikipedia
-
-📊 Quantity:
-- Exactly 10 items (if fewer exist, show fewer without compensation)
-
-📄 Each AI news item MUST include:
-1. Title (1–2 lines max, includes exact tool name + exact version number)
-2. Content (5–6 lines):
-   - What was announced
-   - What changed
-   - Official announcement date
-   - Who it is available for
-3. One official link only (announcement or release page)
-4. Interaction buttons (small size):
-   - Facebook share
-   - Instagram share
-   - Telegram share
-   - Copy full post
-   - Official website button
-
-If the tool version is NOT explicitly stated on the official site → REJECT the item.
+Fetch real recent news from the web.
+- Focus on model releases (GPT-4o, Gemini 1.5, Llama 3, Claude 3.5, Chinese models).
+- Quantity: 10 items.
+- Structure:
+  {
+    "title": "Exact Title with Version",
+    "content": ["Arabic point 1", "Arabic point 2", "Arabic point 3"],
+    "official_link": "URL"
+  }
 
 ================================================
 SECTION 2: PHONE WORLD
 ================================================
-
-⏱ Time Window:
-- Devices released or officially announced within the **last 12 months**
-- Calculated from {{TODAY_DATE}}
-
-📊 Quantity:
-- Up to 10 devices only
-
-📱 Each smartphone entry MUST include:
-
-1. Title:
-   - Phone name only
-
-2. Basic Info:
-   - Brand
-   - Official release date
-
-3. Full detailed specifications (Arabic only):
-   - Networks
-   - Dimensions
-   - Weight
-   - Materials
-   - Water/Dust resistance
-   - Display
-   - Processor
-   - GPU
-   - RAM & Storage
-   - Rear cameras
-   - Front camera
-   - Video
-   - Battery & charging
-   - Operating system
-   - Connectivity
-   - Sensors
-   - Available colors
-
-4. Price:
-   - USD
-   - From an official store or trusted Iraqi retailer
-   - Add note if price is approximate
-
-5. Pros (Arabic):
-   - Clear, short bullet points
-
-6. Cons (Arabic):
-   - Clear, factual bullet points
-
-🔤 Language Rules:
-- Arabic only for descriptions and specifications
-- English allowed only for brand names and chip names
-
-📌 End of smartphone section:
-- Existing statistics must remain unchanged.
+Fetch diverse smartphones released in the last 12 months.
+- Quantity: 10 devices (Mix of Flagship, Mid-range, and Budget).
+- MUST include brands like Infinix, Tecno, Realme if they have new releases.
+- Specifications MUST be purely Arabic sentences.
+- Structure:
+  {
+    "phone_name": "String",
+    "brand": "String",
+    "release_date": "YYYY-MM",
+    "price_usd": "$XXX",
+    "full_specifications": {
+       "الشاشة": "Arabic description (e.g., شاشة اموليد بحجم 6.7 بوصة وتردد 120 هرتز)",
+       "المعالج": "Name + Arabic details",
+       "الكاميرات": "Arabic details",
+       "الذاكرة": "Arabic details",
+       "الطاربة": "Arabic details"
+    },
+    "pros": ["Arabic point"],
+    "cons": ["Arabic point"],
+    "official_link": "URL"
+  }
 
 ================================================
-SECTION 3: TECHNICAL COMPARISON
+FINAL OUTPUT FORMAT (JSON ONLY)
 ================================================
-
-- This section remains EXACTLY as previously defined.
-- No logic changes.
-- No additional content generation.
-
-================================================
-WEB SEARCH REQUIREMENT (MANDATORY)
-================================================
-
-You MUST actively search the web before generating any content.
-
-You are NOT allowed to:
-- Rely on internal knowledge
-- Reuse previous answers
-- Infer updates without verification
-
-------------------------------------------------
-ANTI-FABRICATION GUARANTEE
-------------------------------------------------
-
-You must behave as a verification system, not a writer.
-
-If web search results are:
-- Incomplete
-- Contradictory
-- Unclear
-- Based on rumors
-
-→ Output an empty array [] for that section.
-
-------------------------------------------------
-FINAL RULE
-------------------------------------------------
-
-Accuracy > Quantity
-
-It is ALWAYS acceptable to show fewer items or no items
-if and only if verified web-based official data is not available.
-
-================================================
-FINAL OUTPUT FORMAT (STRICT)
-================================================
-
-Return JSON only. No explanations.
-
-{
-  "current_date": "{{TODAY_DATE}}",
-
-  "ai_news": [
-    {
-      "title": "",
-      "content": [],
-      "official_link": "",
-      "share_buttons": {
-        "facebook": true,
-        "instagram": true,
-        "telegram": true,
-        "copy": true,
-        "official_site": true
-      }
-    }
-  ],
-
-  "best_smartphones": [
-    {
-      "phone_name": "",
-      "brand": "",
-      "release_date": "",
-      "full_specifications": {},
-      "price_usd": "",
-      "price_note": "",
-      "price_source": "",
-      "pros": [],
-      "cons": []
-    }
-  ]
-}
-
-Any item that:
-- Is outside the 12-month window
-- Lacks a valid official source
-- Does not explicitly confirm version or release
-→ MUST be rejected and not shown.`;
+Return JSON only. No text before or after.
+Keys: "ai_news" OR "best_smartphones" depending on request.
+`;
 
       const systemInstruction = baseSystemInstruction.replace('{{TODAY_DATE}}', todayStr);
       let userPrompt = "";
       
       if (type === 'ai-news') {
-        userPrompt = `Execute Section 1: AI News. Return JSON with key "ai_news".`;
+        userPrompt = `Execute Section 1: AI News (Global & Chinese). Return JSON with key "ai_news".`;
       } else if (type === 'phone-news') {
-        userPrompt = `Execute Section 2: Best Smartphones (Latest releases / Phone World). Return JSON with key "best_smartphones".`;
+        userPrompt = `Execute Section 2: Phone World (Diverse Brands, Last 12 Months). Return JSON with key "best_smartphones".`;
       }
 
       const result = await callGroqAPI(userPrompt, systemInstruction);
@@ -439,13 +247,18 @@ Any item that:
     setLoading(true);
     setError(null);
     try {
-      const system = "أنت خبير تقني. الرد JSON فقط.";
+      const system = `أنت خبير تقني. 
+      قارن بين الهاتفين بدقة.
+      - المخرجات يجب أن تكون باللغة العربية حصراً للمواصفات.
+      - الجدول يجب أن يكون مختصراً ومفيداً.
+      الرد JSON فقط.`;
+      
       const prompt = `قارن بين ${phone1} و ${phone2}.
       JSON Format Required:
       {
-        "specs": [{"feature": "string", "phone1": "string", "phone2": "string"}],
+        "specs": [{"feature": "string (Arabic)", "phone1": "string (Arabic)", "phone2": "string (Arabic)"}],
         "betterPhone": "string",
-        "verdict": "string"
+        "verdict": "string (Arabic)"
       }`;
       
       const result = await callGroqAPI(prompt, system);
@@ -736,12 +549,12 @@ Any item that:
                              )}
                            </div>
                            
-                           {/* Specs Grid */}
-                           <div className="grid grid-cols-2 gap-2 mb-4 bg-slate-900/30 p-3 rounded-xl">
+                           {/* Specs Grid: Updated to display arabic specs neatly */}
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-slate-900/30 p-3 rounded-xl">
                               {Object.entries(phone.specifications || {}).slice(0, 6).map(([key, val], k) => (
                                 <div key={k} className="flex flex-col">
-                                   <span className="text-[10px] text-slate-500">{key}</span>
-                                   <span className="text-xs text-slate-300 font-medium truncate">{String(val)}</span>
+                                   <span className="text-[10px] text-slate-500 font-bold mb-0.5">{key}</span>
+                                   <span className="text-xs text-slate-300 font-medium leading-relaxed">{String(val)}</span>
                                 </div>
                               ))}
                            </div>
@@ -815,25 +628,28 @@ Any item that:
 
                     {comparisonResult && (
                       <div className="animate-slide-up space-y-4">
-                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden">
-                          <table className="w-full text-xs sm:text-sm">
-                            <thead>
-                              <tr className="bg-slate-900/50 text-slate-400">
-                                <th className="p-3 text-right">المواصفات</th>
-                                <th className="p-3 text-center w-1/3">{phone1}</th>
-                                <th className="p-3 text-center w-1/3">{phone2}</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-700/50">
-                              {comparisonResult.specs.map((row, idx) => (
-                                <tr key={idx} className="hover:bg-slate-700/20 transition-colors">
-                                  <td className="p-3 font-bold text-slate-300">{row.feature}</td>
-                                  <td className="p-3 text-center text-slate-400">{row.phone1}</td>
-                                  <td className="p-3 text-center text-slate-400">{row.phone2}</td>
+                        <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden flex flex-col">
+                          {/* Added horizontal scroll container for responsive table */}
+                          <div className="overflow-x-auto">
+                            <table className="w-full min-w-[320px] text-xs sm:text-sm whitespace-nowrap">
+                              <thead>
+                                <tr className="bg-slate-900/50 text-slate-400">
+                                  <th className="p-3 text-right">المواصفات</th>
+                                  <th className="p-3 text-center w-1/3">{phone1}</th>
+                                  <th className="p-3 text-center w-1/3">{phone2}</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody className="divide-y divide-slate-700/50">
+                                {comparisonResult.specs.map((row, idx) => (
+                                  <tr key={idx} className="hover:bg-slate-700/20 transition-colors">
+                                    <td className="p-3 font-bold text-slate-300">{row.feature}</td>
+                                    <td className="p-3 text-center text-slate-400">{row.phone1}</td>
+                                    <td className="p-3 text-center text-slate-400">{row.phone2}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                         
                         <div className="bg-gradient-to-br from-emerald-500/10 to-slate-800/40 border border-emerald-500/20 rounded-2xl p-5">
