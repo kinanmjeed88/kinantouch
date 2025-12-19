@@ -5,9 +5,9 @@ import { SocialLinks } from './components/SocialLinks';
 import { 
   Home, Info, 
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
-  AlertCircle, Send, Search, ExternalLink,
-  Copy, TrendingUp,
-  MessageCircle, Facebook, Instagram, BadgeCheck, Zap,
+  AlertCircle, Send, ExternalLink,
+  Copy,
+  MessageCircle, Facebook, BadgeCheck, Zap,
   ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
   Download, Star, X
 } from 'lucide-react';
@@ -29,7 +29,7 @@ const App: React.FC = () => {
   
   const [aiNews, setAiNews] = useState<AINewsItem[]>([]);
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
-  const [bestPhones, setBestPhones] = useState<PhoneNewsItem[]>([]); // reusing PhoneNewsItem structure partially or adapt
+  const [bestPhones, setBestPhones] = useState<PhoneNewsItem[]>([]); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -540,6 +540,18 @@ Any item that:
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/4"></div>
       </div>
+      
+      {/* Error Toast */}
+      {error && (
+        <div className="fixed top-4 left-4 right-4 z-[100] bg-rose-500/90 text-white p-3 rounded-xl text-center shadow-lg backdrop-blur-md animate-fade-in border border-rose-400/50">
+            <p className="text-sm font-bold flex items-center justify-center gap-2">
+                <AlertCircle className="w-5 h-5" /> {error}
+            </p>
+            <button onClick={() => setError(null)} className="absolute top-1/2 -translate-y-1/2 left-3 text-white/70 hover:text-white p-1">
+                <X className="w-5 h-5" />
+            </button>
+        </div>
+      )}
 
       <div className="relative z-10 max-w-lg mx-auto px-4 pb-8 min-h-screen flex flex-col">
         <header className="pt-8 pb-6 text-center relative">
@@ -558,7 +570,7 @@ Any item that:
              {installPrompt && !showInstallBanner && (
                 <button 
                   onClick={() => setShowInstallBanner(true)}
-                  className="absolute -bottom-2 -right-2 p-2 bg-sky-500 text-white rounded-full shadow-lg shadow-sky-500/30 animate-bounce"
+                  className="absolute -bottom-2 -right-2 p-2 bg-sky-500 text-white rounded-full shadow-lg shadow-sky-500/30 animate-bounce hover:bg-sky-400 transition-colors"
                   title="تثبيت التطبيق"
                 >
                   <Download className="w-4 h-4" />
@@ -901,7 +913,7 @@ Any item that:
 
       {/* --- PWA Install Banner --- */}
       {showInstallBanner && (
-        <div className="fixed bottom-4 left-4 right-4 z-50 animate-slide-up">
+        <div className="fixed bottom-4 left-4 right-4 z-[100] animate-slide-up">
           <div className="bg-slate-800/95 border border-sky-500/30 backdrop-blur-md p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-sky-500/20 rounded-xl flex items-center justify-center shrink-0">
