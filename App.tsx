@@ -17,8 +17,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v40',
-  PHONE_NEWS: 'techtouch_phones_v40'
+  AI_NEWS: 'techtouch_ai_v41', // Incremented version
+  PHONE_NEWS: 'techtouch_phones_v41'
 };
 
 const App: React.FC = () => {
@@ -103,59 +103,66 @@ const App: React.FC = () => {
     }
 
     try {
-      const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر رئيسي لموقع Techtouch.
+      const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني احترافي لموقع Techtouch.
 التاريخ الحالي المرجعي: ${todayStr}.
+مهمتك جلب وتنظيم محتوى تقني موثوق 100% فقط من مصادر رسمية.
+
 القواعد الصارمة:
-1. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 30 يوماً.
+1. أخبار AI: إصدارات وأحداث رسمية فقط خلال آخر 5 أشهر.
 2. الهواتف: السنة الحالية فقط، مواصفات كاملة، سعر عراقي موثق.
-3. الرد يجب أن يكون JSON صالح فقط بدون أي نصوص إضافية.
-4. إذا لم توجد بيانات، أعد مصفوفة فارغة.`;
+3. الترتيب من الأحدث للأقدم.
+4. عدم اختلاق أي معلومات غير موجودة.
+5. الرد JSON فقط حسب الهيكل المطلوب.`;
 
       let prompt = "";
       
       if (type === 'ai-news') {
-        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي.
+        prompt = `استخرج أحدث 10 أخبار ذكاء اصطناعي (آخر 5 أشهر).
         JSON Format Required:
         {
           "ai_news": [
             {
-              "tool_name": "string",
-              "title": "string",
-              "summary": ["string", "string"],
+              "tool_name": "اسم الأداة أو الشركة",
+              "title": "عنوان الخبر (سطر أو سطرين)",
+              "summary": ["نقطة 1: تفاصيل الحدث", "نقطة 2: ما الجديد", "نقطة 3: تاريخ الاعلان", "نقطة 4: التوفر"],
               "date": "YYYY-MM-DD",
-              "official_link": "url"
+              "official_link": "رابط رسمي"
             }
           ]
         }`;
       } else if (type === 'phone-news') {
-        prompt = `استخرج أحدث 8 هواتف ذكية صدرت هذا العام.
+        prompt = `استخرج أحدث 10 هواتف ذكية صدرت في ${new Date().getFullYear()}.
         JSON Format Required:
         {
           "smartphones": [
             {
-              "phone_name": "string",
-              "brand": "string",
-              "release_date": "string",
+              "phone_name": "اسم الهاتف",
+              "brand": "الشركة المصنعة",
+              "release_date": "تاريخ الاطلاق",
               "specifications": {
-                "networks": "string",
-                "dimensions": "string",
-                "weight": "string",
-                "display": "string",
-                "processor": "string",
-                "memory": "string",
-                "cameras": "string",
-                "video": "string",
-                "battery": "string",
-                "os": "string",
-                "connectivity": "string",
-                "colors": "string"
+                "networks": "الشبكات",
+                "dimensions": "الابعاد",
+                "weight": "الوزن",
+                "materials": "الخامات",
+                "water_resistance": "مقاومة الماء والغبار",
+                "display": "الشاشة",
+                "processor": "المعالج",
+                "gpu": "المعالج الرسومي",
+                "memory": "الذاكرة والتخزين",
+                "cameras": "الكاميرات",
+                "video": "الفيديو",
+                "battery": "البطارية والشحن",
+                "os": "نظام التشغيل",
+                "connectivity": "الاتصال",
+                "sensors": "المستشعرات",
+                "colors": "الالوان"
               },
-              "price_usd": "string",
-              "official_specs_link": "url",
-              "iraqi_price_source": "url",
-              "pros": ["string"],
-              "cons": ["string"],
-              "copy_payload": "string"
+              "price_usd": "السعر بالدولار",
+              "official_specs_link": "رابط المواصفات الرسمي",
+              "iraqi_price_source": "رابط متجر عراقي او مصدر سعر",
+              "pros": ["ميزة 1", "ميزة 2"],
+              "cons": ["عيب 1", "عيب 2"],
+              "copy_payload": "نص كامل وجذاب للنسخ يحتوي الملخص والمواصفات"
             }
           ]
         }`;

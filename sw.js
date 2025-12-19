@@ -1,6 +1,6 @@
 const CACHE_NAME = 'techtouch-v1';
 const urlsToCache = [
-  './', // Relative path for base
+  './',
   './index.html',
   './manifest.json',
   'https://cdn.tailwindcss.com',
@@ -14,34 +14,52 @@ self.addEventListener('install', event => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Network First strategy for HTML/Document requests to ensure freshness
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+             cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Cache First strategy for assets, Stale-While-Revalidate logic for others
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Return cached response if found
         if (response) {
+          // Verify freshness in background if needed, but for assets return immediately
           return response;
         }
-        
-        // Clone the request because it's a stream and can only be consumed once
-        const fetchRequest = event.request.clone();
 
+        const fetchRequest = event.request.clone();
         return fetch(fetchRequest).then(
           response => {
-            // Check if we received a valid response
             if(!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
 
-            // Clone the response
             const responseToCache = response.clone();
-
             caches.open(CACHE_NAME)
               .then(cache => {
-                // Cache the new resource (e.g. built JS files)
-                // We only cache http/https requests, not chrome-extension schemes
                 if (event.request.url.startsWith('http')) {
                    cache.put(event.request, responseToCache);
                 }
@@ -67,4 +85,5 @@ self.addEventListener('activate', event => {
       );
     })
   );
+  self.clients.claim();
 });
