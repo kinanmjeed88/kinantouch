@@ -6,11 +6,8 @@ import { SocialLinks } from './components/SocialLinks';
 import { GoogleGenAI } from "@google/genai";
 import { 
   Home, Info, 
-  Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
-  AlertCircle, Send, ExternalLink,
-  Copy,
-  Facebook, BadgeCheck,
-  DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
+  Wrench, Cpu, Smartphone, Loader2, ChevronLeft, 
+  AlertCircle, Send,
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid
@@ -59,7 +56,6 @@ const App: React.FC = () => {
   const [phone2, setPhone2] = useState('');
   const [comparisonResult, setComparisonResult] = useState<PhoneComparisonResult | null>(null);
 
-  const [showPhoneSearch, setShowPhoneSearch] = useState(false);
   const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
   const [phoneSearchResult, setPhoneSearchResult] = useState<PhoneNewsItem | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -406,7 +402,7 @@ const App: React.FC = () => {
           {/* Sub-Tools Views (Keep largely same logic but styled to match new layout) */}
           {activeTab === 'tools' && activeToolView !== 'main' && (
              <div className="space-y-4 animate-slide-up pb-8">
-                <button onClick={() => { setActiveToolView('main'); setShowPhoneSearch(false); setPhoneSearchResult(null); setStatsResult(null); }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
+                <button onClick={() => { setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
                    <ChevronLeft className="w-5 h-5" /> <span className="text-sm font-bold">رجوع</span>
                 </button>
 
@@ -433,14 +429,26 @@ const App: React.FC = () => {
                         <input type="text" value={phoneSearchQuery} onChange={(e)=>setPhoneSearchQuery(e.target.value)} placeholder="ابحث عن هاتف..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-sky-500 outline-none" />
                         <button onClick={handlePhoneSearch} className="bg-sky-500 text-white p-3 rounded-xl">{searchLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <Search className="w-5 h-5"/>}</button>
                      </div>
-                     {phoneSearchResult && (
-                        <div className="bg-slate-800/60 border border-sky-500/30 p-4 rounded-2xl animate-fade-in">
+                     {phoneSearchResult ? (
+                        <div className="bg-slate-800/60 border border-sky-500/30 p-4 rounded-2xl animate-fade-in relative">
+                           <button onClick={() => setPhoneSearchResult(null)} className="absolute top-2 left-2 text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
                            <h3 className="font-black text-xl mb-1">{phoneSearchResult.phone_name}</h3>
                            <div className="grid grid-cols-1 gap-2 mt-4">
                               {Object.entries(phoneSearchResult.specifications || {}).slice(0,8).map(([k,v],i) => (
                                  <div key={i} className="flex justify-between text-xs border-b border-slate-700/50 pb-2"><span className="text-slate-400">{SPEC_LABELS[k]||k}</span><span className="text-white max-w-[60%] text-left" dir="ltr">{String(v)}</span></div>
                               ))}
                            </div>
+                        </div>
+                     ) : (
+                        <div className="space-y-3">
+                           {loading && <div className="text-center py-4"><Loader2 className="w-6 h-6 animate-spin mx-auto text-sky-500" /></div>}
+                           {phoneNews.map((phone, idx) => (
+                              <div key={idx} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-colors">
+                                 <h3 className="font-bold text-white text-sm">{phone.phone_name}</h3>
+                                 <p className="text-xs text-slate-400 mt-1">{phone.brand} - {phone.release_date}</p>
+                                 <div className="mt-2 text-xs text-sky-400 font-bold">{phone.price_usd}</div>
+                              </div>
+                           ))}
                         </div>
                      )}
                   </div>
