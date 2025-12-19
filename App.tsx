@@ -278,48 +278,84 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
     setPhoneSearchResult(null);
     setError(null);
 
-    const systemInstruction = `أنت خبير هواتف ذكية.
-    مهمتك: جلب مواصفات هاتف محدد بدقة عالية جداً من الويب.
-    القواعد:
-    1. القيم يجب أن تكون باللغة العربية.
-    2. المفاتيح يجب أن تكون بالإنجليزية تماماً كما هو مطلوب أدناه.
-    3. التنسيق JSON حصراً.
-    4. الهيكل المطلوب:
-    {
-      "phone_name": "اسم الهاتف",
-      "brand": "الشركة المصنعة",
-      "release_date": "تاريخ الاصدار",
-      "price_usd": "السعر بالدولار تقريبيا",
-      "full_specifications": {
-        "networks": "تفاصيل الشبكات",
-        "dimensions": "تفاصيل الأبعاد",
-        "weight": "تفاصيل الوزن",
-        "materials": "خامات التصنيع",
-        "water_resistance": "مقاومة الماء",
-        "display": "تفاصيل الشاشة",
-        "processor": "المعالج",
-        "gpu": "معالج الرسوميات",
-        "memory_storage": "الذاكرة",
-        "rear_cameras": "الكاميرات الخلفية",
-        "front_camera": "الكاميرا الأمامية",
-        "video": "الفيديو",
-        "battery_charging": "البطارية والشحن",
-        "operating_system": "نظام التشغيل",
-        "connectivity": "الاتصال",
-        "sensors": "المستشعرات",
-        "colors": "الألوان"
-      },
-      "pros": ["ميزة 1", "ميزة 2"],
-      "cons": ["عيب 1", "عيب 2"],
-      "official_specs_link": "رابط للمواصفات إن وجد"
-    }`;
+    const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني محترف لموقع Techtouch.
+
+عند البحث عن أي هاتف ذكي، مهمتك هي جلب وعرض المواصفات الرسمية الكاملة للهاتف فقط، بالاعتماد على الموقع الرسمي للشركة المصنعة حصراً.
+
+------------------------------------------------
+قواعد إلزامية قبل البدء
+------------------------------------------------
+1. يجب التحقق من أن الهاتف:
+   - مُعلن عنه رسمياً
+   - يملك صفحة مواصفات رسمية على موقع الشركة
+2. في حال عدم توفر صفحة رسمية:
+   - أخرج النتيجة فارغة null
+   - ولا تقم بتخمين أي معلومة
+
+------------------------------------------------
+قواعد اللغة
+------------------------------------------------
+1. يجب كتابة جميع المحتويات باللغة العربية الفصحى.
+2. يُسمح باستخدام اللغة الإنجليزية فقط في:
+   - اسم الهاتف
+   - اسم الشركة
+   - اسم المعالج
+   - اسم المعالج الرسومي
+3. يمنع استخدام أي مصطلحات تسويقية أو إنشائية.
+
+------------------------------------------------
+قواعد المحتوى (صارمة)
+------------------------------------------------
+1. يمنع:
+   - الاجتهاد
+   - التحليل
+   - المقارنة
+   - التوقعات
+   - إعادة الصياغة الترويجية
+   - ذكر المميزات والعيوب (Pros/Cons) في هذه المخرجات، حيث نعتمد على البيانات الخام فقط.
+2. اعرض المواصفات كما هي مذكورة رسمياً.
+3. لا تُضف أي عنصر غير موجود في المصدر الرسمي.
+
+------------------------------------------------
+تنسيق الإخراج (JSON حصراً)
+------------------------------------------------
+لضمان عمل الموقع، يجب تحويل البيانات إلى هيكل JSON التالي بدقة. لا تخرج نصاً عادياً. قم بدمج النقاط المطلوبة داخل الحقول المناسبة.
+
+{
+  "phone_name": "الاسم الكامل للهاتف",
+  "brand": "الشركة المصنعة",
+  "release_date": "تاريخ الإطلاق الرسمي",
+  "price_usd": "السعر الرسمي إن وجد أو (غير محدد)",
+  "full_specifications": {
+    "networks": "الشبكات المدعومة",
+    "dimensions": "الأبعاد",
+    "weight": "الوزن",
+    "materials": "الخامات",
+    "water_resistance": "مقاومة الماء",
+    "display": "الشاشة (النوع، الحجم، الدقة، التردد)",
+    "processor": "المعالج",
+    "gpu": "المعالج الرسومي",
+    "memory_storage": "الذاكرة العشوائية + التخزين + دعم بطاقة الذاكرة",
+    "rear_cameras": "الكاميرات الخلفية",
+    "front_camera": "الكاميرا الأمامية",
+    "video": "تصوير الفيديو",
+    "battery_charging": "البطارية والشحن",
+    "operating_system": "نظام التشغيل",
+    "connectivity": "وسائل الاتصال",
+    "sensors": "المستشعرات",
+    "colors": "الألوان"
+  },
+  "pros": [],
+  "cons": [],
+  "official_specs_link": "رابط الصفحة الرسمية المستخدمة"
+}`;
 
     try {
-      const result = await callGroqAPI(`أعطني مواصفات كاملة دقيقة للهاتف: ${phoneSearchQuery}`, systemInstruction);
+      const result = await callGroqAPI(`أعطني المواصفات الرسمية الكاملة للهاتف: ${phoneSearchQuery}`, systemInstruction);
       if (result) {
         setPhoneSearchResult(result);
       } else {
-        setError("لم يتم العثور على معلومات لهذا الهاتف.");
+        setError("لم يتم العثور على معلومات رسمية لهذا الهاتف.");
       }
     } catch (e) {
       setError("حدث خطأ أثناء البحث.");
@@ -746,20 +782,26 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
                             })}
                          </div>
 
-                         <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                           <div className="flex-1 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10">
-                             <h4 className="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-3"><ThumbsUp className="w-4 h-4" /> المميزات</h4>
-                             <ul className="space-y-2">
-                               {phoneSearchResult.pros.map((p, i) => <li key={i} className="text-xs sm:text-sm text-slate-300 flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500/50 shrink-0 mt-0.5" />{p}</li>)}
-                             </ul>
+                         {(phoneSearchResult.pros.length > 0 || phoneSearchResult.cons.length > 0) && (
+                           <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                             {phoneSearchResult.pros.length > 0 && (
+                               <div className="flex-1 bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/10">
+                                 <h4 className="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-3"><ThumbsUp className="w-4 h-4" /> المميزات</h4>
+                                 <ul className="space-y-2">
+                                   {phoneSearchResult.pros.map((p, i) => <li key={i} className="text-xs sm:text-sm text-slate-300 flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500/50 shrink-0 mt-0.5" />{p}</li>)}
+                                 </ul>
+                               </div>
+                             )}
+                             {phoneSearchResult.cons.length > 0 && (
+                               <div className="flex-1 bg-rose-500/5 p-4 rounded-xl border border-rose-500/10">
+                                 <h4 className="flex items-center gap-2 text-rose-400 text-sm font-bold mb-3"><ThumbsDown className="w-4 h-4" /> العيوب</h4>
+                                 <ul className="space-y-2">
+                                   {phoneSearchResult.cons.map((c, i) => <li key={i} className="text-xs sm:text-sm text-slate-300 flex items-start gap-2"><AlertCircle className="w-4 h-4 text-rose-500/50 shrink-0 mt-0.5" />{c}</li>)}
+                                 </ul>
+                               </div>
+                             )}
                            </div>
-                           <div className="flex-1 bg-rose-500/5 p-4 rounded-xl border border-rose-500/10">
-                             <h4 className="flex items-center gap-2 text-rose-400 text-sm font-bold mb-3"><ThumbsDown className="w-4 h-4" /> العيوب</h4>
-                             <ul className="space-y-2">
-                               {phoneSearchResult.cons.map((c, i) => <li key={i} className="text-xs sm:text-sm text-slate-300 flex items-start gap-2"><AlertCircle className="w-4 h-4 text-rose-500/50 shrink-0 mt-0.5" />{c}</li>)}
-                             </ul>
-                           </div>
-                         </div>
+                         )}
                          
                          <div className="flex justify-end">
                             <button 
