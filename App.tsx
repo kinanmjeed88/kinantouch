@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
-import { GoogleGenAI } from "@google/genai";
 import { 
   Home, Info, 
   Wrench, Cpu, Smartphone, Loader2, ChevronLeft, 
@@ -102,41 +101,55 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
-  const callGeminiAPI = async (prompt: string, systemInstruction: string, useSearch: boolean = false) => {
+  const callGroqAPI = async (prompt: string, systemInstruction: string) => {
+    // Fetch key from environment (Vite exposes it on process.env via define in vite.config.ts)
     const apiKey = process.env.API_KEY;
     
-    // Check for common mistake: using Groq key for Gemini
-    if (apiKey?.startsWith('gsk_')) {
-        throw new Error("المفتاح المدخل مخصص لـ Groq ولكن التطبيق يستخدم Google Gemini. يرجى توفير مفتاح Gemini API صالح.");
-    }
-
-    if (!apiKey) throw new Error("مفتاح API غير متوفر.");
-
-    const ai = new GoogleGenAI({ apiKey: apiKey });
-    const modelId = 'gemini-2.5-flash-latest';
+    if (!apiKey) throw new Error("مفتاح API غير متوفر (VITE_GROQ_API_KEY).");
 
     try {
-      const response = await ai.models.generateContent({
-        model: modelId,
-        contents: prompt,
-        config: {
-          systemInstruction: systemInstruction,
-          tools: useSearch ? [{googleSearch: {}}] : [],
-          responseMimeType: "application/json",
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile", // Using a capable model for JSON and Arabic
+          messages: [
+            { 
+              role: "system", 
+              content: systemInstruction + " Respond ONLY in valid JSON format." 
+            },
+            { 
+              role: "user", 
+              content: prompt 
+            }
+          ],
+          response_format: { type: "json_object" },
           temperature: 0.1,
-        }
+          max_completion_tokens: 2048
+        })
       });
 
-      if (response.text) {
-         return JSON.parse(response.text);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `Groq API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (content) {
+         return JSON.parse(content);
       } else {
          throw new Error("لم يتم استلام رد نصي من النموذج.");
       }
     } catch (e: any) {
-      console.error("Gemini API Error:", e);
+      console.error("Groq API Error:", e);
       let msg = e.message || 'Unknown error';
-      if (msg.includes('API key not valid')) {
-          msg = "مفتاح API غير صالح. تأكد من صحة المفتاح في الإعدادات.";
+      if (msg.includes('401')) {
+          msg = "مفتاح API غير صالح. تأكد من صحة المفتاح (Groq API Key).";
       }
       throw new Error(msg);
     }
@@ -172,7 +185,7 @@ const App: React.FC = () => {
         userPrompt = `Fetch 10 recent smartphones (diverse brands). Return JSON { "best_smartphones": [{ "phone_name": "English", "brand": "English", "release_date": "YYYY-MM", "price_usd": "$XXX", "full_specifications": { "display": "Arabic", ... }, "pros": ["Arabic"], "cons": ["Arabic"], "official_link": "URL" }] }`;
       }
 
-      const result = await callGeminiAPI(userPrompt, baseSystemInstruction, true);
+      const result = await callGroqAPI(userPrompt, baseSystemInstruction);
       
       if (type === 'ai-news' && result.ai_news) {
         const mappedAI = result.ai_news.map((item: any) => ({
@@ -215,7 +228,7 @@ const App: React.FC = () => {
     const systemInstruction = `Provide official specs for the requested phone in Arabic. JSON Output.`;
 
     try {
-      const result = await callGeminiAPI(`ابحث عن مواصفات: ${phoneSearchQuery}`, systemInstruction, true);
+      const result = await callGroqAPI(`ابحث عن مواصفات: ${phoneSearchQuery}`, systemInstruction);
       if (result) {
         setPhoneSearchResult(result);
       } else {
@@ -235,7 +248,7 @@ const App: React.FC = () => {
     setError(null);
     try {
       const system = "Generate tech stats JSON { title, description, data: [{label, value, displayValue}], insight } in Arabic.";
-      const result = await callGeminiAPI(`إحصائية: ${statsQuery}`, system, true);
+      const result = await callGroqAPI(`إحصائية: ${statsQuery}`, system);
       if (result) {
          const colors = ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', '#a78bfa'];
          result.data = result.data.map((item: any, index: number) => ({
@@ -257,7 +270,7 @@ const App: React.FC = () => {
     setError(null);
     try {
       const system = "Compare phones in Arabic JSON { specs: [{feature, phone1, phone2}], betterPhone, verdict }.";
-      const result = await callGeminiAPI(`Compare ${phone1} vs ${phone2}`, system, true);
+      const result = await callGroqAPI(`Compare ${phone1} vs ${phone2}`, system);
       setComparisonResult(result);
     } catch (err: any) { 
       setError(err.message); 
@@ -331,30 +344,77 @@ const App: React.FC = () => {
              </div>
           )}
           
-          {/* INFO TAB */}
+          {/* INFO TAB - Updated Content */}
           {activeTab === 'info' && (
             <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
-                <div className="space-y-5 text-right">
+                <div className="space-y-6 text-right">
+                  
+                  {/* Bot Section */}
                   <div className="flex flex-col gap-4">
-                     <h3 className="text-lg font-bold text-sky-400 text-center">بوت الطلبات على التيليكرام</h3>
-                     <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-sky-500/20 group">
+                     <h3 className="text-lg font-bold text-sky-400 text-center">بخصوص بوت الطلبات على التيليكرام</h3>
+                     <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-sky-500/25 group border border-white/10">
                        <Send className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
-                       <span>الدخول للبوت</span>
+                       <span>الدخول لبوت الطلبات</span>
                      </a>
                   </div>
-                  <ul className="space-y-3 text-sm text-slate-300">
-                    <li className="flex items-start gap-2"><span className="text-sky-500 font-bold">✪</span><span>ارسل اسم التطبيق مع صورته او الرابط.</span></li>
-                    <li className="flex items-start gap-2"><span className="text-sky-500 font-bold">✪</span><span>لا تطلب تطبيقات مدفوعة أو أكواد.</span></li>
-                  </ul>
-                  <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl">
-                    <p className="text-xs text-rose-300 font-medium"><span className="font-bold text-rose-400">تنبيه:</span> حظر البوت يؤدي لحظر تلقائي.</p>
+                  
+                  {/* Rules */}
+                  <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                    <ul className="space-y-3 text-sm text-slate-300 leading-relaxed">
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-amber-400 text-base mt-0.5">✪</span>
+                        <span>ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-amber-400 text-base mt-0.5">✪</span>
+                        <span>لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات.</span>
+                      </li>
+                    </ul>
+                    <div className="pt-2 text-center">
+                       <p className="text-xs font-bold text-sky-200/80 bg-sky-500/10 py-2 rounded-lg">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
+                    </div>
                   </div>
+
+                  {/* Search Methods */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-bold text-white border-b border-slate-700 pb-2 inline-block">طرق البحث المتاحة في قنوات المناقشات:</h4>
+                    <ul className="space-y-2.5 text-xs text-slate-300">
+                      <li className="flex gap-2">
+                        <span className="font-bold text-slate-500">١.</span>
+                        <span>ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</span>
+                      </li>
+                      <li className="flex gap-2">
+                         <span className="font-bold text-slate-500">٢.</span>
+                         <span>اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).</span>
+                      </li>
+                      <li className="flex gap-2">
+                         <span className="font-bold text-slate-500">٣.</span>
+                         <span>استخدم أمر البحث بكتابة كلمة "بحث" متبوع باسم التطبيق (مثلاً: بحث ياسين).</span>
+                      </li>
+                      <li className="flex gap-2">
+                         <span className="font-bold text-slate-500">٤.</span>
+                         <span>للاعلان في القناة تواصل من خلال البوت.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Warning */}
+                  <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl flex gap-3 items-start">
+                    <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                    <p className="text-xs text-rose-200 font-medium leading-relaxed">
+                      <span className="font-bold text-rose-400 block mb-1">تنبيه هام:</span>
+                      حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا
+                    </p>
+                  </div>
+
                 </div>
               </div>
-              <SocialLinks links={socialLinks} />
-              <div className="text-center pb-8 pt-4">
-                 <p className="text-slate-500 text-xs font-medium">{footerData.text} <a href={footerData.url} className="text-sky-500">@kinanmjeed</a></p>
+
+              {/* Footer */}
+              <div className="text-center pb-8 pt-6 space-y-2">
+                 <p className="text-slate-400 text-sm font-bold">في النهاية دمتم برعاية الله</p>
+                 <p className="text-slate-600 text-[10px] font-medium">{footerData.text} <a href={footerData.url} className="text-sky-500 hover:underline">@kinanmjeed</a></p>
               </div>
             </div>
           )}
