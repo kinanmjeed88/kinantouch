@@ -7,8 +7,8 @@ import {
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
   AlertCircle, Send, ExternalLink,
   Copy,
-  MessageCircle, Facebook, BadgeCheck, Zap,
-  ShieldCheck, DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
+  Facebook, BadgeCheck,
+  DollarSign, ThumbsUp, ThumbsDown, CheckCircle2,
   Download, X
 } from 'lucide-react';
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem } from './types';
