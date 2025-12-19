@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { telegramChannels, socialLinks, footerData, profileConfig } from './data/content';
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
+import { GoogleGenAI } from "@google/genai";
 import { 
   Home, Info, 
   Wrench, Cpu, Smartphone, ArrowRight, Loader2, ChevronLeft, 
@@ -18,8 +19,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v47',
-  PHONE_NEWS: 'techtouch_phones_v47'
+  AI_NEWS: 'techtouch_ai_v48', // Incremented version to clear old cache
+  PHONE_NEWS: 'techtouch_phones_v48'
 };
 
 // Mapping for strict specification keys to Arabic Labels
@@ -107,39 +108,37 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
-  // --- Backend Logic Simulation ---
-  const callGroqAPI = async (prompt: string, systemInstruction: string) => {
-    const apiKey = process.env.API_KEY; 
+  // --- Google Gemini Implementation ---
+  const callGeminiAPI = async (prompt: string, systemInstruction: string, useSearch: boolean = false) => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) throw new Error("مفتاح API غير متوفر.");
+
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     
-    if (!apiKey) throw new Error("مفتاح API غير متوفر (VITE_GROQ_API_KEY).");
+    // Use gemini-2.5-flash-latest for best balance of speed and search capability
+    const modelId = 'gemini-2.5-flash-latest';
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: systemInstruction },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.1 
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`خطأ في الاتصال بخوادم Groq: ${response.status} ${errorData.error?.message || ''}`);
-    }
-
-    const data = await response.json();
     try {
-      return JSON.parse(data.choices[0].message.content);
-    } catch (e) {
-      throw new Error("فشل في تحليل استجابة JSON من Groq.");
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: prompt,
+        config: {
+          systemInstruction: systemInstruction,
+          // Enable Google Search only when needed to get fresh 2025 data
+          tools: useSearch ? [{googleSearch: {}}] : [],
+          responseMimeType: "application/json",
+          temperature: 0.1,
+        }
+      });
+
+      if (response.text) {
+         return JSON.parse(response.text);
+      } else {
+         throw new Error("لم يتم استلام رد نصي من النموذج.");
+      }
+    } catch (e: any) {
+      console.error("Gemini API Error:", e);
+      throw new Error(`خطأ في معالجة البيانات: ${e.message || 'Unknown error'}`);
     }
   };
 
@@ -164,7 +163,7 @@ const App: React.FC = () => {
     try {
       const baseSystemInstruction = `You are an AI system acting as a professional technical editor for the website "Techtouch".
 
-Your task is to fetch, verify, organize, and present technology content that is 100% accurate, strictly sourced from the web, with zero speculation.
+Your task is to fetch, verify, organize, and present technology content that is 100% accurate, strictly sourced from the web using Google Search, with zero speculation.
 
 ================================================
 CRITICAL: DATE & SCOPE
@@ -185,8 +184,8 @@ LANGUAGE RULES (STRICT ARABIC)
 ================================================
 SECTION 1: AI NEWS
 ================================================
-Fetch real recent news from the web.
-- Focus on model releases (GPT-4o, Gemini 1.5, Llama 3, Claude 3.5, Chinese models).
+Fetch real recent news from the web via Search.
+- Focus on model releases.
 - Quantity: 10 items.
 - Structure:
   {
@@ -200,7 +199,6 @@ SECTION 2: PHONE WORLD
 ================================================
 Fetch diverse smartphones released in the last 12 months.
 - Quantity: 10 devices (Mix of Flagship, Mid-range, and Budget).
-- MUST include brands like Infinix, Tecno, Realme if they have new releases.
 - Specifications MUST be purely Arabic sentences.
 - Structure:
   {
@@ -213,7 +211,6 @@ Fetch diverse smartphones released in the last 12 months.
        "processor": "Name + Arabic details",
        "rear_cameras": "Arabic details",
        "battery_charging": "Arabic details"
-       // Add minimum necessary specs for list view
     },
     "pros": ["Arabic point"],
     "cons": ["Arabic point"],
@@ -223,20 +220,19 @@ Fetch diverse smartphones released in the last 12 months.
 ================================================
 FINAL OUTPUT FORMAT (JSON ONLY)
 ================================================
-Return JSON only. No text before or after.
-Keys: "ai_news" OR "best_smartphones" depending on request.
-`;
+Return JSON only. Keys: "ai_news" OR "best_smartphones".`;
 
       const systemInstruction = baseSystemInstruction.replace('{{TODAY_DATE}}', todayStr);
       let userPrompt = "";
       
       if (type === 'ai-news') {
-        userPrompt = `Execute Section 1: AI News (Global & Chinese). Return JSON with key "ai_news".`;
+        userPrompt = `Execute Section 1: AI News (Global & Chinese). Return JSON with key "ai_news". Use Google Search to ensure latest news.`;
       } else if (type === 'phone-news') {
-        userPrompt = `Execute Section 2: Phone World (Diverse Brands, Last 12 Months). Return JSON with key "best_smartphones".`;
+        userPrompt = `Execute Section 2: Phone World (Diverse Brands, Last 12 Months). Return JSON with key "best_smartphones". Use Google Search to find latest releases.`;
       }
 
-      const result = await callGroqAPI(userPrompt, systemInstruction);
+      // Enable Search for News/Phones listing to get latest data
+      const result = await callGeminiAPI(userPrompt, systemInstruction, true);
       
       if (type === 'ai-news' && result.ai_news) {
         const mappedAI = result.ai_news.map((item: any) => ({
@@ -280,17 +276,15 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
 
     const systemInstruction = `أنت نظام ذكاء اصطناعي يعمل كمحرر تقني محترف لموقع Techtouch.
 
-عند البحث عن أي هاتف ذكي، مهمتك هي جلب وعرض المواصفات الرسمية الكاملة للهاتف فقط، بالاعتماد على الموقع الرسمي للشركة المصنعة حصراً.
+عند البحث عن أي هاتف ذكي، مهمتك هي جلب وعرض المواصفات الرسمية الكاملة للهاتف فقط، بالاعتماد على البحث في الويب (Google Search) للوصول إلى المواقع الرسمية أو الإعلانات الرسمية الحديثة.
 
 ------------------------------------------------
-قواعد إلزامية قبل البدء
+قواعد التعامل مع الهواتف الحديثة (2025 وما بعد)
 ------------------------------------------------
-1. يجب التحقق من أن الهاتف:
-   - مُعلن عنه رسمياً
-   - يملك صفحة مواصفات رسمية على موقع الشركة
-2. في حال عدم توفر صفحة رسمية:
-   - أخرج النتيجة فارغة null
-   - ولا تقم بتخمين أي معلومة
+1. استخدم Google Search بذكاء للعثور على مواصفات الهواتف التي صدرت حديثاً (مثل Samsung S25 Series, iPhone 16, etc).
+2. إذا لم تكن صفحة "المواصفات" متاحة، ابحث عن "البيان الصحفي الرسمي" (Official Press Release) واستخرج المواصفات منه.
+3. لا تُرجع قيم "غير محدد" (Unknown) إلا إذا كان الهاتف مجرد شائعة ولم يتم الإعلان عنه رسمياً أبداً.
+4. بالنسبة للسعر، ابحث عن سعر الإطلاق الرسمي العالمي بالدولار.
 
 ------------------------------------------------
 قواعد اللغة
@@ -301,31 +295,15 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
    - اسم الشركة
    - اسم المعالج
    - اسم المعالج الرسومي
-3. يمنع استخدام أي مصطلحات تسويقية أو إنشائية.
-
-------------------------------------------------
-قواعد المحتوى (صارمة)
-------------------------------------------------
-1. يمنع:
-   - الاجتهاد
-   - التحليل
-   - المقارنة
-   - التوقعات
-   - إعادة الصياغة الترويجية
-   - ذكر المميزات والعيوب (Pros/Cons) في هذه المخرجات، حيث نعتمد على البيانات الخام فقط.
-2. اعرض المواصفات كما هي مذكورة رسمياً.
-3. لا تُضف أي عنصر غير موجود في المصدر الرسمي.
 
 ------------------------------------------------
 تنسيق الإخراج (JSON حصراً)
 ------------------------------------------------
-لضمان عمل الموقع، يجب تحويل البيانات إلى هيكل JSON التالي بدقة. لا تخرج نصاً عادياً. قم بدمج النقاط المطلوبة داخل الحقول المناسبة.
-
 {
   "phone_name": "الاسم الكامل للهاتف",
   "brand": "الشركة المصنعة",
-  "release_date": "تاريخ الإطلاق الرسمي",
-  "price_usd": "السعر الرسمي إن وجد أو (غير محدد)",
+  "release_date": "تاريخ الإطلاق الرسمي (YYYY-MM)",
+  "price_usd": "السعر الرسمي (مثال: $1200)",
   "full_specifications": {
     "networks": "الشبكات المدعومة",
     "dimensions": "الأبعاد",
@@ -351,14 +329,15 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
 }`;
 
     try {
-      const result = await callGroqAPI(`أعطني المواصفات الرسمية الكاملة للهاتف: ${phoneSearchQuery}`, systemInstruction);
+      // Use Search = true explicitly for phone search to solve "Unknown" issue
+      const result = await callGeminiAPI(`ابحث عن المواصفات الرسمية الكاملة والحديثة للهاتف: ${phoneSearchQuery}`, systemInstruction, true);
       if (result) {
         setPhoneSearchResult(result);
       } else {
         setError("لم يتم العثور على معلومات رسمية لهذا الهاتف.");
       }
     } catch (e) {
-      setError("حدث خطأ أثناء البحث.");
+      setError("حدث خطأ أثناء البحث. تأكد من الاتصال بالإنترنت.");
     } finally {
       setSearchLoading(false);
     }
@@ -372,7 +351,7 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
 
     const systemInstruction = `أنت محلل بيانات تقني محترف.
     مهمتك: إنشاء إحصائيات دقيقة ورسوم بيانية بناءً على طلب المستخدم.
-    استخدم بيانات الويب الحقيقية (ابحث عن أحدث التقارير من IDC, Canalys, Statista, etc).
+    استخدم Google Search للبحث عن أحدث التقارير (IDC, Canalys, Statista) لعام 2024 و 2025.
     
     القواعد:
     1. العناوين والنصوص بالعربية.
@@ -388,14 +367,12 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
         { "label": "اسم العنصر", "value": 75, "displayValue": "..." }
       ],
       "insight": "استنتاج ذكي قصير من سطرين حول هذه البيانات"
-    }
-    
-    ملاحظة: تأكد أن values هي أرقام (نسب مئوية تقريبية لتناسب الرسم البياني من 100) و displayValue هو النص الظاهر.`;
+    }`;
 
     try {
-      const result = await callGroqAPI(`قم بإنشاء إحصائية لـ: ${statsQuery}`, systemInstruction);
+      // Use Search = true for stats
+      const result = await callGeminiAPI(`قم بإنشاء إحصائية دقيقة وحديثة لـ: ${statsQuery}`, systemInstruction, true);
       if (result) {
-         // Assign colors dynamically if not provided
          const colors = ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', '#a78bfa'];
          result.data = result.data.map((item: any, index: number) => ({
             ...item,
@@ -418,7 +395,7 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
     setError(null);
     try {
       const system = `أنت خبير تقني. 
-      قارن بين الهاتفين بدقة.
+      قارن بين الهاتفين بدقة. استخدم بحث Google للتأكد من مواصفات الهواتف الحديثة.
       - المخرجات يجب أن تكون باللغة العربية حصراً للمواصفات.
       - الجدول يجب أن يكون مختصراً ومفيداً.
       الرد JSON فقط.`;
@@ -431,7 +408,8 @@ Keys: "ai_news" OR "best_smartphones" depending on request.
         "verdict": "string (Arabic)"
       }`;
       
-      const result = await callGroqAPI(prompt, system);
+      // Use Search = true for comparison
+      const result = await callGeminiAPI(prompt, system, true);
       setComparisonResult(result);
     } catch (err: any) { 
       setError("فشل تحليل المقارنة."); 
