@@ -10,10 +10,10 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal
+  RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal, CheckCircle2
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
-import { AINewsFeed, AICategoryData, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
+import { AINewsData, CompanyNews, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
 
 // Importing Local Data - Using relative paths
 import samsungData from './data/phones-backup/samsung.json';
@@ -31,8 +31,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news-categories' | 'ai-feed' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_feed_v1', 
-  AI_LAST_VIEW: 'techtouch_ai_last_view',
+  AI_NEWS: 'techtouch_ai_data_v2', 
+  AI_LAST_VIEW: 'techtouch_ai_view_timestamps',
   PHONE_NEWS: 'techtouch_phones_strict_v4'
 };
 
@@ -159,10 +159,10 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [activeToolView, setActiveToolView] = useState<ToolView>('main');
   
-  // New State for Categorized AI News
-  const [aiFeed, setAiFeed] = useState<AINewsFeed | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<AICategoryData | null>(null);
-  const [lastViewed, setLastViewed] = useState<Record<string, number>>({});
+  // New State for Array-based AI Data
+  const [aiData, setAiData] = useState<AINewsData | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyNews | null>(null);
+  const [lastViewed, setLastViewed] = useState<Record<string, string>>({}); // Store ISO strings
   
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -189,10 +189,12 @@ const App: React.FC = () => {
   const localPhonesDB = useMemo(() => getAllLocalPhones(), []);
 
   useEffect(() => {
-    // Load last viewed timestamps for AI categories
+    // Load last viewed timestamps
     const viewed = localStorage.getItem(CACHE_KEYS.AI_LAST_VIEW);
     if (viewed) {
-      setLastViewed(JSON.parse(viewed));
+      try {
+        setLastViewed(JSON.parse(viewed));
+      } catch(e) { console.error("Error parsing view history"); }
     }
 
     const handler = (e: any) => {
@@ -219,7 +221,7 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 6 hours for news, 24h for phones
+      // Cache valid for 6 hours for AI news, 24h for phones
       const validity = key === CACHE_KEYS.AI_NEWS ? 6 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
       return (Date.now() - timestamp < validity) ? data : null;
     } catch (e) { return null; }
@@ -229,16 +231,25 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
-  const updateLastViewed = (categoryId: string) => {
-    const newViewed = { ...lastViewed, [categoryId]: Date.now() };
+  // Update view timestamp when opening a company feed
+  const handleOpenCompany = (company: CompanyNews) => {
+    const nowISO = new Date().toISOString();
+    const newViewed = { ...lastViewed, [company.id]: nowISO };
     setLastViewed(newViewed);
     localStorage.setItem(CACHE_KEYS.AI_LAST_VIEW, JSON.stringify(newViewed));
+    setSelectedCompany(company);
+    setActiveToolView('ai-feed');
   };
 
-  const hasNewUpdates = (category: AICategoryData) => {
-    const lastView = lastViewed[category.id] || 0;
-    // Show green dot if server update time > user last view time
-    return category.last_updated > lastView;
+  // Logic: Green dot if server updated time > user last viewed time
+  const hasNewUpdates = (company: CompanyNews) => {
+    const lastViewISO = lastViewed[company.id];
+    if (!lastViewISO) return true; // Never viewed -> New
+    
+    const lastViewDate = new Date(lastViewISO);
+    const updateDate = new Date(company.last_updated);
+    
+    return updateDate > lastViewDate;
   };
 
   const callGroqAPI = async (userContent: string, systemInstruction: string) => {
@@ -389,7 +400,7 @@ const App: React.FC = () => {
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
     
     if (cached) {
-      if (type === 'ai-news-categories') setAiFeed(cached.ai_feed || null);
+      if (type === 'ai-news-categories') setAiData(cached.ai_data || null);
       else if (type === 'phone-news') {
         setPhoneNews(cached.smartphones || []);
         setCurrentPage(1);
@@ -400,13 +411,13 @@ const App: React.FC = () => {
 
     try {
       if (type === 'ai-news-categories') {
-        // Fetch fresh JSON with timestamp to bypass browser cache
+        // Fetch fresh JSON with timestamp
         const res = await fetch(`./ai-news.json?t=${Date.now()}`);
         if (!res.ok) throw new Error("فشل تحميل الأخبار");
         const data = await res.json();
         
-        saveToCache(cacheKey, { ai_feed: data });
-        setAiFeed(data);
+        saveToCache(cacheKey, { ai_data: data });
+        setAiData(data);
 
       } else if (type === 'phone-news') {
         const allPhones = [...localPhonesDB].sort((a, b) => b.release_year - a.release_year);
@@ -468,6 +479,28 @@ const App: React.FC = () => {
 
   const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
   const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+  const getCategoryIcon = (key: string) => {
+    switch (key) {
+      case 'openai': return <Sparkles className="w-7 h-7" />;
+      case 'google': return <Globe className="w-7 h-7" />;
+      case 'meta': return <Zap className="w-7 h-7" />;
+      case 'microsoft': return <Terminal className="w-7 h-7" />;
+      case 'anthropic': return <MessageSquare className="w-7 h-7" />;
+      default: return <Cpu className="w-7 h-7" />;
+    }
+  };
+
+  const getCategoryColor = (key: string) => {
+    switch (key) {
+      case 'openai': return 'bg-emerald-500/10 text-emerald-400';
+      case 'google': return 'bg-blue-500/10 text-blue-400';
+      case 'meta': return 'bg-sky-500/10 text-sky-400';
+      case 'microsoft': return 'bg-indigo-500/10 text-indigo-400';
+      case 'anthropic': return 'bg-amber-500/10 text-amber-400';
+      default: return 'bg-slate-700/30 text-slate-300';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right pb-24" dir="rtl">
@@ -583,6 +616,7 @@ const App: React.FC = () => {
                 <button onClick={() => { 
                     if (activeToolView === 'ai-feed') {
                         setActiveToolView('ai-news-categories');
+                        setSelectedCompany(null);
                     } else {
                         setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); 
                     }
@@ -601,39 +635,25 @@ const App: React.FC = () => {
                          </button>
                      </div>
 
-                     {loading && !aiFeed && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
+                     {loading && !aiData && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
 
-                     {aiFeed && (
+                     {aiData && (
                          <div className="grid grid-cols-2 gap-3">
-                             {[aiFeed.openai, aiFeed.google, aiFeed.meta, aiFeed.microsoft, aiFeed.anthropic].map((category) => (
+                             {aiData.companies.map((company) => (
                                  <button 
-                                    key={category.id} 
-                                    onClick={() => {
-                                        setSelectedCategory(category);
-                                        updateLastViewed(category.id);
-                                        setActiveToolView('ai-feed');
-                                    }}
+                                    key={company.id} 
+                                    onClick={() => handleOpenCompany(company)}
                                     className="group relative p-5 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-800/60 hover:border-violet-500/30 transition-all flex flex-col items-center gap-3"
                                  >
-                                     {hasNewUpdates(category) && (
+                                     {hasNewUpdates(company) && (
                                          <span className="absolute top-3 right-3 w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.6)] animate-pulse"></span>
                                      )}
                                      
-                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
-                                         category.id === 'openai' ? 'bg-emerald-500/10 text-emerald-400' :
-                                         category.id === 'google' ? 'bg-blue-500/10 text-blue-400' :
-                                         category.id === 'meta' ? 'bg-sky-500/10 text-sky-400' :
-                                         category.id === 'microsoft' ? 'bg-indigo-500/10 text-indigo-400' :
-                                         'bg-amber-500/10 text-amber-400'
-                                     }`}>
-                                         {category.id === 'openai' && <Sparkles className="w-7 h-7" />}
-                                         {category.id === 'google' && <Globe className="w-7 h-7" />}
-                                         {category.id === 'meta' && <Zap className="w-7 h-7" />}
-                                         {category.id === 'microsoft' && <Terminal className="w-7 h-7" />}
-                                         {category.id === 'anthropic' && <MessageSquare className="w-7 h-7" />}
+                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${getCategoryColor(company.logo_key)}`}>
+                                         {getCategoryIcon(company.logo_key)}
                                      </div>
-                                     <h3 className="font-bold text-sm text-slate-200 group-hover:text-white">{category.name}</h3>
-                                     <p className="text-[10px] text-slate-500">{category.items.length} خبر جديد</p>
+                                     <h3 className="font-bold text-sm text-slate-200 group-hover:text-white">{company.name}</h3>
+                                     <p className="text-[10px] text-slate-500">{company.items.length} خبر جديد</p>
                                  </button>
                              ))}
                          </div>
@@ -641,30 +661,36 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                {/* NEW: AI Feed for Selected Category */}
-                {activeToolView === 'ai-feed' && selectedCategory && (
+                {/* NEW: AI Feed for Selected Company */}
+                {activeToolView === 'ai-feed' && selectedCompany && (
                    <div className="space-y-4">
-                       <h2 className="text-xl font-black text-white px-2 border-r-4 border-violet-500 mr-1">{selectedCategory.name}</h2>
+                       <h2 className="text-xl font-black text-white px-2 border-r-4 border-violet-500 mr-1 flex items-center gap-2">
+                           {getCategoryIcon(selectedCompany.logo_key)}
+                           {selectedCompany.name}
+                       </h2>
                        <p className="text-xs text-slate-400 px-2 mb-4">آخر 10 تحديثات من المصادر الرسمية</p>
                        
                        <div className="space-y-4">
-                           {selectedCategory.items.map((news, idx) => (
-                              <div key={idx} className="bg-slate-800/40 border border-slate-700/50 hover:border-violet-500/30 rounded-2xl p-5 shadow-sm transition-all">
-                                  <div className="flex justify-between items-start mb-2">
-                                    <span className="text-[10px] bg-slate-700/50 text-slate-300 px-2 py-0.5 rounded">{selectedCategory.name}</span>
+                           {selectedCompany.items.map((news) => (
+                              <div key={news.id} className="bg-slate-800/40 border border-slate-700/50 hover:border-violet-500/30 rounded-2xl p-5 shadow-sm transition-all relative overflow-hidden">
+                                  {/* Type Tag */}
+                                  <div className="absolute top-0 left-0 bg-slate-700/30 px-3 py-1 rounded-br-xl text-[10px] text-slate-400 uppercase tracking-widest font-bold border-b border-r border-slate-700/30">
+                                     {news.category || 'news'}
+                                  </div>
+
+                                  <div className="flex justify-between items-start mb-2 mt-2">
+                                    <span className="text-[10px] bg-slate-700/50 text-slate-300 px-2 py-0.5 rounded">{selectedCompany.name}</span>
                                     <span className="text-[10px] text-slate-500">{news.date}</span>
                                   </div>
                                   <h3 className={titleStyle}>{news.title}</h3>
-                                  <ul className="list-disc list-inside space-y-1.5 mb-4 border-b border-slate-700/30 pb-4">
-                                    {news.summary.map((point, i) => (
-                                      <li key={i} className="text-xs text-slate-300 leading-relaxed marker:text-violet-500">{point}</li>
-                                    ))}
-                                  </ul>
-                                  <a href={news.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
+                                  <p className="text-xs text-slate-300 leading-relaxed mb-4 border-b border-slate-700/30 pb-4">
+                                      {news.summary}
+                                  </p>
+                                  <a href={news.url} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
                                     <span>اقرأ المصدر الرسمي</span>
                                     <ExternalLink className="w-4 h-4" />
                                   </a>
-                                  <ShareToolbar title={news.title} text={news.summary.join('\n')} url={news.official_link} />
+                                  <ShareToolbar title={news.title} text={news.summary} url={news.url} />
                               </div>
                            ))}
                        </div>
@@ -736,7 +762,6 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                {/* Comparison and Stats remain unchanged in logic, just need to be rendered */}
                 {activeToolView === 'comparison' && (
                    <div className="space-y-4">
                       <div className="bg-slate-800/40 p-5 rounded-2xl space-y-3 border border-slate-700/50">

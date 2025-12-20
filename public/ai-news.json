@@ -1,338 +1,446 @@
 
 {
-  "openai": {
-    "id": "openai",
-    "name": "OpenAI (GPT)",
-    "last_updated": 1736640000000,
-    "items": [
-      {
-        "title": "إطلاق نموذج o1 بقدرات استدلال فائقة",
-        "summary": ["تفكير متسلسل معقد", "أداء عالي في الرياضيات والفيزياء", "تقليل نسبة الخطأ والهلوسة", "متاح لمشتركي Plus و Team"],
-        "date": "2025-01-12",
-        "official_link": "https://openai.com/index/learning-to-reason-with-llms/"
-      },
-      {
-        "title": "تحديث GPT-4o بقدرات صوتية واقعية",
-        "summary": ["استجابة صوتية فورية (Real-time)", "فهم المشاعر ونبرة الصوت", "إمكانية المقاطعة أثناء الحديث", "دعم للغات متعددة بلكنات مختلفة"],
-        "date": "2025-01-05",
-        "official_link": "https://openai.com/index/hello-gpt-4o/"
-      },
-      {
-        "title": "إتاحة الذاكرة (Memory) لجميع المستخدمين",
-        "summary": ["النموذج يتذكر تفضيلاتك السابقة", "تحكم كامل للمستخدم في حذف الذكريات", "تحسين سياق المحادثات الطويلة", "تخصيص الردود بناءً على تاريخ المحادثة"],
-        "date": "2024-12-28",
-        "official_link": "https://openai.com/blog/memory-and-new-controls-for-chatgpt"
-      },
-      {
-        "title": "تعاون جديد لدمج ChatGPT في أجهزة Apple",
-        "summary": ["دمج مع Siri في iOS 18", "الوصول للنظام بدون إنشاء حساب", "حماية الخصوصية وعدم تخزين الطلبات", "متاح لأجهزة iPhone 15 Pro وما فوق"],
-        "date": "2024-12-20",
-        "official_link": "https://openai.com/index/openai-and-apple-announce-partnership/"
-      },
-      {
-        "title": " Sora: نموذج تحويل النص إلى فيديو",
-        "summary": ["إنشاء فيديوهات واقعية تصل لدقيقة", "فهم معقد للفيزياء وحركة العناصر", "توليد شخصيات ومشاعر دقيقة", "متاح حالياً للمقيمين والمبدعين فقط"],
-        "date": "2024-12-15",
-        "official_link": "https://openai.com/sora"
-      },
-      {
-        "title": "إجراءات سلامة جديدة للنماذج الحدودية",
-        "summary": ["فريق متخصص لتقييم المخاطر", "اختبارات أمان قبل الإطلاق العام", "التعاون مع هيئات تنظيمية حكومية", "شفافية في تقارير الأمان"],
-        "date": "2024-12-10",
-        "official_link": "https://openai.com/safety"
-      },
-      {
-        "title": "تخفيض أسعار API للمطورين",
-        "summary": ["تقليل تكلفة GPT-4o بنسبة 50%", "زيادة سرعة التوليد 2x", "زيادة حدود الاستخدام (Rate Limits)", "أدوات جديدة لمراقبة التكلفة"],
-        "date": "2024-12-05",
-        "official_link": "https://openai.com/api"
-      },
-      {
-        "title": "DALL·E 3: تحسينات في توليد الصور",
-        "summary": ["فهم أدق للنصوص المعقدة", "توليد نصوص صحيحة داخل الصور", "جودة أعلى وتفاصيل أكثر", "دمج مباشر داخل ChatGPT"],
-        "date": "2024-11-28",
-        "official_link": "https://openai.com/dall-e-3"
-      },
-      {
-        "title": "دعم المؤسسات عبر ChatGPT Enterprise",
-        "summary": ["أمان وحماية بيانات على مستوى المؤسسات", "سرعة غير محدودة للنموذج الأقوى", "نوافذ سياق أطول (Context Window)", "لوحة تحكم إدارية متقدمة"],
-        "date": "2024-11-20",
-        "official_link": "https://openai.com/enterprise"
-      },
-      {
-        "title": "ميزة الصوت المتقدمة (Advanced Voice Mode)",
-        "summary": ["تحديثات جديدة للدول الأوروبية", "تحسينات في الاستجابة والتنغيم", "أصوات جديدة وأكثر طبيعية", "طرح تدريجي للمستخدمين المجانيين"],
-        "date": "2024-11-15",
-        "official_link": "https://openai.com/blog"
-      }
-    ]
-  },
-  "google": {
-    "id": "google",
-    "name": "Google (Gemini)",
-    "last_updated": 1736640000000,
-    "items": [
-      {
-        "title": "إطلاق Gemini 1.5 Pro للعامة",
-        "summary": ["نافذة سياق 2 مليون توكن", "تحليل ملفات فيديو وصوت طويلة", "متاح في أكثر من 150 دولة", "تكامل مع تطبيقات Google Workspace"],
-        "date": "2025-01-10",
-        "official_link": "https://blog.google/technology/ai/google-gemini-update-flash-ai-assistant/"
-      },
-      {
-        "title": "مشروع Astra: مستقبل مساعدي AI",
-        "summary": ["فهم العالم عبر الكاميرا مباشرة", "استجابة سريعة جداً وتفاعلية", "ذاكرة بصرية وفهم للمكان", "عرض تجريبي مذهل لقدرات الرؤية"],
-        "date": "2025-01-08",
-        "official_link": "https://deepmind.google/technologies/gemini/project-astra/"
-      },
-      {
-        "title": "Google Veo لتوليد الفيديو عالي الدقة",
-        "summary": ["منافس مباشر لنموذج Sora", "توليد فيديو بدقة 1080p", "فهم المصطلحات السينمائية", "متاح لصناع المحتوى المختارين"],
-        "date": "2025-01-02",
-        "official_link": "https://deepmind.google/technologies/veo/"
-      },
-      {
-        "title": "Imagen 3: الجيل الجديد من الصور",
-        "summary": ["أعلى دقة لتوليد الصور حتى الآن", "تحكم ممتاز في الإضاءة والواقعية", "تقليل الشوائب (Artifacts)", "متاح عبر ImageFX"],
-        "date": "2024-12-25",
-        "official_link": "https://deepmind.google/technologies/imagen-3/"
-      },
-      {
-        "title": "تحديثات Gemini Nano للأندرويد",
-        "summary": ["تشغيل محلي على الجهاز (On-device)", "ميزات جديدة في Pixel 9", "حماية الخصوصية والبيانات", "تلخيص المكالمات والنصوص تلقائياً"],
-        "date": "2024-12-20",
-        "official_link": "https://store.google.com/intl/en/ideas/articles/pixel-feature-drop-june-2024/"
-      },
-      {
-        "title": "AlphaFold 3: ثورة في البيولوجيا",
-        "summary": ["تنبؤ بتركيب البروتينات والحمض النووي", "دقة أعلى بنسبة 50% من الجيل السابق", "مفتوح للباحثين العلميين", "تسريع اكتشاف الأدوية والعلاجات"],
-        "date": "2024-12-15",
-        "official_link": "https://blog.google/technology/ai/google-deepmind-isomorphic-alphafold-3-ai-model/"
-      },
-      {
-        "title": "توسع ميزة AI Overviews في البحث",
-        "summary": ["إجابات ذكية في أعلى نتائج البحث", "تخصيص الإجابات حسب المعقد والبسيط", "دعم لأسئلة الفيديو", "طرح عالمي تدريجي"],
-        "date": "2024-12-10",
-        "official_link": "https://blog.google/products/search/generative-ai-search-updates/"
-      },
-      {
-        "title": "Circle to Search تتلقى تحديثات AI",
-        "summary": ["حل المسائل الرياضية والفيزيائية", "ترجمة فورية للنصوص على الشاشة", "البحث عن المنتجات داخل الفيديوهات", "دعم لأجهزة سامسونج والمزيد"],
-        "date": "2024-12-05",
-        "official_link": "https://blog.google/products/search/"
-      },
-      {
-        "title": "Gemma 2: نماذج مفتوحة المصدر",
-        "summary": ["أداء يتفوق على نماذج أكبر حجماً", "نسخ 9B و 27B متاحة للمطورين", "كفاءة عالية على وحدات TPU و GPU", "ترخيص مرن للاستخدام التجاري"],
-        "date": "2024-11-30",
-        "official_link": "https://blog.google/technology/developers/gemma-2/"
-      },
-      {
-        "title": "NotebookLM: المساعد البحثي الذكي",
-        "summary": ["تحويل المستندات إلى بودكاست صوتي", "فهم عميق للمصادر المرفقة", "دعم للصوت والوسائط المتعددة", "أداة قوية للطلاب والباحثين"],
-        "date": "2024-11-25",
-        "official_link": "https://blog.google/technology/ai/notebooklm-audio-overviews/"
-      }
-    ]
-  },
-  "meta": {
-    "id": "meta",
-    "name": "Meta AI (Llama)",
-    "last_updated": 1736640000000,
-    "items": [
-      {
-        "title": "Llama 3.2: نماذج متعددة الوسائط",
-        "summary": ["دعم الرؤية (Vision) لأول مرة", "نسخ خفيفة 1B و 3B للهواتف", "أداء قوي جداً مقارنة بالحجم", "مفتوح المصدر بالكامل"],
-        "date": "2025-01-08",
-        "official_link": "https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/"
-      },
-      {
-        "title": "Meta AI في واتساب وانستجرام",
-        "summary": ["مساعد ذكي مدمج في تطبيقات التواصل", "توليد صور متحركة (GIFs)", "البحث عن المعلومات داخل المحادثات", "متاح في دول جديدة"],
-        "date": "2025-01-01",
-        "official_link": "https://about.fb.com/news/2024/09/meta-ai-updates-connect-2024/"
-      },
-      {
-        "title": "Movie Gen: نموذج توليد الفيديو",
-        "summary": ["توليد فيديو بدقة HD مع صوت", "تعديل الفيديوهات الشخصية", "إنشاء موسيقى خلفية متزامنة", "منافس قوي لـ Sora و Veo"],
-        "date": "2024-12-20",
-        "official_link": "https://ai.meta.com/blog/movie-gen-media-foundation-models-generative-ai-video/"
-      },
-      {
-        "title": "نظارات Ray-Ban Meta الذكية",
-        "summary": ["ترجمة فورية للمحادثات", "التعرف على الأشياء وتذكر أماكنها", "تكامل كامل مع Meta AI صوتياً", "تحديثات برمجية مستمرة"],
-        "date": "2024-12-15",
-        "official_link": "https://about.fb.com/news/2024/09/ray-ban-meta-smart-glasses-updates/"
-      },
-      {
-        "title": "Audiobox: توليد الصوت بالذكاء الاصطناعي",
-        "summary": ["إنشاء أصوات ومؤثرات صوتية", "تحكم دقيق بنبرة الصوت", "إزالة الضوضاء وتحسين الجودة", "أداة بحثية جديدة"],
-        "date": "2024-12-10",
-        "official_link": "https://ai.meta.com/blog/audiobox-generating-audio-voice-sound-effects/"
-      },
-      {
-        "title": "SAM 2: تقسيم الفيديو (Segment Anything)",
-        "summary": ["تحديد العناصر في الفيديو بدقة", "سريع جداً ويعمل في الوقت الفعلي", "مفتوح المصدر للبحث والتطوير", "تطبيقات في المونتاج والسيارات الذكية"],
-        "date": "2024-12-05",
-        "official_link": "https://ai.meta.com/blog/segment-anything-2/"
-      },
-      {
-        "title": "تحسينات الترجمة بـ SeamlessM4T",
-        "summary": ["ترجمة فورية لأكثر من 100 لغة", "الحفاظ على نبرة المتحدث الأصلي", "دعم للغات قليلة الموارد", "نموذج موحد لجميع المهام"],
-        "date": "2024-11-28",
-        "official_link": "https://ai.meta.com/blog/seamless-m4t/"
-      },
-      {
-        "title": "Chameleon: نموذج مختلط الوسائط",
-        "summary": ["فهم وتوليد نص وصورة معاً", "معمارية جديدة كلياً", "مرونة عالية في المهام المتعددة", "نشر الأوراق البحثية المتعلقة به"],
-        "date": "2024-11-20",
-        "official_link": "https://ai.meta.com/blog/chameleon-early-fusion-multimodal-model/"
-      },
-      {
-        "title": "أدوات AI Studio للمبدعين",
-        "summary": ["إنشاء شخصيات AI خاصة بك", "تدريب النموذج على أسلوبك", "نشر البوتات على انستجرام وماسنجر", "بدون الحاجة لخبرة برمجية"],
-        "date": "2024-11-15",
-        "official_link": "https://about.fb.com/news/2024/07/create-your-own-ai-characters-with-ai-studio/"
-      },
-      {
-        "title": "Emu Video: تحرير الفيديو بالنص",
-        "summary": ["تعديل الفيديوهات بأوامر نصية", "جودة عالية وسرعة في المعالجة", "أدوات تحرير إبداعية جديدة", "تكامل مستقبلي مع فيسبوك"],
-        "date": "2024-11-10",
-        "official_link": "https://ai.meta.com/blog/emu-video-generation-editing/"
-      }
-    ]
-  },
-  "microsoft": {
-    "id": "microsoft",
-    "name": "Microsoft (Copilot)",
-    "last_updated": 1736640000000,
-    "items": [
-      {
-        "title": "Copilot+ PC: حقبة جديدة من الحواسيب",
-        "summary": ["أجهزة بمعالجات NPU مخصصة", "ميزة Recall لتذكر كل شيء", "توليد صور وتعديلها محلياً", "أداء بطارية يدوم طويلاً"],
-        "date": "2025-01-05",
-        "official_link": "https://blogs.microsoft.com/blog/2024/05/20/introducing-copilot-pcs/"
-      },
-      {
-        "title": "تحديث Copilot Pro بتصميم جديد",
-        "summary": ["واجهة مستخدم أكثر بساطة ودفئاً", "بطاقات تفاعلية للمعلومات", "Copilot Voice للتحدث الطبيعي", "Copilot Daily لملخص الأخبار"],
-        "date": "2025-01-02",
-        "official_link": "https://blogs.microsoft.com/blog/2024/10/01/an-ai-companion-for-everyone/"
-      },
-      {
-        "title": "Phi-3.5: نماذج صغيرة وقوية",
-        "summary": ["تفوق على نماذج أكبر حجماً", "نسخ Mini و Small و Vision", "مثالية للتشغيل المحلي", "مفتوحة المصدر عبر Azure"],
-        "date": "2024-12-28",
-        "official_link": "https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-what-s-possible-with-slms/"
-      },
-      {
-        "title": "Azure AI Studio: منصة المطورين",
-        "summary": ["بناء وكلاء AI (Agents) بسهولة", "أدوات لتقييم الأمان والجودة", "وصول لأحدث نماذج OpenAI و Llama", "تكامل مع بيانات المؤسسة"],
-        "date": "2024-12-20",
-        "official_link": "https://azure.microsoft.com/en-us/products/ai-studio"
-      },
-      {
-        "title": "Copilot في Excel مع Python",
-        "summary": ["تحليل بيانات معقدة بلغة بايثون", "إنشاء رسوم بيانية متقدمة", "لا حاجة لتنصيب بيئة برمجية", "متاح لمشتركي المؤسسات"],
-        "date": "2024-12-15",
-        "official_link": "https://techcommunity.microsoft.com/t5/excel-blog/copilot-in-excel-with-python/ba-p/4217156"
-      },
-      {
-        "title": "Designer: تطبيق التصميم بالذكاء الاصطناعي",
-        "summary": ["تطبيق مستقل للهواتف والويب", "إنشاء ملصقات وتصاميم ودعوات", "إزالة الخلفيات وتعديل الصور", "مجاني للاستخدام الشخصي"],
-        "date": "2024-12-10",
-        "official_link": "https://designer.microsoft.com/"
-      },
-      {
-        "title": "تحسينات Copilot للأمان (Security)",
-        "summary": ["تحليل التهديدات السيبرانية بسرعة", "مساعدة الخبراء في كتابة التقارير", "كشف الثغرات بشكل استباقي", "مخصص لفرق الأمن السيبراني"],
-        "date": "2024-12-05",
-        "official_link": "https://www.microsoft.com/en-us/security/business/ai-machine-learning/microsoft-copilot-security"
-      },
-      {
-        "title": "إطلاق نماذج Phi-3 Vision",
-        "summary": ["فهم الصور والمخططات والرسوم", "حجم صغير يمكن تشغيله على الهاتف", "دقة عالية في استخراج النصوص (OCR)", "مجاني للاستخدام البحثي والتجاري"],
-        "date": "2024-11-25",
-        "official_link": "https://techcommunity.microsoft.com/t5/ai-machine-learning-blog/phi-3-vision/ba-p/4144062"
-      },
-      {
-        "title": "Copilot Pages: تعاون جماعي مع AI",
-        "summary": ["مساحة عمل مشتركة مع الذكاء الاصطناعي", "تحويل الردود إلى مستندات قابلة للتعديل", "العمل مع الفريق في الوقت الفعلي", "جزء من Microsoft Loop"],
-        "date": "2024-11-20",
-        "official_link": "https://www.microsoft.com/en-us/worklab/copilot-pages"
-      },
-      {
-        "title": "الاستدامة في مراكز بيانات AI",
-        "summary": ["خطط للوصول إلى طاقة نظيفة 100%", "تقنيات تبريد جديدة للخوادم", "استثمارات في الطاقة النووية", "تقارير شفافية حول استهلاك المياه"],
-        "date": "2024-11-15",
-        "official_link": "https://blogs.microsoft.com/on-the-issues/2024/05/15/ai-sustainability-renewable-energy-water/"
-      }
-    ]
-  },
-  "anthropic": {
-    "id": "anthropic",
-    "name": "Anthropic (Claude)",
-    "last_updated": 1736640000000,
-    "items": [
-      {
-        "title": "Claude 3.5 Sonnet: المعيار الجديد",
-        "summary": ["أذكى وأسرع من GPT-4o في البرمجة", "واجهة Artifacts لعرض الكود والتطبيقات", "فهم بصري وتحليل بيانات ممتاز", "سعر منافس جداً"],
-        "date": "2024-12-20",
-        "official_link": "https://www.anthropic.com/news/claude-3-5-sonnet"
-      },
-      {
-        "title": "ميزة Computer Use (التحكم بالكمبيوتر)",
-        "summary": ["النموذج يستطيع استخدام الماوس والكيبورد", "تنفيذ مهام معقدة عبر تطبيقات متعددة", "متاح للمطورين عبر API حالياً", "نقلة نوعية في وكلاء AI"],
-        "date": "2024-12-22",
-        "official_link": "https://www.anthropic.com/news/developing-computer-use"
-      },
-      {
-        "title": "إطلاق تطبيق Claude للأندرويد",
-        "summary": ["مزامنة المحادثات مع الويب", "تحليل الصور مباشرة من الكاميرا", "واجهة سريعة وبسيطة", "متاح مجاناً وللمشتركين"],
-        "date": "2024-12-15",
-        "official_link": "https://www.anthropic.com/news/android-app"
-      },
-      {
-        "title": "Claude Enterprise: حلول للشركات",
-        "summary": ["نافذة سياق 500K توكن ضخمة", "تكامل مع GitHub و GitHub", "حماية بيانات وخصوصية عالية", "أدوات إدارة للفريق"],
-        "date": "2024-12-10",
-        "official_link": "https://www.anthropic.com/news/claude-enterprise"
-      },
-      {
-        "title": "تحسينات Artifacts للمشاركة",
-        "summary": ["مشاركة التطبيقات المصغرة مع الآخرين", "تعديل الكود وعرض النتيجة فوراً", "تحويل المحادثة إلى وثيقة عمل", "متاح الآن على الهاتف"],
-        "date": "2024-12-05",
-        "official_link": "https://www.anthropic.com/news/artifacts-for-everyone"
-      },
-      {
-        "title": "Claude 3 Haiku: الأسرع والأرخص",
-        "summary": ["نموذج خفيف وسريع جداً", "مثالي لمهام الدردشة البسيطة", "قراءة الأوراق البحثية في ثوانٍ", "تكلفة منخفضة للمطورين"],
-        "date": "2024-11-25",
-        "official_link": "https://www.anthropic.com/news/claude-3-haiku"
-      },
-      {
-        "title": "مبادرة الدستور الذكي (Constitutional AI)",
-        "summary": ["تدريب النماذج على مبادئ أخلاقية", "تقليل التحيز والردود الضارة", "شفافية في عملية التدريب", "تركيز على الأمان والسلامة"],
-        "date": "2024-11-20",
-        "official_link": "https://www.anthropic.com/research/constitutional-ai-harmlessness-from-ai-feedback"
-      },
-      {
-        "title": "أداة Prompt Caching لتقليل التكلفة",
-        "summary": ["تخزين السياق المتكرر لتقليل السعر", "زيادة سرعة الاستجابة للطلبات الطويلة", "توفير يصل إلى 90% للمطورين", "مثالي لتحليل الكتب والكود"],
-        "date": "2024-11-15",
-        "official_link": "https://www.anthropic.com/news/prompt-caching"
-      },
-      {
-        "title": "تمويل جديد لتوسيع البنية التحتية",
-        "summary": ["شراكة استراتيجية مع Amazon", "استثمار ملياري في مراكز البيانات", "التركيز على تدريب Claude 4", "توسع عالمي في أوروبا"],
-        "date": "2024-11-10",
-        "official_link": "https://www.anthropic.com/news"
-      },
-      {
-        "title": "تحديثات لزيادة حدود الاستخدام",
-        "summary": ["زيادة عدد الرسائل للمستخدمين المجانيين", "أداء أسرع في أوقات الذروة", "تحسينات في الاستقرار", "دعم فني أسرع"],
-        "date": "2024-11-05",
-        "official_link": "https://www.anthropic.com/news"
-      }
-    ]
-  }
+  "generated_at": "2025-01-15T12:00:00Z",
+  "companies": [
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "logo_key": "openai",
+      "last_updated": "2025-01-12T10:00:00Z",
+      "items": [
+        {
+          "id": "openai-o1",
+          "title": "إطلاق نموذج o1 بقدرات استدلال فائقة",
+          "summary": "نموذج جديد يتميز بالتفكير المتسلسل المعقد، مع أداء عالي في الرياضيات والفيزياء وتقليل نسبة الخطأ.",
+          "date": "2025-01-12",
+          "url": "https://openai.com/index/learning-to-reason-with-llms/",
+          "category": "release"
+        },
+        {
+          "id": "openai-gpt4o-audio",
+          "title": "تحديث GPT-4o بقدرات صوتية واقعية",
+          "summary": "استجابة صوتية فورية (Real-time) مع فهم للمشاعر ونبرة الصوت وإمكانية المقاطعة أثناء الحديث.",
+          "date": "2025-01-05",
+          "url": "https://openai.com/index/hello-gpt-4o/",
+          "category": "update"
+        },
+        {
+          "id": "openai-memory",
+          "title": "إتاحة الذاكرة (Memory) لجميع المستخدمين",
+          "summary": "النموذج أصبح يتذكر تفضيلاتك السابقة مع تحكم كامل للمستخدم في حذف الذكريات.",
+          "date": "2024-12-28",
+          "url": "https://openai.com/blog/memory-and-new-controls-for-chatgpt/",
+          "category": "update"
+        },
+        {
+          "id": "openai-apple",
+          "title": "تعاون جديد لدمج ChatGPT في أجهزة Apple",
+          "summary": "دمج مع Siri في iOS 18، والوصول للنظام بدون إنشاء حساب مع حماية الخصوصية.",
+          "date": "2024-12-20",
+          "url": "https://openai.com/index/openai-and-apple-announce-partnership/",
+          "category": "release"
+        },
+        {
+          "id": "openai-sora",
+          "title": "Sora: نموذج تحويل النص إلى فيديو",
+          "summary": "إنشاء فيديوهات واقعية تصل لدقيقة مع فهم معقد للفيزياء وحركة العناصر.",
+          "date": "2024-12-15",
+          "url": "https://openai.com/sora",
+          "category": "research"
+        },
+        {
+          "id": "openai-safety",
+          "title": "إجراءات سلامة جديدة للنماذج الحدودية",
+          "summary": "تأسيس فريق متخصص لتقييم المخاطر واختبارات أمان قبل الإطلاق العام.",
+          "date": "2024-12-10",
+          "url": "https://openai.com/safety",
+          "category": "safety"
+        },
+        {
+          "id": "openai-api-price",
+          "title": "تخفيض أسعار API للمطورين",
+          "summary": "تقليل تكلفة GPT-4o بنسبة 50% وزيادة سرعة التوليد وحدود الاستخدام.",
+          "date": "2024-12-05",
+          "url": "https://openai.com/api",
+          "category": "update"
+        },
+        {
+          "id": "openai-dalle3",
+          "title": "DALL·E 3: تحسينات في توليد الصور",
+          "summary": "فهم أدق للنصوص المعقدة وتوليد نصوص صحيحة داخل الصور بجودة أعلى.",
+          "date": "2024-11-28",
+          "url": "https://openai.com/dall-e-3",
+          "category": "update"
+        },
+        {
+          "id": "openai-enterprise",
+          "title": "دعم المؤسسات عبر ChatGPT Enterprise",
+          "summary": "أمان وحماية بيانات على مستوى المؤسسات وسرعة غير محدودة للنموذج الأقوى.",
+          "date": "2024-11-20",
+          "url": "https://openai.com/enterprise",
+          "category": "release"
+        },
+        {
+          "id": "openai-voice-adv",
+          "title": "ميزة الصوت المتقدمة (Advanced Voice Mode)",
+          "summary": "تحديثات جديدة للدول الأوروبية وتحسينات في الاستجابة والتنغيم.",
+          "date": "2024-11-15",
+          "url": "https://openai.com/blog",
+          "category": "update"
+        }
+      ]
+    },
+    {
+      "id": "google",
+      "name": "Google",
+      "logo_key": "google",
+      "last_updated": "2025-01-10T10:00:00Z",
+      "items": [
+        {
+          "id": "google-gemini-1.5",
+          "title": "إطلاق Gemini 1.5 Pro للعامة",
+          "summary": "نافذة سياق 2 مليون توكن وتحليل ملفات فيديو وصوت طويلة، متاح في أكثر من 150 دولة.",
+          "date": "2025-01-10",
+          "url": "https://blog.google/technology/ai/google-gemini-update-flash-ai-assistant/",
+          "category": "release"
+        },
+        {
+          "id": "google-astra",
+          "title": "مشروع Astra: مستقبل مساعدي AI",
+          "summary": "فهم العالم عبر الكاميرا مباشرة واستجابة سريعة جداً وتفاعلية.",
+          "date": "2025-01-08",
+          "url": "https://deepmind.google/technologies/gemini/project-astra/",
+          "category": "research"
+        },
+        {
+          "id": "google-veo",
+          "title": "Google Veo لتوليد الفيديو عالي الدقة",
+          "summary": "منافس مباشر لنموذج Sora، يولد فيديو بدقة 1080p ويفهم المصطلحات السينمائية.",
+          "date": "2025-01-02",
+          "url": "https://deepmind.google/technologies/veo/",
+          "category": "research"
+        },
+        {
+          "id": "google-imagen3",
+          "title": "Imagen 3: الجيل الجديد من الصور",
+          "summary": "أعلى دقة لتوليد الصور حتى الآن مع تحكم ممتاز في الإضاءة والواقعية.",
+          "date": "2024-12-25",
+          "url": "https://deepmind.google/technologies/imagen-3/",
+          "category": "release"
+        },
+        {
+          "id": "google-nano",
+          "title": "تحديثات Gemini Nano للأندرويد",
+          "summary": "تشغيل محلي على الجهاز (On-device) مع ميزات جديدة في Pixel وحماية الخصوصية.",
+          "date": "2024-12-20",
+          "url": "https://store.google.com/intl/en/ideas/articles/pixel-feature-drop-june-2024/",
+          "category": "update"
+        },
+        {
+          "id": "google-alphafold3",
+          "title": "AlphaFold 3: ثورة في البيولوجيا",
+          "summary": "تنبؤ بتركيب البروتينات والحمض النووي بدقة أعلى بنسبة 50% من الجيل السابق.",
+          "date": "2024-12-15",
+          "url": "https://blog.google/technology/ai/google-deepmind-isomorphic-alphafold-3-ai-model/",
+          "category": "research"
+        },
+        {
+          "id": "google-search-overview",
+          "title": "توسع ميزة AI Overviews في البحث",
+          "summary": "إجابات ذكية في أعلى نتائج البحث مع تخصيص الإجابات ودعم أسئلة الفيديو.",
+          "date": "2024-12-10",
+          "url": "https://blog.google/products/search/generative-ai-search-updates/",
+          "category": "update"
+        },
+        {
+          "id": "google-circle",
+          "title": "Circle to Search تتلقى تحديثات AI",
+          "summary": "حل المسائل الرياضية والفيزيائية وترجمة فورية للنصوص على الشاشة.",
+          "date": "2024-12-05",
+          "url": "https://blog.google/products/search/",
+          "category": "update"
+        },
+        {
+          "id": "google-gemma2",
+          "title": "Gemma 2: نماذج مفتوحة المصدر",
+          "summary": "أداء يتفوق على نماذج أكبر حجماً، نسخ 9B و 27B متاحة للمطورين.",
+          "date": "2024-11-30",
+          "url": "https://blog.google/technology/developers/gemma-2/",
+          "category": "release"
+        },
+        {
+          "id": "google-notebooklm",
+          "title": "NotebookLM: المساعد البحثي الذكي",
+          "summary": "تحويل المستندات إلى بودكاست صوتي وفهم عميق للمصادر المرفقة.",
+          "date": "2024-11-25",
+          "url": "https://blog.google/technology/ai/notebooklm-audio-overviews/",
+          "category": "update"
+        }
+      ]
+    },
+    {
+      "id": "meta",
+      "name": "Meta",
+      "logo_key": "meta",
+      "last_updated": "2025-01-08T15:00:00Z",
+      "items": [
+        {
+          "id": "meta-llama3.2",
+          "title": "Llama 3.2: نماذج متعددة الوسائط",
+          "summary": "دعم الرؤية (Vision) لأول مرة، نسخ خفيفة 1B و 3B للهواتف، وأداء قوي جداً.",
+          "date": "2025-01-08",
+          "url": "https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/",
+          "category": "release"
+        },
+        {
+          "id": "meta-ai-apps",
+          "title": "Meta AI في واتساب وانستجرام",
+          "summary": "مساعد ذكي مدمج في تطبيقات التواصل لتوليد صور والبحث عن المعلومات.",
+          "date": "2025-01-01",
+          "url": "https://about.fb.com/news/2024/09/meta-ai-updates-connect-2024/",
+          "category": "update"
+        },
+        {
+          "id": "meta-movie-gen",
+          "title": "Movie Gen: نموذج توليد الفيديو",
+          "summary": "توليد فيديو بدقة HD مع صوت، وتعديل الفيديوهات الشخصية.",
+          "date": "2024-12-20",
+          "url": "https://ai.meta.com/blog/movie-gen-media-foundation-models-generative-ai-video/",
+          "category": "research"
+        },
+        {
+          "id": "meta-glasses",
+          "title": "نظارات Ray-Ban Meta الذكية",
+          "summary": "ترجمة فورية للمحادثات والتعرف على الأشياء وتذكر أماكنها.",
+          "date": "2024-12-15",
+          "url": "https://about.fb.com/news/2024/09/ray-ban-meta-smart-glasses-updates/",
+          "category": "update"
+        },
+        {
+          "id": "meta-audiobox",
+          "title": "Audiobox: توليد الصوت بالذكاء الاصطناعي",
+          "summary": "إنشاء أصوات ومؤثرات صوتية وتحكم دقيق بنبرة الصوت.",
+          "date": "2024-12-10",
+          "url": "https://ai.meta.com/blog/audiobox-generating-audio-voice-sound-effects/",
+          "category": "research"
+        },
+        {
+          "id": "meta-sam2",
+          "title": "SAM 2: تقسيم الفيديو",
+          "summary": "تحديد العناصر في الفيديو بدقة وسرعة في الوقت الفعلي، مفتوح المصدر.",
+          "date": "2024-12-05",
+          "url": "https://ai.meta.com/blog/segment-anything-2/",
+          "category": "release"
+        },
+        {
+          "id": "meta-seamless",
+          "title": "تحسينات الترجمة بـ SeamlessM4T",
+          "summary": "ترجمة فورية لأكثر من 100 لغة مع الحفاظ على نبرة المتحدث الأصلي.",
+          "date": "2024-11-28",
+          "url": "https://ai.meta.com/blog/seamless-m4t/",
+          "category": "update"
+        },
+        {
+          "id": "meta-chameleon",
+          "title": "Chameleon: نموذج مختلط الوسائط",
+          "summary": "فهم وتوليد نص وصورة معاً بمعمارية جديدة كلياً.",
+          "date": "2024-11-20",
+          "url": "https://ai.meta.com/blog/chameleon-early-fusion-multimodal-model/",
+          "category": "research"
+        },
+        {
+          "id": "meta-aistudio",
+          "title": "أدوات AI Studio للمبدعين",
+          "summary": "إنشاء شخصيات AI خاصة وتدريب النموذج على أسلوبك.",
+          "date": "2024-11-15",
+          "url": "https://about.fb.com/news/2024/07/create-your-own-ai-characters-with-ai-studio/",
+          "category": "release"
+        },
+        {
+          "id": "meta-emu",
+          "title": "Emu Video: تحرير الفيديو بالنص",
+          "summary": "تعديل الفيديوهات بأوامر نصية بجودة عالية.",
+          "date": "2024-11-10",
+          "url": "https://ai.meta.com/blog/emu-video-generation-editing/",
+          "category": "research"
+        }
+      ]
+    },
+    {
+      "id": "microsoft",
+      "name": "Microsoft",
+      "logo_key": "microsoft",
+      "last_updated": "2025-01-05T09:00:00Z",
+      "items": [
+        {
+          "id": "ms-copilot-pc",
+          "title": "Copilot+ PC: حقبة جديدة",
+          "summary": "أجهزة بمعالجات NPU مخصصة وميزة Recall لتذكر كل شيء.",
+          "date": "2025-01-05",
+          "url": "https://blogs.microsoft.com/blog/2024/05/20/introducing-copilot-pcs/",
+          "category": "release"
+        },
+        {
+          "id": "ms-copilot-pro",
+          "title": "تحديث Copilot Pro",
+          "summary": "واجهة مستخدم أكثر بساطة ودفئاً مع بطاقات تفاعلية و Copilot Voice.",
+          "date": "2025-01-02",
+          "url": "https://blogs.microsoft.com/blog/2024/10/01/an-ai-companion-for-everyone/",
+          "category": "update"
+        },
+        {
+          "id": "ms-phi3.5",
+          "title": "Phi-3.5: نماذج صغيرة وقوية",
+          "summary": "تفوق على نماذج أكبر حجماً، نسخ Mini و Small و Vision للتشغيل المحلي.",
+          "date": "2024-12-28",
+          "url": "https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-what-s-possible-with-slms/",
+          "category": "release"
+        },
+        {
+          "id": "ms-azure-studio",
+          "title": "Azure AI Studio",
+          "summary": "بناء وكلاء AI (Agents) بسهولة وأدوات لتقييم الأمان والجودة.",
+          "date": "2024-12-20",
+          "url": "https://azure.microsoft.com/en-us/products/ai-studio",
+          "category": "update"
+        },
+        {
+          "id": "ms-excel-python",
+          "title": "Copilot في Excel مع Python",
+          "summary": "تحليل بيانات معقدة بلغة بايثون وإنشاء رسوم بيانية بدون تنصيب بيئة.",
+          "date": "2024-12-15",
+          "url": "https://techcommunity.microsoft.com/t5/excel-blog/copilot-in-excel-with-python/ba-p/4217156",
+          "category": "update"
+        },
+        {
+          "id": "ms-designer",
+          "title": "Designer: تطبيق التصميم",
+          "summary": "تطبيق مستقل لإنشاء ملصقات وتصاميم ودعوات وإزالة الخلفيات.",
+          "date": "2024-12-10",
+          "url": "https://designer.microsoft.com/",
+          "category": "release"
+        },
+        {
+          "id": "ms-security",
+          "title": "تحسينات Copilot للأمان",
+          "summary": "تحليل التهديدات السيبرانية بسرعة ومساعدة الخبراء في كتابة التقارير.",
+          "date": "2024-12-05",
+          "url": "https://www.microsoft.com/en-us/security/business/ai-machine-learning/microsoft-copilot-security",
+          "category": "safety"
+        },
+        {
+          "id": "ms-phi3-vision",
+          "title": "إطلاق نماذج Phi-3 Vision",
+          "summary": "فهم الصور والمخططات واستخراج النصوص بدقة عالية.",
+          "date": "2024-11-25",
+          "url": "https://techcommunity.microsoft.com/t5/ai-machine-learning-blog/phi-3-vision/ba-p/4144062",
+          "category": "release"
+        },
+        {
+          "id": "ms-pages",
+          "title": "Copilot Pages: تعاون جماعي",
+          "summary": "مساحة عمل مشتركة مع الذكاء الاصطناعي لتحويل الردود إلى مستندات.",
+          "date": "2024-11-20",
+          "url": "https://www.microsoft.com/en-us/worklab/copilot-pages",
+          "category": "update"
+        },
+        {
+          "id": "ms-sustainability",
+          "title": "الاستدامة في مراكز البيانات",
+          "summary": "خطط للوصول إلى طاقة نظيفة 100% وتقنيات تبريد جديدة.",
+          "date": "2024-11-15",
+          "url": "https://blogs.microsoft.com/on-the-issues/2024/05/15/ai-sustainability-renewable-energy-water/",
+          "category": "other"
+        }
+      ]
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "logo_key": "anthropic",
+      "last_updated": "2024-12-22T08:00:00Z",
+      "items": [
+        {
+          "id": "anthro-computer-use",
+          "title": "ميزة Computer Use",
+          "summary": "النموذج يستطيع استخدام الماوس والكيبورد لتنفيذ مهام معقدة.",
+          "date": "2024-12-22",
+          "url": "https://www.anthropic.com/news/developing-computer-use",
+          "category": "release"
+        },
+        {
+          "id": "anthro-sonnet-3.5",
+          "title": "Claude 3.5 Sonnet",
+          "summary": "المعيار الجديد، أذكى وأسرع من السابق في البرمجة والتحليل البصري.",
+          "date": "2024-12-20",
+          "url": "https://www.anthropic.com/news/claude-3-5-sonnet",
+          "category": "release"
+        },
+        {
+          "id": "anthro-android",
+          "title": "تطبيق Claude للأندرويد",
+          "summary": "مزامنة المحادثات وتحليل الصور مباشرة من الكاميرا بواجهة بسيطة.",
+          "date": "2024-12-15",
+          "url": "https://www.anthropic.com/news/android-app",
+          "category": "release"
+        },
+        {
+          "id": "anthro-enterprise",
+          "title": "Claude Enterprise",
+          "summary": "نافذة سياق 500K توكن وحماية بيانات وخصوصية عالية للمؤسسات.",
+          "date": "2024-12-10",
+          "url": "https://www.anthropic.com/news/claude-enterprise",
+          "category": "update"
+        },
+        {
+          "id": "anthro-artifacts",
+          "title": "تحسينات Artifacts",
+          "summary": "مشاركة التطبيقات المصغرة وتعديل الكود وعرض النتيجة فوراً.",
+          "date": "2024-12-05",
+          "url": "https://www.anthropic.com/news/artifacts-for-everyone",
+          "category": "update"
+        },
+        {
+          "id": "anthro-haiku",
+          "title": "Claude 3 Haiku",
+          "summary": "نموذج خفيف وسريع جداً مثالي لمهام الدردشة البسيطة وتكلفة منخفضة.",
+          "date": "2024-11-25",
+          "url": "https://www.anthropic.com/news/claude-3-haiku",
+          "category": "release"
+        },
+        {
+          "id": "anthro-constitutional",
+          "title": "مبادرة الدستور الذكي",
+          "summary": "تدريب النماذج على مبادئ أخلاقية لتقليل التحيز والردود الضارة.",
+          "date": "2024-11-20",
+          "url": "https://www.anthropic.com/research/constitutional-ai-harmlessness-from-ai-feedback",
+          "category": "safety"
+        },
+        {
+          "id": "anthro-caching",
+          "title": "Prompt Caching",
+          "summary": "تخزين السياق المتكرر لتقليل السعر وزيادة سرعة الاستجابة.",
+          "date": "2024-11-15",
+          "url": "https://www.anthropic.com/news/prompt-caching",
+          "category": "update"
+        },
+        {
+          "id": "anthro-funding",
+          "title": "تمويل لتوسيع البنية التحتية",
+          "summary": "شراكة استراتيجية مع Amazon واستثمار ملياري في مراكز البيانات.",
+          "date": "2024-11-10",
+          "url": "https://www.anthropic.com/news",
+          "category": "other"
+        },
+        {
+          "id": "anthro-limits",
+          "title": "زيادة حدود الاستخدام",
+          "summary": "زيادة عدد الرسائل وأداء أسرع في أوقات الذروة.",
+          "date": "2024-11-05",
+          "url": "https://www.anthropic.com/news",
+          "category": "update"
+        }
+      ]
+    }
+  ]
 }

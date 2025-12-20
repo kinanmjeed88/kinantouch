@@ -14,33 +14,32 @@ export interface SocialData {
   url: string;
 }
 
-export interface AINewsItem {
+export interface NewsItem {
+  id: string;
   title: string;
-  summary: string[];
+  summary: string; // Changed to string for easier normalized handling, or keep array if needed. Let's stick to string for normalized summaries.
   date: string;
-  official_link: string;
+  url: string;
+  category?: 'research' | 'release' | 'update' | 'safety' | 'other';
 }
 
-export interface AICategoryData {
+export interface CompanyNews {
   id: string;
   name: string;
-  last_updated: number; // Timestamp
-  items: AINewsItem[];
+  logo_key: 'openai' | 'google' | 'meta' | 'microsoft' | 'anthropic' | 'other';
+  last_updated: string; // ISO 8601 String for easier comparison
+  items: NewsItem[];
 }
 
-export interface AINewsFeed {
-  openai: AICategoryData;
-  google: AICategoryData;
-  meta: AICategoryData;
-  microsoft: AICategoryData;
-  anthropic: AICategoryData;
+export interface AINewsData {
+  generated_at: string;
+  companies: CompanyNews[];
 }
 
 export interface PhoneNewsItem {
   phone_name: string;
   brand: string;
   release_date: string;
-  // Flexible key-value pair for detailed specs
   specifications: Record<string, string>;
   official_specs_link?: string;
   iraqi_price_source?: string;
@@ -61,15 +60,14 @@ export interface PhoneComparisonResult {
   verdict: string;
 }
 
-// Updated to support multiple charts per query
 export interface StatsChart {
   title: string;
   description: string;
   chart_type: 'bar' | 'pie' | 'list';
   data: {
     label: string;
-    value: number; // Percentage 0-100 or raw value
-    displayValue: string; // e.g., "50M" or "25%"
+    value: number; 
+    displayValue: string; 
     color?: string;
   }[];
 }
@@ -79,7 +77,6 @@ export interface StatsResult {
   charts: StatsChart[];
 }
 
-// Interfaces for Local Database
 export interface LocalPhone {
   id: string;
   name: string;
@@ -97,7 +94,6 @@ export interface LocalPhone {
       type?: string;
       resolution?: string;
       refresh_rate?: string;
-      // For foldables
       main?: string;
       cover?: string;
     };
