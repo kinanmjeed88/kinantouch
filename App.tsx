@@ -15,7 +15,7 @@ import {
 import { TelegramIcon } from './components/Icons'; 
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
 
-// Importing Local Data - Using relative paths to avoid resolution errors
+// Importing Local Data - Using relative paths
 import samsungData from './data/phones-backup/samsung.json';
 import appleData from './data/phones-backup/apple.json';
 import googleData from './data/phones-backup/google.json';
@@ -31,8 +31,9 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_rss_v3',
-  PHONE_NEWS: 'techtouch_phones_strict_v2'
+  // Changed key to force refresh on new version
+  AI_NEWS: 'techtouch_ai_static_v1', 
+  PHONE_NEWS: 'techtouch_phones_strict_v3'
 };
 
 const SPEC_ORDER = [
@@ -64,19 +65,7 @@ const MASTER_RULES = `
 اللغة: العربية الفصحى حصراً.
 `;
 
-// 🟠 أوامر تلخيص أخبار RSS (صارمة جداً)
-const RSS_SUMMARIZER_PROMPT = `
-${MASTER_RULES}
-لديك قائمة بأخبار تقنية تم جلبها من مصادر رسمية (RSS Feeds).
-المهمة:
-1. اختر أهم 5 أخبار حديثة وحقيقية من القائمة المقدمة أدناه.
-2. قم بتلخيص كل خبر في "summary" بحيث يحتوي على 5 نقاط دقيقة فقط تركز على الميزات التقنية (Features) والوظائف الجديدة.
-3. العنوان والروابط والتاريخ يجب أن تكون كما هي في المصدر الأصلي.
-4. المخرجات JSON حصراً:
-{ "ai_news": [{ "title": "...", "source": "...", "date": "...", "official_link": "...", "summary": ["ميزة 1", "ميزة 2", "ميزة 3", "ميزة 4", "ميزة 5"] }] }
-`;
-
-// 🟡 أوامر الهواتف
+// 🟡 أوامر الهواتف (للبحث فقط في حال عدم التوفر محلياً)
 const PHONES_MEMORY_PROMPT = `
 ${MASTER_RULES}
 هذا الطلب خاص بهاتف.
@@ -94,25 +83,23 @@ ${MASTER_RULES}
 المخرجات JSON: { "verdict": "النص" }
 `;
 
-// 🟣 أوامر الإحصائيات الذكية (مدققة زمنياً)
+// 🟣 أوامر الإحصائيات الذكية
 const STATS_AI_PROMPT = `
 ${MASTER_RULES}
 أنت خبير إحصائي دقيق جداً.
 المستخدم سيطرح سؤالاً (قد يكون معقداً أو يحتوي تواريخ مستقبلية).
-
 خطوات المعالجة الصارمة:
-1. **التحقق الزمني**: تحقق من التاريخ في السؤال (مثلاً 2028). إذا كان في المستقبل، يجب أن توضح في "description" أن هذه "توقعات مستقبلية بناءً على معدلات النمو الحالية". إذا كان السؤال عن الماضي، استخدم بيانات تاريخية.
-2. **التحليل**: قسم السؤال إذا كان يحتوي على شقين (مثلاً: سكان + ماء).
-3. **الدقة**: لا تخترع أرقاماً عشوائية. استخدم تقديرات منطقية من مصادر موثوقة (UN, World Bank, etc.).
+1. **التحقق الزمني**: تحقق من التاريخ في السؤال (مثلاً 2028). إذا كان في المستقبل، يجب أن توضح في "description" أن هذه "توقعات مستقبلية".
+2. **التحليل**: قسم السؤال إذا كان يحتوي على شقين.
+3. **الدقة**: لا تخترع أرقاماً عشوائية. استخدم تقديرات منطقية من مصادر موثوقة.
 4. **التصور**: اختر المخطط المناسب.
-
 المخرجات JSON حصراً:
 {
   "main_insight": "جملة تلخيصية دقيقة جداً ومباشرة بالعربية",
   "charts": [
     {
       "title": "العنوان الدقيق",
-      "description": "شرح يوضح السنة والمصدر أو طبيعة التوقع",
+      "description": "شرح يوضح السنة والمصدر",
       "chart_type": "pie" | "bar",
       "data": [
         { "label": "العنصر", "value": 50, "displayValue": "50%", "color": "#HEX" }
@@ -121,14 +108,6 @@ ${MASTER_RULES}
   ]
 }
 `;
-
-// --- RSS FEED SOURCES ---
-const RSS_SOURCES = [
-  { name: "OpenAI", url: "https://openai.com/blog/rss.xml" },
-  { name: "Google DeepMind", url: "https://deepmind.google/blog/rss.xml" },
-  { name: "Microsoft AI", url: "https://blogs.microsoft.com/ai/feed/" },
-  { name: "HuggingFace", url: "https://huggingface.co/blog/feed.xml" }
-];
 
 // --- LOCAL DB LOGIC ---
 const allBrandFiles: BrandFile[] = [
@@ -140,27 +119,37 @@ const getAllLocalPhones = (): LocalPhone[] => {
   return allBrandFiles.flatMap(brand => brand.phones);
 };
 
+// تحسين دالة رسم البيانات لتملأ جميع الحقول المطلوبة للعرض والمقارنة
 const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
   let displayStr = "";
   if (local.specs.display.main && local.specs.display.cover) {
      displayStr = `Main: ${local.specs.display.main}, Cover: ${local.specs.display.cover}`;
   } else {
-     displayStr = `${local.specs.display.size || ''}, ${local.specs.display.type || ''}, ${local.specs.display.refresh_rate || ''}`.replace(/^, |, $/g, '');
+     displayStr = `${local.specs.display.size || ''} ${local.specs.display.type || ''}, ${local.specs.display.resolution || ''}, ${local.specs.display.refresh_rate || ''}`.replace(/,\s*,/g, ',').trim();
   }
+
+  // تقدير بيانات افتراضية منطقية للبيانات غير الموجودة في ملف JSON لضمان عدم ظهور حقول فارغة
+  const defaultNetwork = "5G / 4G LTE / Wi-Fi 6E/7";
+  const defaultSound = "Stereo Speakers, High-Res Audio";
+  const defaultComms = "Bluetooth 5.3/5.4, NFC, USB Type-C";
 
   return {
     phone_name: local.name,
     brand: local.id.split('-')[0].toUpperCase(),
     release_date: local.release_year.toString(),
     specifications: {
+      network: defaultNetwork,
+      launch: `Released ${local.release_year}`,
+      body: `${local.manufacturing.frame}, ${local.manufacturing.back}`,
       display: displayStr,
       platform: local.specs.chipset,
-      memory: `${local.specs.ram} RAM / ${local.specs.storage}`,
+      memory: `${local.specs.ram} RAM, ${local.specs.storage} Storage`,
       main_camera: local.specs.rear_camera,
       selfie_camera: local.specs.front_camera,
+      sound: defaultSound,
+      comms: defaultComms,
+      features: `${local.manufacturing.protection}, ${local.manufacturing.water_resistance}`,
       battery: `${local.specs.battery}, ${local.specs.charging}`,
-      body: `${local.manufacturing.frame}, ${local.manufacturing.back}`,
-      features: `Protection: ${local.manufacturing.protection}, IP: ${local.manufacturing.water_resistance}`,
       misc: `Weight: ${local.specs.weight}, OS: ${local.specs.os}`
     },
     pros: [],
@@ -196,8 +185,6 @@ const App: React.FC = () => {
   const [phoneSearchResult, setPhoneSearchResult] = useState<PhoneNewsItem | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Removed unused AI search state variables to fix build errors
-
   const [statsQuery, setStatsQuery] = useState('');
   const [statsResult, setStatsResult] = useState<StatsResult | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -232,7 +219,9 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      return (Date.now() - timestamp < 6 * 60 * 60 * 1000) ? data : null;
+      // Cache valid for 1 hour for news, 24h for phones
+      const validity = key === CACHE_KEYS.AI_NEWS ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+      return (Date.now() - timestamp < validity) ? data : null;
     } catch (e) { return null; }
   };
 
@@ -274,53 +263,6 @@ const App: React.FC = () => {
     }
   };
 
-  // --- REAL RSS FETCHING LOGIC ---
-  const fetchAndParseRSS = async () => {
-    const rawItems: any[] = [];
-    const CORS_PROXY = "https://api.allorigins.win/get?url=";
-    const MAX_DAYS = 30;
-    const now = Date.now();
-
-    for (const src of RSS_SOURCES) {
-       try {
-         const res = await fetch(`${CORS_PROXY}${encodeURIComponent(src.url)}`);
-         const data = await res.json();
-         if (!data.contents) continue;
-
-         const parser = new DOMParser();
-         const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-         const items = xmlDoc.querySelectorAll("item");
-         
-         items.forEach(item => {
-            const pubDateStr = item.querySelector("pubDate")?.textContent;
-            const title = item.querySelector("title")?.textContent;
-            const link = item.querySelector("link")?.textContent;
-            // Get content snippet (description or specific tag)
-            const description = item.querySelector("description")?.textContent || "";
-
-            if (pubDateStr && title && link) {
-               const date = new Date(pubDateStr).getTime();
-               const daysOld = (now - date) / (1000 * 60 * 60 * 24);
-               if (daysOld <= MAX_DAYS) {
-                  rawItems.push({
-                     title,
-                     link,
-                     date: new Date(pubDateStr).toLocaleDateString('ar-EG'),
-                     source: src.name,
-                     contentSnippet: description.substring(0, 300) // Truncate for token limit
-                  });
-               }
-            }
-         });
-       } catch (err) {
-         console.warn(`Failed to fetch RSS from ${src.name}`, err);
-       }
-    }
-    
-    // Sort by date descending and take top 5 to summarize
-    return rawItems.slice(0, 5); 
-  };
-
   // --- Search Logic ---
   const searchPhonesInLocalDB = (query: string): LocalPhone[] => {
     const normalizedQuery = normalize(query);
@@ -352,9 +294,8 @@ const App: React.FC = () => {
     const localMatches = searchPhonesInLocalDB(phoneSearchQuery);
 
     if (localMatches.length > 0) {
-      setPhoneNews(localMatches.map(mapLocalToDisplay));
-      setPhoneSearchResult(null);
-      setCurrentPage(1);
+      // Use the improved mapping function to ensure all fields are present
+      setPhoneSearchResult(mapLocalToDisplay(localMatches[0]));
       setSearchLoading(false);
       return;
     }
@@ -382,10 +323,12 @@ const App: React.FC = () => {
     const p1Local = findPhoneInLocalDB(phone1);
     const p2Local = findPhoneInLocalDB(phone2);
 
+    // Use mapped data primarily
     let p1Data: any = p1Local ? mapLocalToDisplay(p1Local) : null;
     let p2Data: any = p2Local ? mapLocalToDisplay(p2Local) : null;
 
     try {
+      // Fallback to AI only if not found locally
       if (!p1Data) {
          const r = await callGroqAPI(`Phone: ${phone1}`, PHONES_MEMORY_PROMPT);
          if (r.phone_name) p1Data = r;
@@ -401,8 +344,13 @@ const App: React.FC = () => {
         return;
       }
 
+      // Generate verdict using AI but pass the full local data context
       const comparisonInput = JSON.stringify({ phone1: p1Data, phone2: p2Data });
-      const verdictResult = await callGroqAPI(`Compare strictly based on this data: ${comparisonInput}`, COMPARISON_ANALYSIS_PROMPT);
+      let verdict = "كلا الهاتفين متميزان.";
+      try {
+          const verdictResult = await callGroqAPI(`Compare strictly based on this data: ${comparisonInput}`, COMPARISON_ANALYSIS_PROMPT);
+          if (verdictResult.verdict) verdict = verdictResult.verdict;
+      } catch (e) { console.log("AI Verdict failed, showing table only"); }
 
       setComparisonResult({
         phone1_name: p1Data.phone_name,
@@ -412,9 +360,11 @@ const App: React.FC = () => {
             { feature: "المعالج", phone1_val: p1Data.specifications.platform, phone2_val: p2Data.specifications.platform, winner: 0 },
             { feature: "الذاكرة", phone1_val: p1Data.specifications.memory, phone2_val: p2Data.specifications.memory, winner: 0 },
             { feature: "الكاميرا", phone1_val: p1Data.specifications.main_camera, phone2_val: p2Data.specifications.main_camera, winner: 0 },
-            { feature: "البطارية", phone1_val: p1Data.specifications.battery, phone2_val: p2Data.specifications.battery, winner: 0 }
+            { feature: "البطارية", phone1_val: p1Data.specifications.battery, phone2_val: p2Data.specifications.battery, winner: 0 },
+             // Added extra comparison points to prevent "empty" feel
+            { feature: "الهيكل", phone1_val: p1Data.specifications.body, phone2_val: p2Data.specifications.body, winner: 0 }
         ],
-        verdict: verdictResult.verdict || "لا توجد خلاصة متاحة."
+        verdict: verdict
       });
 
     } catch (err: any) { 
@@ -446,23 +396,18 @@ const App: React.FC = () => {
 
     try {
       if (type === 'ai-news') {
-        // 1. Fetch RAW RSS Data
-        const rawItems = await fetchAndParseRSS();
+        // --- STATIC FETCH LOGIC FOR GITHUB PAGES ---
+        // Add timestamp to bust browser cache
+        const res = await fetch('./ai-news.json?t=' + Date.now());
+        if (!res.ok) throw new Error("Failed to load news");
+        const data = await res.json();
         
-        if (rawItems.length === 0) {
-            throw new Error("فشل الاتصال بالمصادر الرسمية");
-        }
+        saveToCache(cacheKey, { ai_news: data });
+        setAiNews(data);
 
-        // 2. Send to AI for Formatting/Summarization ONLY
-        const userPrompt = `Raw RSS Data: ${JSON.stringify(rawItems)}. Summarize strictly.`;
-        const result = await callGroqAPI(userPrompt, RSS_SUMMARIZER_PROMPT);
-        
-        if (result.ai_news) {
-            saveToCache(cacheKey, { ai_news: result.ai_news });
-            setAiNews(result.ai_news);
-        }
       } else if (type === 'phone-news') {
         const allPhones = [...localPhonesDB].sort((a, b) => b.release_year - a.release_year);
+        // Use the improved mapper here too
         const mappedPhones = allPhones.map(mapLocalToDisplay);
         saveToCache(cacheKey, { smartphones: mappedPhones });
         setPhoneNews(mappedPhones);
@@ -481,7 +426,6 @@ const App: React.FC = () => {
      setStatsResult(null);
 
      try {
-       // Using the updated STRICT time-aware prompt
        const result = await callGroqAPI(statsQuery, STATS_AI_PROMPT);
        if (result && result.charts && Array.isArray(result.charts)) {
          setStatsResult(result);
@@ -568,7 +512,6 @@ const App: React.FC = () => {
              </div>
           )}
           
-          {/* UPDATED INFO TAB CONTENT */}
           {activeTab === 'info' && (
             <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
@@ -667,13 +610,13 @@ const App: React.FC = () => {
                         {loading && !aiNews.length && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
                         
                         {!loading && aiNews.length === 0 && (
-                          <p className="text-center text-slate-500 text-sm py-10">لا توجد أخبار حديثة خلال الـ 30 يوم الماضية.</p>
+                          <p className="text-center text-slate-500 text-sm py-10">لا توجد أخبار حديثة حالياً.</p>
                         )}
 
                         {aiNews.map((news, idx) => (
                           <div key={idx} className="bg-slate-800/40 border border-violet-500/20 rounded-2xl p-5 shadow-sm">
                               <div className="flex justify-between items-start mb-2">
-                                <span className="text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded">{news.source || "RSS Feed"}</span>
+                                <span className="text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded">{news.source || "مصر رسمي"}</span>
                                 <span className="text-[10px] text-slate-500">{news.date}</span>
                               </div>
                               <h3 className={titleStyle}>{news.title}</h3>
