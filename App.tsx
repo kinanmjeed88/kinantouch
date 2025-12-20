@@ -12,15 +12,15 @@ import {
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
   RotateCcw
 } from 'lucide-react';
-import { TelegramIcon } from './components/Icons'; // Importing custom TG icon
+import { TelegramIcon } from './components/Icons'; 
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult } from './types';
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v52',
-  PHONE_NEWS: 'techtouch_phones_v52'
+  AI_NEWS: 'techtouch_ai_strict_v1',
+  PHONE_NEWS: 'techtouch_phones_strict_v1'
 };
 
 const SPEC_ORDER = [
@@ -45,34 +45,87 @@ const SPEC_LABELS: Record<string, string> = {
   misc: "ألوان وسعر تقريبي"
 };
 
-const AI_SYSTEM_PROMPT = `
-أنت نظام ذكاء اصطناعي يعمل كمحرر تقني لموقع Techtouch.
-مهمتك: جلب أخبار ومعلومات أدوات الذكاء الاصطناعي من مصادرها الرسمية فقط.
-اللغة: يجب أن يكون الرد باللغة العربية الفصحى حصراً (قم بترجمة أي نص إنجليزي بدقة).
+// 🔴 MASTER PROMPT (القاعدة الأساسية)
+const MASTER_RULES = `
+أنت تعمل داخل موقع ويب اسمه "Techtouch".
+دورك الوحيد هو معالجة البيانات الموثوقة فقط.
 
-المصادر المعتمدة فقط:
-OpenAI, Anthropic (Claude), Google Gemini/DeepMind, Microsoft Copilot, Meta AI, Midjourney, Stability AI, xAI (Grok), Mistral, Adobe Firefly.
-أدوات الصين وآسيا الرسمية: DeepSeek, Qwen, Yi, Kimi.
-
-القواعد الصارمة:
-1. ممنوع تأليف أخبار وهمية.
-2. ممنوع ذكر إصدارات غير موجودة (مثل Gemini 5 أو GPT-7).
-3. عند طلب "بحث عن أداة"، أحضر الوصف الدقيق، والمميزات، والرابط الرسمي.
-4. التنسيق JSON حصراً.
+قواعد عامة صارمة:
+- ممنوع اختراع معلومات.
+- ممنوع افتراض أسعار أو تواريخ (إذا لم تكن متأكداً 100% اتركها فارغة).
+- أي معلومة بلا مصدر رسمي أو غير موجودة في تدريبك الموثوق → تُرفض.
+- الامتناع عن الإجابة أفضل من معلومة خاطئة.
+- اللغة: العربية الفصحى حصراً.
 `;
 
-const PHONE_SYSTEM_PROMPT = `
-أنت نظام ذكاء اصطناعي يعمل كمحرر تقني لموقع Techtouch.
-مهمتك جلب مواصفات الهواتف الذكية الحقيقية فقط.
-اللغة: العربية الفصحى.
+// 🟠 أوامر أخبار AI
+const AI_NEWS_PROMPT = `
+${MASTER_RULES}
+هذا الطلب خاص بقسم "أخبار AI".
+مهمتك:
+- استخراج وعرض الأدوات الموثوقة والرسمية فقط (مثل ChatGPT, Gemini, Claude, Midjourney).
+- تلخيص الوظيفة الحقيقية للأداة.
+- عدم إضافة أي معلومة وهمية أو تحديث لم يحصل.
+- عدم الادعاء أن الخبر حديث إن لم يكن كذلك.
 
-المصادر المعتمدة:
-Samsung, Apple, Xiaomi, Google Pixel, Honor, Huawei, OnePlus, Oppo, Vivo, Sony, Asus, Infinix, Tecno.
+المخرجات المطلوبة JSON حصراً بالتنسيق التالي:
+{ "ai_news": [{ "title": "اسم الأداة الرسمي", "summary": ["نقطة 1", "نقطة 2"], "official_link": "الرابط الرسمي" }] }
+`;
 
-القواعد:
-1. لا تقم باختراع مواصفات لهواتف لم تعلن رسمياً.
-2. التزم بالبيانات الواقعية (المعالج، الكاميرا، البطارية).
-3. التنسيق JSON حصراً.
+// 🟡 أوامر الهواتف
+const PHONES_PROMPT = `
+${MASTER_RULES}
+هذا الطلب خاص بقسم "الهواتف".
+الحقول المسموحة فقط: name, brand, display, os, chipset, ram, storage, battery, cameras, official_website.
+
+مهمتك:
+- عرض بيانات الهواتف الموجودة فعلياً في الأسواق.
+- عدم إضافة سعر (إلا إذا كان رسمياً بالدولار).
+- عدم إضافة تاريخ إصدار مستقبلي.
+- عدم افتراض نظام تشغيل أحدث.
+
+إذا لم تتوفر بيانات دقيقة، لا تخترعها.
+
+المخرجات المطلوبة JSON حصراً بالتنسيق التالي:
+{ "best_smartphones": [{ "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة والشهر", "price_usd": "السعر الرسمي أو اترك فارغ", "specifications": { "network": "...", "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "selfie_camera": "...", "battery": "..." }, "official_link": "الرابط", "pros": ["ميزة حقيقية"], "cons": ["عيب حقيقي"] }] }
+`;
+
+// 🔵 أوامر المقارنة
+const COMPARISON_PROMPT = `
+${MASTER_RULES}
+هذا الطلب خاص بقسم "المقارنة".
+مهمتك:
+- مقارنة القيم المتوفرة والحقيقية فقط.
+- عدم تحديد فائز إلا إذا كان الفرق واضحاً بالأرقام.
+- إذا كانت البيانات متطابقة اكتب: "الهاتفان متطابقان في المواصفات المتوفرة".
+- ممنوع الرأي الشخصي.
+
+المخرجات المطلوبة JSON حصراً:
+{ "phone1_name": "الاسم 1", "phone2_name": "الاسم 2", "comparison_points": [{ "feature": "الميزة", "phone1_val": "القيمة", "phone2_val": "القيمة", "winner": 0 }], "verdict": "الخلاصة" }
+ملحوظة: winner يكون 1 للأول، 2 للثاني، 0 للتعادل.
+`;
+
+// 🟣 أوامر الإحصائيات
+const STATS_PROMPT = `
+${MASTER_RULES}
+هذا الطلب خاص بقسم "الإحصائيات".
+مهمتك:
+- شرح الاتجاهات الحقيقية للسوق (Market Share, Sales) بناء على بيانات شركات الأبحاث المعروفة.
+- عدم إنشاء أي رقم عشوائي.
+
+المخرجات المطلوبة JSON حصراً:
+{ "title": "العنوان", "description": "الوصف", "data": [{ "label": "الاسم", "value": 50, "displayValue": "50%" }], "insight": "التحليل" }
+`;
+
+// 🟤 أوامر البحث عن الأدوات
+const TOOL_SEARCH_PROMPT = `
+${MASTER_RULES}
+هذا الطلب خاص بقسم "الأدوات".
+كل أداة يجب أن تحتوي: اسم رسمي، وصف محايد، رابط رسمي.
+مهمتك: إعادة صياغة الوصف فقط. عدم اختراع إصدار (مثلاً لا تكتب Gemini 3.22).
+
+المخرجات المطلوبة JSON حصراً:
+{ "title": "الاسم الرسمي", "summary": ["وصف 1", "وصف 2"], "official_link": "الرابط" }
 `;
 
 const App: React.FC = () => {
@@ -93,7 +146,6 @@ const App: React.FC = () => {
   const [phoneSearchResult, setPhoneSearchResult] = useState<PhoneNewsItem | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // New State for AI Search
   const [aiSearchQuery, setAiSearchQuery] = useState('');
   const [aiSearchResult, setAiSearchResult] = useState<AINewsItem | null>(null);
   const [aiSearchLoading, setAiSearchLoading] = useState(false);
@@ -104,8 +156,6 @@ const App: React.FC = () => {
 
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
-
-  const todayStr = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -140,7 +190,7 @@ const App: React.FC = () => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
   };
 
-  const callGroqAPI = async (prompt: string, systemInstruction: string) => {
+  const callGroqAPI = async (userContent: string, systemInstruction: string) => {
     const apiKey = process.env.API_KEY;
     if (!apiKey) throw new Error("مفتاح API غير متوفر (VITE_GROQ_API_KEY).");
 
@@ -154,24 +204,17 @@ const App: React.FC = () => {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile", 
           messages: [
-            { 
-              role: "system", 
-              content: systemInstruction + `\nCurrent Date: ${todayStr}. Respond ONLY in valid JSON format. Language: ARABIC ONLY.` 
-            },
-            { 
-              role: "user", 
-              content: prompt 
-            }
+            { role: "system", content: systemInstruction },
+            { role: "user", content: userContent }
           ],
           response_format: { type: "json_object" },
-          temperature: 0.3,
-          max_completion_tokens: 3500
+          temperature: 0.1, // تقليل الحرارة لأقصى درجة لمنع الإبداع/الهلوسة
+          max_completion_tokens: 3000
         })
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `Groq API Error: ${response.status}`);
+        throw new Error(`API Error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -180,9 +223,7 @@ const App: React.FC = () => {
       throw new Error("Empty response");
     } catch (e: any) {
       console.error("Groq API Error:", e);
-      let msg = e.message || 'Unknown error';
-      if (msg.includes('401')) msg = "مفتاح API غير صالح.";
-      throw new Error(msg);
+      throw new Error("لا تتوفر بيانات موثوقة حالياً.");
     }
   };
 
@@ -195,9 +236,7 @@ const App: React.FC = () => {
     if (type === 'ai-news') cacheKey = CACHE_KEYS.AI_NEWS;
     else if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
 
-    // Skip cache if forced
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
-
     if (cached) {
       if (type === 'ai-news') setAiNews(cached.ai_news || []);
       else if (type === 'phone-news') setPhoneNews(cached.smartphones || []);
@@ -210,15 +249,12 @@ const App: React.FC = () => {
       let systemInstruction = "";
 
       if (type === 'ai-news') {
-        systemInstruction = AI_SYSTEM_PROMPT;
-        userPrompt = `Fetch 6 latest OFFICIAL AI news/updates. 
-        Verify existence from official blogs. 
-        Translate everything to ARABIC.
-        Format JSON: { "ai_news": [{ "title": "Tool Name + Update", "summary": ["Arabic Point 1", "Arabic Point 2", "Arabic Point 3"], "official_link": "Official URL" }] }`;
+        systemInstruction = AI_NEWS_PROMPT;
+        // محاكاة إرسال بيانات (بما أننا لا نملك Backend حقيقي، نطلب منه استرجاع المؤكد فقط)
+        userPrompt = "استخرج قائمة بأهم 5 أدوات ذكاء اصطناعي مثبتة ومعروفة عالمياً. تجاهل أي شائعات.";
       } else if (type === 'phone-news') {
-        systemInstruction = PHONE_SYSTEM_PROMPT;
-        userPrompt = `Fetch 6 NEWEST smartphones released recently. 
-        Format JSON: { "best_smartphones": [{ "phone_name": "Full Name", "brand": "Brand", "release_date": "YYYY-MM", "price_usd": "$XXX", "specifications": { "network": "...", "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "selfie_camera": "...", "battery": "..." }, "official_link": "URL", "pros": ["..."], "cons": ["..."] }] }`;
+        systemInstruction = PHONES_PROMPT;
+        userPrompt = "استخرج قائمة بأحدث 5 هواتف تم إطلاقها رسمياً من شركات كبرى (Samsung, Apple, Xiaomi). لا تذكر هواتف مسربة.";
       }
 
       const result = await callGroqAPI(userPrompt, systemInstruction);
@@ -227,8 +263,8 @@ const App: React.FC = () => {
         const mappedAI = result.ai_news.map((item: any) => ({
           tool_name: item.title,
           title: item.title,
-          summary: item.content || item.summary || [],
-          date: todayStr,
+          summary: item.summary || [],
+          date: '', // نترك التاريخ فارغاً لمنع الهلوسة
           official_link: item.official_link
         }));
         saveToCache(cacheKey, { ai_news: mappedAI });
@@ -239,16 +275,18 @@ const App: React.FC = () => {
           brand: item.brand,
           release_date: item.release_date,
           specifications: item.specifications || {},
-          price_usd: item.price_usd,
+          price_usd: item.price_usd || "غير متوفر",
           official_specs_link: item.official_link || '',
           pros: item.pros || [],
           cons: item.cons || []
         }));
         saveToCache(cacheKey, { smartphones: mappedPhones });
         setPhoneNews(mappedPhones);
+      } else {
+        setError("لا توجد بيانات جاهزة من الويب.");
       }
     } catch (err: any) {
-      setError(err.message || "فشل في جلب البيانات.");
+      setError(err.message || "لا تتوفر بيانات.");
     } finally {
       setLoading(false);
     }
@@ -260,17 +298,20 @@ const App: React.FC = () => {
     setPhoneSearchResult(null);
     setError(null);
 
-    const systemInstruction = PHONE_SYSTEM_PROMPT + " Provide EXTREMELY DETAILED specifications in ARABIC.";
+    const systemInstruction = PHONES_PROMPT;
 
     try {
-      const result = await callGroqAPI(`Give full detailed specs for: ${phoneSearchQuery}. Output JSON single object (not array).`, systemInstruction);
-      if (result) {
-        setPhoneSearchResult(result);
+      const result = await callGroqAPI(`بيانات الهاتف المطلوبة: ${phoneSearchQuery}. (إذا لم يكن الهاتف حقيقياً لا تعرض نتيجة)`, systemInstruction);
+      // التعامل مع الحالات الفردية حيث يرجع API كائن مباشر
+      const phoneData = result.best_smartphones ? result.best_smartphones[0] : result;
+      
+      if (phoneData && phoneData.phone_name) {
+        setPhoneSearchResult(phoneData);
       } else {
-        setError("لم يتم العثور على معلومات.");
+        setError("لا تتوفر بيانات هاتف موثوقة حالياً.");
       }
     } catch (e: any) {
-      setError(e.message);
+      setError("لا تتوفر بيانات هاتف موثوقة حالياً.");
     } finally {
       setSearchLoading(false);
     }
@@ -282,26 +323,22 @@ const App: React.FC = () => {
     setAiSearchResult(null);
     setError(null);
 
-    const systemInstruction = AI_SYSTEM_PROMPT;
+    const systemInstruction = TOOL_SEARCH_PROMPT;
 
     try {
-      const prompt = `
-        Search and provide detailed info about the AI tool: "${aiSearchQuery}".
-        Provide: Official Title, Detailed Description in Arabic, Key Features, and Official Website.
-        Format JSON: { "title": "Tool Name", "summary": ["Detailed Arabic Description", "Feature 1", "Feature 2", "Feature 3", "Pricing Model"], "official_link": "URL" }
-      `;
+      const prompt = `ابحث عن الأداة الرسمية: "${aiSearchQuery}". إذا لم يكن للأداة إصدار رسمي معلن لا تذكر رقم إصدار.`;
       const result = await callGroqAPI(prompt, systemInstruction);
-      if (result) {
+      if (result && result.title) {
         setAiSearchResult({
            title: result.title,
            summary: result.summary,
            official_link: result.official_link
         });
       } else {
-        setError("لم يتم العثور على معلومات عن هذه الأداة.");
+        setError("لا توجد بيانات لهذه الأداة.");
       }
     } catch (e: any) {
-      setError(e.message);
+      setError("لا توجد بيانات.");
     } finally {
       setAiSearchLoading(false);
     }
@@ -312,11 +349,15 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const system = `Compare two phones deeply in Arabic. Output JSON: { "phone1_name": "${phone1}", "phone2_name": "${phone2}", "comparison_points": [{ "feature": "الشبكة", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "الشاشة", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "المعالج", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "الكاميرا", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "البطارية", "phone1_val": "...", "phone2_val": "...", "winner": 0 }], "verdict": "Final Arabic conclusion." }`;
-      const result = await callGroqAPI(`Compare: ${phone1} vs ${phone2}`, system);
-      setComparisonResult(result);
+      const system = COMPARISON_PROMPT;
+      const result = await callGroqAPI(`قارن بين: ${phone1} و ${phone2}. قارن القيم المتوفرة فقط.`, system);
+      if (result && result.comparison_points) {
+        setComparisonResult(result);
+      } else {
+        setError("لا تتوفر بيانات للمقارنة.");
+      }
     } catch (err: any) { 
-      setError(err.message); 
+      setError("فشل في إجراء المقارنة."); 
     } finally { 
       setLoading(false); 
     }
@@ -328,18 +369,20 @@ const App: React.FC = () => {
     setStatsResult(null);
     setError(null);
     try {
-      const system = "Generate tech stats JSON { title, description, data: [{label, value, displayValue}], insight } in Arabic.";
-      const result = await callGroqAPI(`إحصائية: ${statsQuery}`, system);
-      if (result) {
+      const system = STATS_PROMPT;
+      const result = await callGroqAPI(`بيانات إحصائية عن: ${statsQuery}. إذا لم تتوفر بيانات رقمية موثوقة ارجع خطأ.`, system);
+      if (result && result.data) {
          const colors = ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', '#a78bfa'];
          result.data = result.data.map((item: any, index: number) => ({
             ...item,
             color: colors[index % colors.length]
          }));
          setStatsResult(result);
+      } else {
+        setError("لا تتوفر بيانات إحصائية موثوقة.");
       }
     } catch (e: any) {
-      setError(e.message);
+      setError("لا تتوفر بيانات.");
     } finally {
       setStatsLoading(false);
     }
@@ -382,7 +425,6 @@ const App: React.FC = () => {
     );
   };
 
-  // Helper for single line title style
   const titleStyle = "font-black text-white leading-none mb-3 whitespace-nowrap overflow-hidden text-[clamp(1rem,4vw,1.25rem)]";
 
   return (
@@ -440,8 +482,6 @@ const App: React.FC = () => {
             <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="space-y-6 text-right">
-                  
-                  {/* Section 1: Bot Link */}
                   <div className="flex flex-col gap-4">
                      <h3 className="text-lg font-bold text-sky-400 text-center">بخصوص بوت الطلبات على التيليكرام</h3>
                      <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-sky-500/25 group border border-white/10">
@@ -449,21 +489,15 @@ const App: React.FC = () => {
                        <span>الدخول لبوت الطلبات</span>
                      </a>
                   </div>
-
-                  {/* Section 2: Rules */}
                   <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
                     <ul className="space-y-3 text-sm text-slate-300 leading-relaxed">
                       <li className="flex items-start gap-2.5"><span className="text-amber-400 text-base mt-0.5">✪</span><span>ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط.</span></li>
                       <li className="flex items-start gap-2.5"><span className="text-amber-400 text-base mt-0.5">✪</span><span>لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات.</span></li>
                     </ul>
-                    
-                    {/* Note */}
                     <div className="pt-2 text-center">
                        <p className="text-xs font-bold text-sky-200/80 bg-sky-500/10 py-2 rounded-lg">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
                     </div>
                   </div>
-
-                  {/* Section 3: Search Methods */}
                   <div className="space-y-3">
                     <h4 className="text-sm font-bold text-white border-b border-slate-700 pb-2 inline-block">طرق البحث المتاحة في قنوات المناقشات في التيليكرام:</h4>
                     <ul className="space-y-2.5 text-xs text-slate-300">
@@ -473,16 +507,12 @@ const App: React.FC = () => {
                       <li className="flex gap-2"><span className="font-bold text-slate-500">٤.</span><span>للاعلان في القناة تواصل من خلال البوت</span></li>
                     </ul>
                   </div>
-
-                  {/* Section 4: Warning */}
                   <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl flex gap-3 items-start">
                     <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
                     <p className="text-xs text-rose-200 font-medium leading-relaxed"><span className="font-bold text-rose-400 block mb-1">تنبيه:</span>حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
                   </div>
                 </div>
               </div>
-
-              {/* Footer */}
               <div className="text-center pb-8 pt-6 space-y-2">
                  <p className="text-slate-400 text-sm font-bold">في النهاية دمتم برعاية الله</p>
                  <p className="text-slate-600 text-[10px] font-medium">{footerData.text} <a href={footerData.url} className="text-sky-500 hover:underline">@kinanmjeed</a></p>
@@ -503,7 +533,6 @@ const App: React.FC = () => {
                      </div>
                   </div>
                </button>
-               {/* ... Other tool buttons ... */}
                <button onClick={() => fetchToolData('phone-news')} className="group p-5 bg-slate-800/40 border border-sky-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
                   <div className="flex flex-col items-start gap-3">
                      <div className="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center text-sky-400"><Smartphone className="w-5 h-5" /></div>
@@ -538,14 +567,12 @@ const App: React.FC = () => {
                 {/* AI News View */}
                 {activeToolView === 'ai-news' && (
                   <div className="space-y-4">
-                     {/* Search & Refresh Toolbar */}
                      <div className="flex gap-2">
-                        <input type="text" value={aiSearchQuery} onChange={(e)=>setAiSearchQuery(e.target.value)} placeholder="ابحث عن أداة (مثلاً: Gemini 1.5)..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-violet-500 outline-none h-12" />
+                        <input type="text" value={aiSearchQuery} onChange={(e)=>setAiSearchQuery(e.target.value)} placeholder="ابحث عن أداة (مثلاً: Gemini)..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-violet-500 outline-none h-12" />
                         <button onClick={handleAISearch} className="bg-violet-600 hover:bg-violet-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/20">{aiSearchLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <Search className="w-5 h-5"/>}</button>
                         <button onClick={() => fetchToolData('ai-news', true)} className="bg-slate-800 hover:bg-slate-700 text-violet-400 w-12 h-12 rounded-xl flex items-center justify-center border border-slate-700" title="تحديث الأخبار"><RotateCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
                      </div>
 
-                     {/* AI Search Result */}
                      {aiSearchResult ? (
                        <div className="bg-slate-800/60 border border-violet-500/30 p-5 rounded-3xl animate-fade-in relative shadow-2xl">
                           <button onClick={() => setAiSearchResult(null)} className="absolute top-4 left-4 p-1 bg-slate-700/50 rounded-full text-slate-300 hover:text-white"><X className="w-4 h-4" /></button>
@@ -568,7 +595,6 @@ const App: React.FC = () => {
                           <ShareToolbar title={aiSearchResult.title} text={aiSearchResult.summary.join('\n')} url={aiSearchResult.official_link} />
                        </div>
                      ) : (
-                       /* Standard AI News List */
                        <div className="space-y-4">
                           {loading && !aiNews.length && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
                           {aiNews.map((news, idx) => (
@@ -664,7 +690,7 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                {/* Comparison View - RE-ADDED to fix build errors */}
+                {/* Comparison View */}
                 {activeToolView === 'comparison' && (
                    <div className="space-y-4">
                       <div className="bg-slate-800/40 p-5 rounded-2xl space-y-3 border border-slate-700/50">
@@ -686,17 +712,12 @@ const App: React.FC = () => {
                             <div className="space-y-1">
                                {comparisonResult.comparison_points.map((point, i) => (
                                   <div key={i} className="grid grid-cols-[1fr,auto,1fr] gap-2 text-xs border-b border-slate-700/50 py-3 last:border-0 items-center">
-                                      {/* Phone 1 Value */}
                                       <div className={`text-left pl-1 leading-relaxed ${point.winner === 1 ? 'text-emerald-400 font-bold' : 'text-slate-300'}`}>
                                          {point.phone1_val}
                                       </div>
-                                      
-                                      {/* Feature Label */}
                                       <div className="bg-slate-900 px-2 py-1 rounded text-[10px] text-slate-500 font-bold whitespace-nowrap self-start mt-0.5">
                                          {point.feature}
                                       </div>
-
-                                      {/* Phone 2 Value */}
                                       <div className={`text-right pr-1 leading-relaxed ${point.winner === 2 ? 'text-sky-400 font-bold' : 'text-slate-300'}`}>
                                          {point.phone2_val}
                                       </div>
@@ -719,7 +740,7 @@ const App: React.FC = () => {
                    </div>
                 )}
 
-                {/* Stats View - RE-ADDED to fix build errors */}
+                {/* Stats View */}
                 {activeToolView === 'stats' && (
                    <div className="space-y-4">
                       <div className="flex gap-2">
