@@ -36,6 +36,21 @@ export interface AINewsData {
   companies: CompanyNews[];
 }
 
+export interface AITool {
+  id: string;
+  name: string;
+  category: string;
+  country: string;
+  company: string;
+  description: string[];
+  free_note?: string;
+  official_url: string;
+}
+
+export interface AIToolsData {
+  tools: AITool[];
+}
+
 export interface PhoneNewsItem {
   phone_name: string;
   brand: string;

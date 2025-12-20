@@ -10,10 +10,10 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal
+  RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal, Command
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
-import { AINewsData, CompanyNews, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
+import { AINewsData, CompanyNews, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool, AIToolsData } from './types';
 
 // Importing Local Data - Using relative paths
 import samsungData from './data/phones-backup/samsung.json';
@@ -28,11 +28,12 @@ import realmeData from './data/phones-backup/realme.json';
 import sonyData from './data/phones-backup/sony.json';
 
 type TabType = 'home' | 'info' | 'tools';
-type ToolView = 'main' | 'ai-news-categories' | 'ai-feed' | 'comparison' | 'phone-news' | 'stats';
+type ToolView = 'main' | 'ai-news-categories' | 'ai-feed' | 'ai-directory' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
   AI_NEWS: 'techtouch_ai_data_v2', 
   AI_LAST_VIEW: 'techtouch_ai_view_timestamps',
+  AI_TOOLS: 'techtouch_ai_tools_v1',
   PHONE_NEWS: 'techtouch_phones_strict_v4'
 };
 
@@ -164,6 +165,10 @@ const App: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<CompanyNews | null>(null);
   const [lastViewed, setLastViewed] = useState<Record<string, string>>({}); // Store ISO strings
   
+  // AI Tools Directory State
+  const [aiTools, setAiTools] = useState<AITool[]>([]);
+  const [toolSearchQuery, setToolSearchQuery] = useState('');
+  
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -221,7 +226,7 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 6 hours for AI news, 24h for phones
+      // Cache valid for 6 hours for AI news, 24h for phones, 24h for tools
       const validity = key === CACHE_KEYS.AI_NEWS ? 6 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
       return (Date.now() - timestamp < validity) ? data : null;
     } catch (e) { return null; }
@@ -396,6 +401,7 @@ const App: React.FC = () => {
     let cacheKey = '';
     if (type === 'ai-news-categories') cacheKey = CACHE_KEYS.AI_NEWS;
     else if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
+    else if (type === 'ai-directory') cacheKey = CACHE_KEYS.AI_TOOLS;
 
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
     
@@ -404,6 +410,8 @@ const App: React.FC = () => {
       else if (type === 'phone-news') {
         setPhoneNews(cached.smartphones || []);
         setCurrentPage(1);
+      } else if (type === 'ai-directory') {
+        setAiTools(cached.tools || []);
       }
       setLoading(false);
       return;
@@ -425,6 +433,12 @@ const App: React.FC = () => {
         saveToCache(cacheKey, { smartphones: mappedPhones });
         setPhoneNews(mappedPhones);
         setCurrentPage(1);
+      } else if (type === 'ai-directory') {
+        const res = await fetch(`./ai-tools.json?t=${Date.now()}`);
+        if (!res.ok) throw new Error("فشل تحميل دليل الأدوات");
+        const data = await res.json();
+        saveToCache(cacheKey, { tools: data.tools });
+        setAiTools(data.tools);
       }
     } catch (err: any) {
       setError(err.message || "لا تتوفر بيانات.");
@@ -451,6 +465,15 @@ const App: React.FC = () => {
        setStatsLoading(false);
      }
   };
+
+  // AI Tools Filtering
+  const filteredTools = aiTools.filter(tool => 
+    tool.name.toLowerCase().includes(toolSearchQuery.toLowerCase())
+  );
+  
+  const toolSuggestions = toolSearchQuery.length > 0 
+    ? aiTools.filter(tool => tool.name.toLowerCase().includes(toolSearchQuery.toLowerCase())).slice(0, 5) 
+    : [];
 
   const titleStyle = "font-black text-white leading-none mb-3 whitespace-nowrap overflow-hidden text-[clamp(1rem,4vw,1.25rem)]";
   
@@ -587,6 +610,18 @@ const App: React.FC = () => {
                      </div>
                   </div>
                </button>
+
+               {/* New AI Tools Directory Button */}
+               <button onClick={() => fetchToolData('ai-directory')} className="col-span-2 group p-5 bg-slate-800/40 border border-amber-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                   <div className="flex items-center gap-4">
+                     <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-400"><Command className="w-6 h-6" /></div>
+                     <div className="text-right w-full overflow-hidden">
+                        <h3 className="font-bold text-lg text-white truncate w-full">دليل أدوات AI</h3>
+                        <p className="text-xs text-slate-400 truncate w-full">أكثر من 50 أداة مصنفة (بحث فوري)</p>
+                     </div>
+                   </div>
+               </button>
+
                <button onClick={() => fetchToolData('phone-news')} className="group p-5 bg-slate-800/40 border border-sky-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
                   <div className="flex flex-col items-start gap-3">
                      <div className="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center text-sky-400"><Smartphone className="w-5 h-5" /></div>
@@ -618,11 +653,96 @@ const App: React.FC = () => {
                         setActiveToolView('ai-news-categories');
                         setSelectedCompany(null);
                     } else {
-                        setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); 
+                        setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setToolSearchQuery('');
                     }
                 }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
                    <ChevronLeft className="w-5 h-5" /> <span className="text-sm font-bold">رجوع</span>
                 </button>
+
+                {/* AI Tools Directory View */}
+                {activeToolView === 'ai-directory' && (
+                   <div className="space-y-4">
+                      {/* Search Bar */}
+                      <div className="relative">
+                         <div className="flex items-center bg-slate-800/60 border border-slate-700/50 rounded-xl px-4 py-3 focus-within:border-amber-500/50 transition-colors">
+                            <Search className="w-5 h-5 text-slate-400 ml-3" />
+                            <input 
+                               type="text" 
+                               value={toolSearchQuery}
+                               onChange={(e) => setToolSearchQuery(e.target.value)}
+                               placeholder="ابحث عن أداة ذكاء اصطناعي..."
+                               className="bg-transparent border-none outline-none text-white w-full text-sm placeholder:text-slate-500"
+                            />
+                            {toolSearchQuery && (
+                                <button onClick={() => setToolSearchQuery('')} className="p-1 hover:bg-slate-700 rounded-full text-slate-400"><X className="w-4 h-4" /></button>
+                            )}
+                         </div>
+
+                         {/* Autocomplete Suggestions */}
+                         {toolSuggestions.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700/50 rounded-xl shadow-xl z-50 overflow-hidden">
+                               {toolSuggestions.map(tool => (
+                                  <button 
+                                    key={tool.id}
+                                    onClick={() => setToolSearchQuery(tool.name)}
+                                    className="w-full text-right px-4 py-3 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white border-b border-slate-700/30 last:border-0 transition-colors flex items-center justify-between group"
+                                  >
+                                     <span>{tool.name}</span>
+                                     <span className="text-[10px] bg-slate-900 text-slate-500 px-2 py-0.5 rounded group-hover:bg-slate-800 group-hover:text-amber-400 transition-colors">{tool.category}</span>
+                                  </button>
+                               ))}
+                            </div>
+                         )}
+                      </div>
+
+                      {/* Tools Grid */}
+                      <div className="grid gap-4">
+                         {filteredTools.length > 0 ? (
+                            filteredTools.map(tool => (
+                               <div key={tool.id} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 hover:border-amber-500/30 transition-all group relative overflow-hidden">
+                                   <div className="flex justify-between items-start mb-3">
+                                      <div>
+                                         <h3 className="font-black text-lg text-white mb-1 group-hover:text-amber-400 transition-colors">{tool.name}</h3>
+                                         <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                            <span className="bg-slate-700/50 px-2 py-0.5 rounded">{tool.company}</span>
+                                            <span className="opacity-50">•</span>
+                                            <span>{tool.country}</span>
+                                         </div>
+                                      </div>
+                                      <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-lg font-bold">
+                                         {tool.category}
+                                      </span>
+                                   </div>
+
+                                   <ul className="space-y-1.5 mb-4">
+                                      {tool.description.map((line, idx) => (
+                                         <li key={idx} className="text-xs text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-slate-600">
+                                            {line}
+                                         </li>
+                                      ))}
+                                   </ul>
+
+                                   {tool.free_note && (
+                                      <div className="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2 text-xs text-emerald-400 font-bold flex items-center gap-2">
+                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                         {tool.free_note}
+                                      </div>
+                                   )}
+
+                                   <a href={tool.official_url} target="_blank" className="flex items-center justify-center gap-2 w-full bg-slate-700/50 hover:bg-amber-600 hover:text-white text-slate-300 font-bold py-2.5 rounded-xl transition-all text-sm group-hover:shadow-lg group-hover:shadow-amber-900/20">
+                                      <span>زيارة الموقع الرسمي</span>
+                                      <ExternalLink className="w-4 h-4" />
+                                   </a>
+                               </div>
+                            ))
+                         ) : (
+                            <div className="text-center py-10 text-slate-500">
+                               <p>لم يتم العثور على أداة بهذا الاسم.</p>
+                            </div>
+                         )}
+                      </div>
+                   </div>
+                )}
 
                 {/* NEW: AI Categories Grid */}
                 {activeToolView === 'ai-news-categories' && (
