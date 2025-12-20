@@ -10,12 +10,12 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye
+  RotateCcw, Eye, RefreshCw
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
 
-// Importing Local Data (Strict Source for 2024-2025) using Relative Paths
+// Importing Local Data
 import samsungData from './data/phones-backup/samsung.json';
 import appleData from './data/phones-backup/apple.json';
 import googleData from './data/phones-backup/google.json';
@@ -31,7 +31,7 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_strict_v2',
+  AI_NEWS: 'techtouch_ai_rss_v3',
   PHONE_NEWS: 'techtouch_phones_strict_v2'
 };
 
@@ -57,86 +57,78 @@ const SPEC_LABELS: Record<string, string> = {
   misc: "ألوان ومعلومات إضافية"
 };
 
-// 🔴 MASTER PROMPT (القاعدة الأساسية)
+// 🔴 MASTER PROMPT
 const MASTER_RULES = `
 أنت تعمل داخل موقع ويب اسمه "Techtouch".
 دورك الوحيد هو معالجة البيانات الموثوقة فقط.
-
-قواعد عامة صارمة:
-- ممنوع اختراع معلومات.
-- ممنوع ذكر أسعار.
-- اللغة: العربية الفصحى حصراً.
+اللغة: العربية الفصحى حصراً.
 `;
 
-// 🟠 أوامر أخبار AI
-const AI_NEWS_PROMPT = `
+// 🟠 أوامر تلخيص أخبار RSS (صارمة جداً)
+const RSS_SUMMARIZER_PROMPT = `
 ${MASTER_RULES}
-هذا الطلب خاص بقسم "أخبار AI".
-مهمتك:
-- استخراج وعرض الأدوات الموثوقة والرسمية فقط.
-- تلخيص الوظيفة الحقيقية للأداة.
-المخرجات المطلوبة JSON حصراً بالتنسيق التالي:
-{ "ai_news": [{ "title": "اسم الأداة الرسمي", "summary": ["نقطة 1", "نقطة 2"], "official_link": "الرابط الرسمي" }] }
+لديك قائمة بأخبار تقنية تم جلبها من مصادر رسمية (RSS Feeds).
+المهمة:
+1. اختر أهم 5 أخبار حديثة وحقيقية من القائمة المقدمة أدناه.
+2. قم بتلخيص كل خبر في "summary" بحيث يحتوي على 5 نقاط دقيقة فقط تركز على الميزات التقنية (Features) والوظائف الجديدة.
+3. العنوان والروابط والتاريخ يجب أن تكون كما هي في المصدر الأصلي.
+4. المخرجات JSON حصراً:
+{ "ai_news": [{ "title": "...", "source": "...", "date": "...", "official_link": "...", "summary": ["ميزة 1", "ميزة 2", "ميزة 3", "ميزة 4", "ميزة 5"] }] }
 `;
 
-// 🟡 أوامر الهواتف (للذاكرة فقط - هواتف قديمة)
+// 🟡 أوامر الهواتف
 const PHONES_MEMORY_PROMPT = `
 ${MASTER_RULES}
-هذا الطلب خاص بهاتف (سواء قديم أو 2025).
-مهمتك:
-- عرض مواصفات عامة ودقيقة.
-- بالنسبة لهواتف 2025 (مثل S25/iPhone 17)، استخدم أحدث التسريبات المؤكدة.
-- لا تذكر السعر نهائياً.
-المخرجات المطلوبة JSON حصراً:
-{ "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة", "specifications": { "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "battery": "..." }, "official_link": "", "pros": [], "cons": [] }
+هذا الطلب خاص بهاتف.
+مهمتك: عرض مواصفات عامة ودقيقة. لهواتف 2025 استخدم أحدث التسريبات المؤكدة.
+لا تذكر السعر.
+المخرجات JSON:
+{ "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة", "specifications": { ... }, "official_link": "", "pros": [], "cons": [] }
 `;
 
-// 🔵 أوامر المقارنة (تحليلية فقط)
+// 🔵 أوامر المقارنة
 const COMPARISON_ANALYSIS_PROMPT = `
 ${MASTER_RULES}
-هذا الطلب خاص بقسم "المقارنة".
-لديك بيانات هاتفين.
-مهمتك:
-- كتابة خلاصة وصفية ومنطقية.
-- الصيغة الإلزامية: "الهاتفان يقدمان أداءً قويًا، ولكن يتفوق {الهاتف A} في {الميزة}، بينما يتميز {الهاتف B} بـ {الميزة الأخرى}."
-- ممنوع اختراع أرقام غير موجودة في المدخلات.
+قارن بين الهاتفين بناءً على البيانات المقدمة.
+الصيغة: "الهاتفان يقدمان أداءً قويًا، ولكن يتفوق {A} في... بينما {B}..."
 المخرجات JSON: { "verdict": "النص" }
 `;
 
-// 🟤 أوامر البحث عن الأدوات
-const TOOL_SEARCH_PROMPT = `
-${MASTER_RULES}
-هذا الطلب خاص بقسم "الأدوات".
-مهمتك: إعادة صياغة الوصف فقط. عدم اختراع إصدار.
-المخرجات JSON: { "title": "الاسم", "summary": ["وصف"], "official_link": "الرابط" }
-`;
-
-// 🟣 أوامر الإحصائيات الذكية
+// 🟣 أوامر الإحصائيات الذكية (مدققة زمنياً)
 const STATS_AI_PROMPT = `
 ${MASTER_RULES}
-هذا الطلب خاص بقسم "الإحصائيات الذكية".
-المستخدم سيطرح سؤالاً أو عدة أسئلة في جملة واحدة (مثلاً: "عدد سكان العالم ونسبة الماء واليابسة").
-مهمتك:
-1. تحليل الجملة وتقسيمها إلى مواضيع منفصلة إذا لزم الأمر.
-2. لكل موضوع، قم بتوليد بيانات إحصائية تقديرية دقيقة (استناداً لمعلوماتك العامة).
-3. حدد نوع المخطط المناسب (pie للنسب المئوية، bar للمقارنات الكمية).
+أنت خبير إحصائي دقيق جداً.
+المستخدم سيطرح سؤالاً (قد يكون معقداً أو يحتوي تواريخ مستقبلية).
 
-المخرجات JSON حصراً بالتنسيق التالي:
+خطوات المعالجة الصارمة:
+1. **التحقق الزمني**: تحقق من التاريخ في السؤال (مثلاً 2028). إذا كان في المستقبل، يجب أن توضح في "description" أن هذه "توقعات مستقبلية بناءً على معدلات النمو الحالية". إذا كان السؤال عن الماضي، استخدم بيانات تاريخية.
+2. **التحليل**: قسم السؤال إذا كان يحتوي على شقين (مثلاً: سكان + ماء).
+3. **الدقة**: لا تخترع أرقاماً عشوائية. استخدم تقديرات منطقية من مصادر موثوقة (UN, World Bank, etc.).
+4. **التصور**: اختر المخطط المناسب.
+
+المخرجات JSON حصراً:
 {
-  "main_insight": "جملة تلخيصية عامة للإجابة بالعربية",
+  "main_insight": "جملة تلخيصية دقيقة جداً ومباشرة بالعربية",
   "charts": [
     {
-      "title": "عنوان المخطط الأول",
-      "description": "شرح بسيط",
-      "chart_type": "pie" OR "bar",
+      "title": "العنوان الدقيق",
+      "description": "شرح يوضح السنة والمصدر أو طبيعة التوقع",
+      "chart_type": "pie" | "bar",
       "data": [
-        { "label": "اسم العنصر", "value": 70, "displayValue": "70%", "color": "#HEX" },
-        { "label": "اسم العنصر", "value": 30, "displayValue": "30%", "color": "#HEX" }
+        { "label": "العنصر", "value": 50, "displayValue": "50%", "color": "#HEX" }
       ]
     }
   ]
 }
 `;
+
+// --- RSS FEED SOURCES ---
+const RSS_SOURCES = [
+  { name: "OpenAI", url: "https://openai.com/blog/rss.xml" },
+  { name: "Google DeepMind", url: "https://deepmind.google/blog/rss.xml" },
+  { name: "Microsoft AI", url: "https://blogs.microsoft.com/ai/feed/" },
+  { name: "HuggingFace", url: "https://huggingface.co/blog/feed.xml" }
+];
 
 // --- LOCAL DB LOGIC ---
 const allBrandFiles: BrandFile[] = [
@@ -179,7 +171,7 @@ const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
 const normalize = (text: string) => {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "") // Remove spaces for strict matching
+    .replace(/[^a-z0-9]+/g, "")
     .trim();
 };
 
@@ -193,7 +185,6 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -216,7 +207,6 @@ const App: React.FC = () => {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
-  // --- LOCAL DATA MEMO ---
   const localPhonesDB = useMemo(() => getAllLocalPhones(), []);
 
   useEffect(() => {
@@ -286,19 +276,63 @@ const App: React.FC = () => {
     }
   };
 
+  // --- REAL RSS FETCHING LOGIC ---
+  const fetchAndParseRSS = async () => {
+    const rawItems: any[] = [];
+    const CORS_PROXY = "https://api.allorigins.win/get?url=";
+    const MAX_DAYS = 30;
+    const now = Date.now();
+
+    for (const src of RSS_SOURCES) {
+       try {
+         const res = await fetch(`${CORS_PROXY}${encodeURIComponent(src.url)}`);
+         const data = await res.json();
+         if (!data.contents) continue;
+
+         const parser = new DOMParser();
+         const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+         const items = xmlDoc.querySelectorAll("item");
+         
+         items.forEach(item => {
+            const pubDateStr = item.querySelector("pubDate")?.textContent;
+            const title = item.querySelector("title")?.textContent;
+            const link = item.querySelector("link")?.textContent;
+            // Get content snippet (description or specific tag)
+            const description = item.querySelector("description")?.textContent || "";
+
+            if (pubDateStr && title && link) {
+               const date = new Date(pubDateStr).getTime();
+               const daysOld = (now - date) / (1000 * 60 * 60 * 24);
+               if (daysOld <= MAX_DAYS) {
+                  rawItems.push({
+                     title,
+                     link,
+                     date: new Date(pubDateStr).toLocaleDateString('ar-EG'),
+                     source: src.name,
+                     contentSnippet: description.substring(0, 300) // Truncate for token limit
+                  });
+               }
+            }
+         });
+       } catch (err) {
+         console.warn(`Failed to fetch RSS from ${src.name}`, err);
+       }
+    }
+    
+    // Sort by date descending and take top 5 to summarize
+    return rawItems.slice(0, 5); 
+  };
+
   // --- Search Logic ---
   const searchPhonesInLocalDB = (query: string): LocalPhone[] => {
     const normalizedQuery = normalize(query);
     if (!normalizedQuery) return [];
 
-    // Precise matching first for IDs (e.g. "galaxys25")
-    // Then partial matching for name
     return localPhonesDB.filter(phone => {
        const normId = normalize(phone.id);
        const normName = normalize(phone.name);
        return normId.includes(normalizedQuery) || normName.includes(normalizedQuery);
     }).sort((a, b) => {
-        // Prioritize closer match length (e.g. S25 over S25 Ultra if query is "S25")
         const qLen = normalizedQuery.length;
         const aDiff = Math.abs(normalize(a.name).length - qLen);
         const bDiff = Math.abs(normalize(b.name).length - qLen);
@@ -327,7 +361,6 @@ const App: React.FC = () => {
       return;
     }
 
-    // AI Fallback for truly missing phones
     try {
       const result = await callGroqAPI(`User asked for phone: "${phoneSearchQuery}". Return specs.`, PHONES_MEMORY_PROMPT);
       if (result && result.phone_name) {
@@ -355,7 +388,6 @@ const App: React.FC = () => {
     let p2Data: any = p2Local ? mapLocalToDisplay(p2Local) : null;
 
     try {
-      // AI Fallback if local DB misses a phone
       if (!p1Data) {
          const r = await callGroqAPI(`Phone: ${phone1}`, PHONES_MEMORY_PROMPT);
          if (r.phone_name) p1Data = r;
@@ -416,18 +448,20 @@ const App: React.FC = () => {
 
     try {
       if (type === 'ai-news') {
-        const userPrompt = "استخرج قائمة بأهم 5 أدوات ذكاء اصطناعي مثبتة ومعروفة عالمياً.";
-        const result = await callGroqAPI(userPrompt, AI_NEWS_PROMPT);
+        // 1. Fetch RAW RSS Data
+        const rawItems = await fetchAndParseRSS();
+        
+        if (rawItems.length === 0) {
+            throw new Error("فشل الاتصال بالمصادر الرسمية");
+        }
+
+        // 2. Send to AI for Formatting/Summarization ONLY
+        const userPrompt = `Raw RSS Data: ${JSON.stringify(rawItems)}. Summarize strictly.`;
+        const result = await callGroqAPI(userPrompt, RSS_SUMMARIZER_PROMPT);
+        
         if (result.ai_news) {
-            const mappedAI = result.ai_news.map((item: any) => ({
-              tool_name: item.title,
-              title: item.title,
-              summary: item.summary || [],
-              date: '', 
-              official_link: item.official_link
-            }));
-            saveToCache(cacheKey, { ai_news: mappedAI });
-            setAiNews(mappedAI);
+            saveToCache(cacheKey, { ai_news: result.ai_news });
+            setAiNews(result.ai_news);
         }
       } else if (type === 'phone-news') {
         const allPhones = [...localPhonesDB].sort((a, b) => b.release_year - a.release_year);
@@ -443,45 +477,21 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAISearch = async () => {
-    if (!aiSearchQuery.trim()) return;
-    setAiSearchLoading(true);
-    setAiSearchResult(null);
-    setError(null);
-
-    try {
-      const prompt = `ابحث عن الأداة الرسمية: "${aiSearchQuery}". إذا لم يكن للأداة إصدار رسمي معلن لا تذكر رقم إصدار.`;
-      const result = await callGroqAPI(prompt, TOOL_SEARCH_PROMPT);
-      if (result && result.title) {
-        setAiSearchResult({
-           title: result.title,
-           summary: result.summary,
-           official_link: result.official_link
-        });
-      } else {
-        setError("لا توجد بيانات لهذه الأداة.");
-      }
-    } catch (e: any) {
-      setError("لا توجد بيانات.");
-    } finally {
-      setAiSearchLoading(false);
-    }
-  };
-
   const handleStatsRequest = async () => {
      if (!statsQuery.trim()) return;
      setStatsLoading(true);
      setStatsResult(null);
 
      try {
+       // Using the updated STRICT time-aware prompt
        const result = await callGroqAPI(statsQuery, STATS_AI_PROMPT);
        if (result && result.charts && Array.isArray(result.charts)) {
          setStatsResult(result);
        } else {
-         setError("لم أتمكن من توليد إحصائيات لهذا السؤال.");
+         setError("لم أتمكن من توليد إحصائيات دقيقة لهذا السؤال.");
        }
      } catch (e) {
-       setError("حدث خطأ أثناء معالجة السؤال.");
+       setError("حدث خطأ أثناء تحليل البيانات.");
      } finally {
        setStatsLoading(false);
      }
@@ -560,10 +570,12 @@ const App: React.FC = () => {
              </div>
           )}
           
+          {/* UPDATED INFO TAB CONTENT */}
           {activeTab === 'info' && (
             <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="space-y-6 text-right">
+                  
                   <div className="flex flex-col gap-4">
                      <h3 className="text-lg font-bold text-sky-400 text-center">بخصوص بوت الطلبات على التيليكرام</h3>
                      <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-sky-500/25 group border border-white/10">
@@ -571,6 +583,27 @@ const App: React.FC = () => {
                        <span>الدخول لبوت الطلبات</span>
                      </a>
                   </div>
+
+                  <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 text-sm space-y-3 leading-relaxed text-slate-300">
+                     <p>✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط.</p>
+                     <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات.</p>
+                     <p className="text-yellow-400 font-bold">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                     <h4 className="text-white font-bold text-sm border-r-2 border-sky-500 pr-2">طرق البحث المتاحة في قنوات المناقشات:</h4>
+                     <ul className="space-y-2 text-xs text-slate-400 leading-relaxed list-decimal list-inside marker:text-sky-500">
+                        <li>ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</li>
+                        <li>اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).</li>
+                        <li>استخدم أمر البحث بكتابة كلمة "بحث" متبوع باسم التطبيق (مثلاً: بحث ياسين).</li>
+                        <li>للاعلان في القناة تواصل من خلال البوت.</li>
+                     </ul>
+                  </div>
+                  
+                  <div className="bg-rose-900/20 p-3 rounded-lg border border-rose-500/20 text-xs text-rose-300 font-bold text-center">
+                    تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا.
+                  </div>
+
                 </div>
               </div>
               <div className="text-center pb-8 pt-6 space-y-2">
@@ -588,7 +621,7 @@ const App: React.FC = () => {
                      <div className="w-10 h-10 bg-violet-500/20 rounded-xl flex items-center justify-center text-violet-400"><Cpu className="w-6 h-6" /></div>
                      <div className="text-right w-full">
                         <h3 className="font-bold text-lg text-white truncate w-full">أخبار AI</h3>
-                        <p className="text-xs text-slate-400 truncate w-full">أحدث النماذج والتقنيات</p>
+                        <p className="text-xs text-slate-400 truncate w-full">آخر 30 يوم - مصادر رسمية</p>
                      </div>
                   </div>
                </button>
@@ -609,7 +642,7 @@ const App: React.FC = () => {
                      <div className="w-10 h-10 bg-pink-500/20 rounded-xl flex items-center justify-center text-pink-400"><BarChart3 className="w-6 h-6" /></div>
                      <div className="text-right w-full overflow-hidden">
                         <h3 className="font-bold text-lg text-white truncate w-full">إحصائيات ذكية</h3>
-                        <p className="text-xs text-slate-400 truncate w-full">تحليل بياني بالذكاء الاصطناعي</p>
+                        <p className="text-xs text-slate-400 truncate w-full">تحليل بياني مدقق زمنياً</p>
                      </div>
                    </div>
                </button>
@@ -624,51 +657,45 @@ const App: React.FC = () => {
 
                 {activeToolView === 'ai-news' && (
                   <div className="space-y-4">
-                     <div className="flex gap-2">
-                        <input type="text" value={aiSearchQuery} onChange={(e)=>setAiSearchQuery(e.target.value)} placeholder="ابحث عن أداة (مثلاً: Gemini)..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-violet-500 outline-none h-12" />
-                        <button onClick={handleAISearch} className="bg-violet-600 hover:bg-violet-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/20">{aiSearchLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <Search className="w-5 h-5"/>}</button>
+                     <div className="flex gap-2 items-center justify-between">
+                         <h3 className="text-lg font-bold text-violet-400 px-2">أخبار الذكاء الاصطناعي</h3>
+                         <button onClick={() => fetchToolData('ai-news', true)} className="bg-violet-600 hover:bg-violet-500 text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/20 gap-2 text-xs font-bold px-3">
+                           {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <RefreshCw className="w-4 h-4"/>}
+                           تحديث المصادر
+                         </button>
                      </div>
 
-                     {aiSearchResult ? (
-                       <div className="bg-slate-800/60 border border-violet-500/30 p-5 rounded-3xl animate-fade-in relative shadow-2xl">
-                          <button onClick={() => setAiSearchResult(null)} className="absolute top-4 left-4 p-1 bg-slate-700/50 rounded-full text-slate-300 hover:text-white"><X className="w-4 h-4" /></button>
-                          <h3 className={titleStyle}>{aiSearchResult.title}</h3>
-                          <ul className="list-disc list-inside space-y-2 mb-6 border-b border-slate-700/30 pb-4">
-                            {aiSearchResult.summary.map((point, i) => (
-                              <li key={i} className="text-sm text-slate-200 leading-relaxed marker:text-violet-500">{point}</li>
-                            ))}
-                          </ul>
-                          {aiSearchResult.official_link && (
-                            <a href={aiSearchResult.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
-                               <span>الموقع الرسمي</span>
-                               <ExternalLink className="w-4 h-4" />
-                            </a>
-                          )}
-                          <ShareToolbar title={aiSearchResult.title} text={aiSearchResult.summary.join('\n')} url={aiSearchResult.official_link} />
-                       </div>
-                     ) : (
-                       <div className="space-y-4">
-                          {loading && !aiNews.length && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
-                          {aiNews.map((news, idx) => (
-                            <div key={idx} className="bg-slate-800/40 border border-violet-500/20 rounded-2xl p-5 shadow-sm">
-                                <h3 className={titleStyle}>{news.title}</h3>
-                                <ul className="list-disc list-inside space-y-1.5 mb-4 border-b border-slate-700/30 pb-4">
-                                  {news.summary.slice(0, 5).map((point, i) => (
-                                    <li key={i} className="text-xs text-slate-300 leading-relaxed marker:text-violet-500">{point}</li>
-                                  ))}
-                                </ul>
-                                <a href={news.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
-                                  <span>الموقع الرسمي</span>
-                                  <ExternalLink className="w-4 h-4" />
-                                </a>
-                                <ShareToolbar title={news.title} text={news.summary.join('\n')} url={news.official_link} />
-                            </div>
-                          ))}
-                       </div>
-                     )}
+                     <div className="space-y-4">
+                        {loading && !aiNews.length && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
+                        
+                        {!loading && aiNews.length === 0 && (
+                          <p className="text-center text-slate-500 text-sm py-10">لا توجد أخبار حديثة خلال الـ 30 يوم الماضية.</p>
+                        )}
+
+                        {aiNews.map((news, idx) => (
+                          <div key={idx} className="bg-slate-800/40 border border-violet-500/20 rounded-2xl p-5 shadow-sm">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded">{news.source || "RSS Feed"}</span>
+                                <span className="text-[10px] text-slate-500">{news.date}</span>
+                              </div>
+                              <h3 className={titleStyle}>{news.title}</h3>
+                              <ul className="list-disc list-inside space-y-1.5 mb-4 border-b border-slate-700/30 pb-4">
+                                {news.summary.slice(0, 5).map((point, i) => (
+                                  <li key={i} className="text-xs text-slate-300 leading-relaxed marker:text-violet-500">{point}</li>
+                                ))}
+                              </ul>
+                              <a href={news.official_link} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
+                                <span>اقرأ الخبر الأصلي</span>
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                              <ShareToolbar title={news.title} text={news.summary.join('\n')} url={news.official_link} />
+                          </div>
+                        ))}
+                     </div>
                   </div>
                 )}
                 
+                {/* Phone Search & News View */}
                 {activeToolView === 'phone-news' && (
                   <div className="space-y-4">
                      <div className="flex gap-2">
@@ -772,7 +799,7 @@ const App: React.FC = () => {
                 {activeToolView === 'stats' && (
                    <div className="space-y-4">
                       <div className="flex gap-2">
-                        <input value={statsQuery} onChange={e=>setStatsQuery(e.target.value)} placeholder="مثال: عدد سكان العالم ونسبة الماء..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm outline-none" />
+                        <input value={statsQuery} onChange={e=>setStatsQuery(e.target.value)} placeholder="مثال: عدد سكان العالم سنة 2030..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm outline-none" />
                         <button onClick={handleStatsRequest} className="bg-pink-500 text-white p-3 rounded-xl">{statsLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <PieChart className="w-5 h-5"/>}</button>
                       </div>
                       

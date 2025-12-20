@@ -20,6 +20,7 @@ export interface AINewsItem {
   summary: string[];
   date?: string;
   official_link: string;
+  source?: string; // Added source field
 }
 
 export interface PhoneNewsItem {
