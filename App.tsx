@@ -10,7 +10,7 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw
+  RotateCcw, Eye
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
@@ -54,7 +54,7 @@ const SPEC_LABELS: Record<string, string> = {
   comms: "واي فاي وبلوتوث",
   features: "المستشعرات والإضافات",
   battery: "البطارية والشحن",
-  misc: "ألوان وسعر تقريبي"
+  misc: "ألوان ومعلومات إضافية"
 };
 
 // 🔴 MASTER PROMPT (القاعدة الأساسية)
@@ -64,7 +64,7 @@ const MASTER_RULES = `
 
 قواعد عامة صارمة:
 - ممنوع اختراع معلومات.
-- ممنوع افتراض أسعار أو تواريخ.
+- ممنوع ذكر أسعار.
 - اللغة: العربية الفصحى حصراً.
 `;
 
@@ -85,9 +85,9 @@ ${MASTER_RULES}
 هذا الطلب خاص بهاتف قديم (2023 وما قبل).
 مهمتك:
 - عرض مواصفات عامة ودقيقة من ذاكرتك.
-- لا تضع سعراً.
+- لا تذكر السعر نهائياً.
 المخرجات المطلوبة JSON حصراً:
-{ "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة", "price_usd": "غير متوفر", "specifications": { "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "battery": "..." }, "official_link": "", "pros": [], "cons": [] }
+{ "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة", "specifications": { "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "battery": "..." }, "official_link": "", "pros": [], "cons": [] }
 `;
 
 // 🔵 أوامر المقارنة (تحليلية فقط)
@@ -111,7 +111,7 @@ ${MASTER_RULES}
 `;
 
 // --- LOCAL DB LOGIC ---
-// Force cast to BrandFile[] to avoid strict type mismatch with inferred JSON types (e.g. undefined vs string in specs)
+// Force cast to BrandFile[] to avoid strict type mismatch with inferred JSON types
 const allBrandFiles: BrandFile[] = [
   samsungData, appleData, googleData, xiaomiData, huaweiData, 
   oneplusData, oppoData, vivoData, realmeData, sonyData
@@ -123,7 +123,6 @@ const getAllLocalPhones = (): LocalPhone[] => {
 
 // Map LocalPhone JSON format to PhoneNewsItem format used by UI
 const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
-  // Handle standard vs foldable display specs
   let displayStr = "";
   if (local.specs.display.main && local.specs.display.cover) {
      displayStr = `Main: ${local.specs.display.main}, Cover: ${local.specs.display.cover}`;
@@ -133,9 +132,8 @@ const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
 
   return {
     phone_name: local.name,
-    brand: local.id.split('-')[0].toUpperCase(), // Rough estimation or pass brand
+    brand: local.id.split('-')[0].toUpperCase(),
     release_date: local.release_year.toString(),
-    price_usd: "غير متوفر",
     specifications: {
       display: displayStr,
       platform: local.specs.chipset,
@@ -150,6 +148,18 @@ const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
     pros: [],
     cons: []
   };
+};
+
+// --- Helper Functions for Search ---
+const normalize = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+};
+
+const tokenize = (text: string) => {
+  return normalize(text).split(" ").filter(Boolean);
 };
 
 const App: React.FC = () => {
@@ -251,13 +261,27 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Strict Search Logic ---
+  // --- Search Logic ---
+  const searchPhonesInLocalDB = (query: string): LocalPhone[] => {
+    const queryTokens = tokenize(query);
+    if (queryTokens.length === 0) return [];
+
+    return localPhonesDB.filter(phone => {
+      const phoneText = normalize(
+        [
+          phone.name,
+          phone.id,
+          phone.category
+        ].join(" ")
+      );
+
+      return queryTokens.some(token => phoneText.includes(token));
+    });
+  };
+
   const findPhoneInLocalDB = (query: string): LocalPhone | undefined => {
-    const normalizedQuery = query.toLowerCase().trim();
-    return localPhonesDB.find(p => 
-      p.name.toLowerCase().includes(normalizedQuery) || 
-      p.id.replace(/-/g, ' ').includes(normalizedQuery)
-    );
+     // Fallback for single strict match (used in comparison)
+     return searchPhonesInLocalDB(query)[0];
   };
 
   const handlePhoneSearch = async () => {
@@ -266,11 +290,12 @@ const App: React.FC = () => {
     setPhoneSearchResult(null);
     setError(null);
 
-    // 1. Check Local Files (2024-2025)
-    const localMatch = findPhoneInLocalDB(phoneSearchQuery);
+    // 1. Check Local Files (2024-2025) using fuzzy/token logic
+    const localMatches = searchPhonesInLocalDB(phoneSearchQuery);
 
-    if (localMatch) {
-      setPhoneSearchResult(mapLocalToDisplay(localMatch));
+    if (localMatches.length > 0) {
+      // Display results in the list view (phoneNews)
+      setPhoneNews(localMatches.map(mapLocalToDisplay));
       setSearchLoading(false);
       return;
     }
@@ -286,6 +311,7 @@ const App: React.FC = () => {
         4. If unknown/fake: Return JSON { "status": "UNKNOWN" }.
         
         Use the exact structure from PHONES_MEMORY_PROMPT for "data" if status is OLD.
+        DO NOT include price.
       `;
       
       const result = await callGroqAPI(checkPrompt, PHONES_MEMORY_PROMPT);
@@ -295,7 +321,7 @@ const App: React.FC = () => {
       } else if (result.status === "MODERN_NOT_FOUND") {
         setError("هذا الهاتف حديث ولكنه غير متوفر في قاعدة بيانات Techtouch الحالية.");
       } else {
-        setError("لم يتم العثور على هذا الهاتف أو أنه غير مؤكد.");
+        setError("لم يتم العثور على نتائج مطابقة.");
       }
     } catch (e: any) {
       setError("لا تتوفر بيانات حالياً.");
@@ -310,7 +336,7 @@ const App: React.FC = () => {
     setError(null);
     setComparisonResult(null);
 
-    // Get Data for both phones
+    // Get Data for both phones (using best match)
     const p1Local = findPhoneInLocalDB(phone1);
     const p2Local = findPhoneInLocalDB(phone2);
 
@@ -650,7 +676,6 @@ const App: React.FC = () => {
                              <h2 className={titleStyle}>{phoneSearchResult.phone_name}</h2>
                              <div className="flex items-center gap-3">
                                <span className="bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded text-xs font-bold">{phoneSearchResult.brand}</span>
-                               <span className="text-emerald-400 font-bold text-lg">{phoneSearchResult.price_usd}</span>
                              </div>
                            </div>
 
@@ -677,9 +702,12 @@ const App: React.FC = () => {
                         <div className="space-y-3">
                            {phoneNews.map((phone, idx) => (
                               <div key={idx} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-all cursor-pointer group" onClick={() => setPhoneSearchResult(phone)}>
-                                 <div className="flex justify-between items-start mb-2 overflow-hidden">
-                                    <h3 className={titleStyle}>{phone.phone_name}</h3>
-                                    <span className="text-xs font-mono text-sky-400 bg-sky-500/10 px-2 py-1 rounded-lg shrink-0 ml-2">{phone.price_usd}</span>
+                                 <div className="flex justify-between items-center mb-2 overflow-hidden">
+                                    <h3 className="font-bold text-white text-base">{phone.phone_name}</h3>
+                                    <button className="flex items-center gap-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0">
+                                      <Eye className="w-3.5 h-3.5" />
+                                      عرض التفاصيل
+                                    </button>
                                  </div>
                               </div>
                            ))}

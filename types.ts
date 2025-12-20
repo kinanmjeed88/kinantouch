@@ -28,7 +28,6 @@ export interface PhoneNewsItem {
   release_date: string;
   // Flexible key-value pair for detailed specs
   specifications: Record<string, string>;
-  price_usd: string;
   official_specs_link?: string;
   iraqi_price_source?: string;
   pros: string[];
