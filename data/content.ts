@@ -1,11 +1,13 @@
+
 import { ChannelData, SocialData } from '../types';
 
 // اعدادات الصورة الشخصية
-// لتغيير الصورة، ضع ملف الصورة في مجلد public (أو assets) واكتب المسار هنا
-// مثال: image: 'my-photo.jpg'
-// إذا تركتها فارغة '' سيتم عرض الشعار الافتراضي (TT)
+// لكي تظهر صورتك:
+// 1. قم بإنشاء مجلد جديد في الملفات (بجانب index.html) وسمّه "public"
+// 2. ضع صورتك داخل مجلد public وغيّر اسمها لتصبح "profile.jpg"
+// 3. سيتعرف الموقع عليها تلقائياً
 export const profileConfig = {
-  image: 'profile.jpg', // تم ضبطه ليقرأ ملف profile.jpg من مجلد public (بدون شرطة مائلة في البداية)
+  image: 'profile.jpg', 
   initials: 'TT'
 };
 

@@ -19,8 +19,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_v51',
-  PHONE_NEWS: 'techtouch_phones_v51'
+  AI_NEWS: 'techtouch_ai_v52',
+  PHONE_NEWS: 'techtouch_phones_v52'
 };
 
 const SPEC_ORDER = [
@@ -46,46 +46,33 @@ const SPEC_LABELS: Record<string, string> = {
 };
 
 const AI_SYSTEM_PROMPT = `
-أنت نظام ذكاء اصطناعي يعمل كمحرر تقني موثوق لموقع Techtouch.
-فيما يلي قائمة شاملة لأدوات ومنصات الذكاء الاصطناعي من مختلف دول العالم مع روابطها الرسمية فقط.
-يُسمح باستخدام هذه الروابط حصراً لجلب: الأخبار، الإصدارات، التحديثات الرسمية.
-يُمنع منعاً باتاً استخدام أي مصدر غير موجود هنا إلا إذا كان موقعاً رسمياً مباشراً.
+أنت نظام ذكاء اصطناعي يعمل كمحرر تقني لموقع Techtouch.
+مهمتك: جلب أخبار ومعلومات أدوات الذكاء الاصطناعي من مصادرها الرسمية فقط.
+اللغة: يجب أن يكون الرد باللغة العربية الفصحى حصراً (قم بترجمة أي نص إنجليزي بدقة).
 
-قائمة المصادر المعتمدة:
-OpenAI (openai.com), Anthropic (anthropic.com), Google Gemini/DeepMind (deepmind.google), Microsoft Copilot (microsoft.com/ai), Meta AI (ai.meta.com), Amazon AWS AI, NVIDIA AI, IBM Watson, Apple Intelligence, Hugging Face, Stability AI, Midjourney, xAI Grok, Mistral AI.
-الصين: Kimi (Moonshot), DeepSeek, Baidu ERNIE, Alibaba Qwen, Tencent Hunyuan, iFlytek Spark.
-آسيا: Naver HyperCLOVA, Kakao Brain, LINE AI.
-أدوات أخرى: Cohere, Perplexity AI, Runway ML, Adobe Firefly.
+المصادر المعتمدة فقط:
+OpenAI, Anthropic (Claude), Google Gemini/DeepMind, Microsoft Copilot, Meta AI, Midjourney, Stability AI, xAI (Grok), Mistral, Adobe Firefly.
+أدوات الصين وآسيا الرسمية: DeepSeek, Qwen, Yi, Kimi.
 
-قواعد الاستخدام:
-1. لا يُقبل أي خبر إلا إذا كان منشوراً في المصادر الرسمية.
-2. يجب أن يتضمن الخبر: اسم الأداة، رقم الإصدار، وتاريخ الإعلان.
-3. أي خبر بلا رابط رسمي صالح يُرفض.
-4. يمنع استخدام مواقع أخبار تقنية عامة أو تسريبات.
-5. المخرجات يجب أن تكون باللغة العربية الفصحى حصراً (ترجم المحتوى بدقة).
-
-في حال عدم وجود أخبار رسمية، لا تقم بتأليف محتوى.
+القواعد الصارمة:
+1. ممنوع تأليف أخبار وهمية.
+2. ممنوع ذكر إصدارات غير موجودة (مثل Gemini 5 أو GPT-7).
+3. عند طلب "بحث عن أداة"، أحضر الوصف الدقيق، والمميزات، والرابط الرسمي.
+4. التنسيق JSON حصراً.
 `;
 
 const PHONE_SYSTEM_PROMPT = `
-أنت نظام ذكاء اصطناعي يعمل كمحرر تقني احترافي لموقع Techtouch.
-مهمتك جلب معلومات الهواتف الذكية (إطلاقات – مواصفات – أخبار) من المواقع الرسمية فقط.
+أنت نظام ذكاء اصطناعي يعمل كمحرر تقني لموقع Techtouch.
+مهمتك جلب مواصفات الهواتف الذكية الحقيقية فقط.
+اللغة: العربية الفصحى.
 
 المصادر المعتمدة:
-Samsung, Apple, Google Pixel, Xiaomi, Redmi, POCO, Huawei, Honor, OnePlus, Oppo, Vivo, Realme, Sony Xperia, Nokia, ASUS, Motorola, Nothing, Infinix, Tecno, ZTE, Meizu.
+Samsung, Apple, Xiaomi, Google Pixel, Honor, Huawei, OnePlus, Oppo, Vivo, Sony, Asus, Infinix, Tecno.
 
-الإطار الزمني:
-يُسمح فقط بالهواتف التي تم إطلاقها رسمياً خلال آخر 12 شهراً محسوبة من تاريخ اليوم.
-
-محتوى كل منشور هاتف (إلزامي):
-1. العنوان: اسم الهاتف فقط (سطر واحد).
-2. معلومات أساسية: الشركة، تاريخ الإطلاق.
-3. المواصفات التفصيلية (بالعربية): الشبكات، الأبعاد، الوزن، الخامات، الشاشة، المعالج، الذاكرة، الكاميرات، البطارية، النظام، إلخ.
-4. السعر: بالدولار (تقريبي) مع المصدر.
-5. المميزات والعيوب: نقاط واضحة.
-
-اللغة: العربية الفصحى فقط.
-صيغة الإخراج: JSON فقط.
+القواعد:
+1. لا تقم باختراع مواصفات لهواتف لم تعلن رسمياً.
+2. التزم بالبيانات الواقعية (المعالج، الكاميرا، البطارية).
+3. التنسيق JSON حصراً.
 `;
 
 const App: React.FC = () => {
@@ -169,7 +156,7 @@ const App: React.FC = () => {
           messages: [
             { 
               role: "system", 
-              content: systemInstruction + `\nCurrent Date: ${todayStr}. Respond ONLY in valid JSON format.` 
+              content: systemInstruction + `\nCurrent Date: ${todayStr}. Respond ONLY in valid JSON format. Language: ARABIC ONLY.` 
             },
             { 
               role: "user", 
@@ -177,7 +164,7 @@ const App: React.FC = () => {
             }
           ],
           response_format: { type: "json_object" },
-          temperature: 0.2,
+          temperature: 0.3,
           max_completion_tokens: 3500
         })
       });
@@ -208,6 +195,7 @@ const App: React.FC = () => {
     if (type === 'ai-news') cacheKey = CACHE_KEYS.AI_NEWS;
     else if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
 
+    // Skip cache if forced
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
 
     if (cached) {
@@ -223,13 +211,13 @@ const App: React.FC = () => {
 
       if (type === 'ai-news') {
         systemInstruction = AI_SYSTEM_PROMPT;
-        userPrompt = `Fetch 8 latest AI news updates from official sources. 
-        Verify existence. 
-        IMPORTANT: Translate all content, titles, and summaries to ARABIC Language.
-        Format JSON: { "ai_news": [{ "title": "Tool Name vX.X", "content": ["Line 1: Main update", "Line 2: Feature A", "Line 3: Feature B", "Line 4: Improvement", "Line 5: Availability"], "official_link": "URL" }] }`;
+        userPrompt = `Fetch 6 latest OFFICIAL AI news/updates. 
+        Verify existence from official blogs. 
+        Translate everything to ARABIC.
+        Format JSON: { "ai_news": [{ "title": "Tool Name + Update", "summary": ["Arabic Point 1", "Arabic Point 2", "Arabic Point 3"], "official_link": "Official URL" }] }`;
       } else if (type === 'phone-news') {
         systemInstruction = PHONE_SYSTEM_PROMPT;
-        userPrompt = `Fetch 8 NEWEST smartphones launched in the last 12 months. 
+        userPrompt = `Fetch 6 NEWEST smartphones released recently. 
         Format JSON: { "best_smartphones": [{ "phone_name": "Full Name", "brand": "Brand", "release_date": "YYYY-MM", "price_usd": "$XXX", "specifications": { "network": "...", "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "selfie_camera": "...", "battery": "..." }, "official_link": "URL", "pros": ["..."], "cons": ["..."] }] }`;
       }
 
@@ -239,7 +227,7 @@ const App: React.FC = () => {
         const mappedAI = result.ai_news.map((item: any) => ({
           tool_name: item.title,
           title: item.title,
-          summary: item.content || [],
+          summary: item.content || item.summary || [],
           date: todayStr,
           official_link: item.official_link
         }));
@@ -272,8 +260,7 @@ const App: React.FC = () => {
     setPhoneSearchResult(null);
     setError(null);
 
-    // Reuse the phone prompt system for consistency
-    const systemInstruction = PHONE_SYSTEM_PROMPT + " Provide EXTREMELY DETAILED specifications.";
+    const systemInstruction = PHONE_SYSTEM_PROMPT + " Provide EXTREMELY DETAILED specifications in ARABIC.";
 
     try {
       const result = await callGroqAPI(`Give full detailed specs for: ${phoneSearchQuery}. Output JSON single object (not array).`, systemInstruction);
@@ -299,10 +286,9 @@ const App: React.FC = () => {
 
     try {
       const prompt = `
-        Provide detailed information about the AI tool: "${aiSearchQuery}".
-        Include official website link, latest version features, and general description.
-        Output MUST BE IN ARABIC language completely.
-        Format JSON: { "title": "Tool Name + Version", "summary": ["Line 1: Description", "Line 2: Key Feature 1", "Line 3: Key Feature 2", "Line 4: Pricing/Availability", "Line 5: Interesting fact"], "official_link": "URL" }
+        Search and provide detailed info about the AI tool: "${aiSearchQuery}".
+        Provide: Official Title, Detailed Description in Arabic, Key Features, and Official Website.
+        Format JSON: { "title": "Tool Name", "summary": ["Detailed Arabic Description", "Feature 1", "Feature 2", "Feature 3", "Pricing Model"], "official_link": "URL" }
       `;
       const result = await callGroqAPI(prompt, systemInstruction);
       if (result) {
@@ -326,8 +312,8 @@ const App: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const system = `Compare two phones deeply in Arabic based on official specs. Output JSON: { "phone1_name": "${phone1}", "phone2_name": "${phone2}", "comparison_points": [{ "feature": "Network/الشبكة", "phone1_val": "details", "phone2_val": "details", "winner": 0_1_or_2 }, { "feature": "Display/الشاشة", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "Performance/الأداء", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "Camera/الكاميرا", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "Battery/الطاربة", "phone1_val": "...", "phone2_val": "...", "winner": 0 }], "verdict": "Final detailed Arabic conclusion." }`;
-      const result = await callGroqAPI(`Compare detailed specs: ${phone1} vs ${phone2}`, system);
+      const system = `Compare two phones deeply in Arabic. Output JSON: { "phone1_name": "${phone1}", "phone2_name": "${phone2}", "comparison_points": [{ "feature": "الشبكة", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "الشاشة", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "المعالج", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "الكاميرا", "phone1_val": "...", "phone2_val": "...", "winner": 0 }, { "feature": "البطارية", "phone1_val": "...", "phone2_val": "...", "winner": 0 }], "verdict": "Final Arabic conclusion." }`;
+      const result = await callGroqAPI(`Compare: ${phone1} vs ${phone2}`, system);
       setComparisonResult(result);
     } catch (err: any) { 
       setError(err.message); 
@@ -554,7 +540,7 @@ const App: React.FC = () => {
                   <div className="space-y-4">
                      {/* Search & Refresh Toolbar */}
                      <div className="flex gap-2">
-                        <input type="text" value={aiSearchQuery} onChange={(e)=>setAiSearchQuery(e.target.value)} placeholder="ابحث عن أداة (مثلاً: ChatGPT 5)..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-violet-500 outline-none h-12" />
+                        <input type="text" value={aiSearchQuery} onChange={(e)=>setAiSearchQuery(e.target.value)} placeholder="ابحث عن أداة (مثلاً: Gemini 1.5)..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm focus:border-violet-500 outline-none h-12" />
                         <button onClick={handleAISearch} className="bg-violet-600 hover:bg-violet-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/20">{aiSearchLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <Search className="w-5 h-5"/>}</button>
                         <button onClick={() => fetchToolData('ai-news', true)} className="bg-slate-800 hover:bg-slate-700 text-violet-400 w-12 h-12 rounded-xl flex items-center justify-center border border-slate-700" title="تحديث الأخبار"><RotateCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} /></button>
                      </div>
