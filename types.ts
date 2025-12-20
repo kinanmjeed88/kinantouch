@@ -76,10 +76,13 @@ export interface LocalPhone {
   };
   specs: {
     display: {
-      size: string;
-      type: string;
-      resolution: string;
-      refresh_rate: string;
+      size?: string;
+      type?: string;
+      resolution?: string;
+      refresh_rate?: string;
+      // For foldables
+      main?: string;
+      cover?: string;
     };
     chipset: string;
     ram: string;
