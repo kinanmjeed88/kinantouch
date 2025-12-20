@@ -13,7 +13,7 @@ import {
   RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal, Command
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
-import { AINewsData, CompanyNews, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool, AIToolsData } from './types';
+import { AINewsData, CompanyNews, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool } from './types';
 
 // Importing Local Data - Using relative paths
 import samsungData from './data/phones-backup/samsung.json';
