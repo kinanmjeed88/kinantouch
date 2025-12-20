@@ -1,0 +1,35 @@
+{
+  "brand": "Vivo",
+  "country": "China",
+  "phones": [
+    {
+      "id": "vivo-x100-pro",
+      "name": "Vivo X100 Pro",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass / Vegan Leather",
+        "protection": "Gorilla Glass",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.78 inch",
+          "type": "LTPO AMOLED",
+          "resolution": "QHD+",
+          "refresh_rate": "1–120Hz"
+        },
+        "chipset": "Dimensity 9300",
+        "ram": "16GB",
+        "storage": "512GB",
+        "rear_camera": "50MP + 50MP + 50MP",
+        "front_camera": "32MP",
+        "battery": "5400mAh",
+        "charging": "100W wired",
+        "weight": "225g",
+        "os": "Android"
+      }
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "brand": "Samsung",
+  "country": "South Korea",
+  "phones": [
+    {
+      "id": "galaxy-s24",
+      "name": "Samsung Galaxy S24",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum Armor",
+        "back": "Glass (Gorilla Glass Victus 2)",
+        "protection": "Gorilla Glass Victus 2",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.2 inch",
+          "type": "Dynamic AMOLED 2X",
+          "resolution": "FHD+",
+          "refresh_rate": "1–120Hz"
+        },
+        "chipset": "Exynos 2400 / Snapdragon 8 Gen 3",
+        "ram": "8GB",
+        "storage": "128GB / 256GB",
+        "rear_camera": "50MP (Wide) + 12MP (Ultra-wide) + 10MP (Telephoto)",
+        "front_camera": "12MP",
+        "battery": "4000mAh",
+        "charging": "25W wired",
+        "weight": "167g",
+        "os": "Android"
+      }
+    },
+    {
+      "id": "galaxy-s24-plus",
+      "name": "Samsung Galaxy S24+",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum Armor",
+        "back": "Glass (Gorilla Glass Victus 2)",
+        "protection": "Gorilla Glass Victus 2",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.7 inch",
+          "type": "Dynamic AMOLED 2X",
+          "resolution": "QHD+",
+          "refresh_rate": "1–120Hz"
+        },
+        "chipset": "Exynos 2400 / Snapdragon 8 Gen 3",
+        "ram": "12GB",
+        "storage": "256GB / 512GB",
+        "rear_camera": "50MP + 12MP + 10MP",
+        "front_camera": "12MP",
+        "battery": "4900mAh",
+        "charging": "45W wired",
+        "weight": "196g",
+        "os": "Android"
+      }
+    },
+    {
+      "id": "galaxy-s24-ultra",
+      "name": "Samsung Galaxy S24 Ultra",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Titanium",
+        "back": "Glass (Gorilla Armor)",
+        "protection": "Corning Gorilla Armor",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.8 inch",
+          "type": "Dynamic AMOLED 2X",
+          "resolution": "QHD+",
+          "refresh_rate": "1–120Hz"
+        },
+        "chipset": "Snapdragon 8 Gen 3 for Galaxy",
+        "ram": "12GB",
+        "storage": "256GB / 512GB / 1TB",
+        "rear_camera": "200MP + 50MP (Periscope) + 12MP (Ultra-wide) + 10MP (Telephoto)",
+        "front_camera": "12MP",
+        "battery": "5000mAh",
+        "charging": "45W wired",
+        "weight": "232g",
+        "os": "Android"
+      }
+    },
+    {
+      "id": "galaxy-z-fold-6",
+      "name": "Samsung Galaxy Z Fold6",
+      "release_year": 2024,
+      "category": "Foldable Flagship",
+      "manufacturing": {
+        "frame": "Aluminum Armor",
+        "back": "Glass",
+        "protection": "Gorilla Glass Victus 2",
+        "water_resistance": "IP48"
+      },
+      "specs": {
+        "display": {
+          "main": "7.6 inch Foldable AMOLED 120Hz",
+          "cover": "6.3 inch AMOLED 120Hz"
+        },
+        "chipset": "Snapdragon 8 Gen 3 for Galaxy",
+        "ram": "12GB",
+        "storage": "256GB / 512GB / 1TB",
+        "rear_camera": "50MP + 12MP + 10MP",
+        "front_camera": "10MP",
+        "battery": "4400mAh",
+        "charging": "25W wired",
+        "weight": "239g",
+        "os": "Android"
+      }
+    },
+    {
+      "id": "galaxy-a55",
+      "name": "Samsung Galaxy A55",
+      "release_year": 2024,
+      "category": "Midrange",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass",
+        "protection": "Gorilla Glass Victus+",
+        "water_resistance": "IP67"
+      },
+      "specs": {
+        "display": {
+          "size": "6.6 inch",
+          "type": "Super AMOLED",
+          "resolution": "FHD+",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Exynos 1480",
+        "ram": "8GB / 12GB",
+        "storage": "128GB / 256GB",
+        "rear_camera": "50MP + 12MP + 5MP",
+        "front_camera": "32MP",
+        "battery": "5000mAh",
+        "charging": "25W wired",
+        "weight": "213g",
+        "os": "Android"
+      }
+    }
+  ]
+}

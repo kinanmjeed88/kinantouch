@@ -1,0 +1,35 @@
+{
+  "brand": "Xiaomi",
+  "country": "China",
+  "phones": [
+    {
+      "id": "xiaomi-14",
+      "name": "Xiaomi 14",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass",
+        "protection": "Gorilla Glass Victus",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.36 inch",
+          "type": "AMOLED",
+          "resolution": "FHD+",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Snapdragon 8 Gen 3",
+        "ram": "12GB",
+        "storage": "256GB / 512GB",
+        "rear_camera": "50MP + 50MP + 50MP",
+        "front_camera": "32MP",
+        "battery": "4610mAh",
+        "charging": "90W wired",
+        "weight": "188g",
+        "os": "Android"
+      }
+    }
+  ]
+}

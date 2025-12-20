@@ -61,3 +61,40 @@ export interface StatsResult {
   }[];
   insight: string;
 }
+
+// Interfaces for Local Database
+export interface LocalPhone {
+  id: string;
+  name: string;
+  release_year: number;
+  category: string;
+  manufacturing: {
+    frame: string;
+    back: string;
+    protection: string;
+    water_resistance: string;
+  };
+  specs: {
+    display: {
+      size: string;
+      type: string;
+      resolution: string;
+      refresh_rate: string;
+    };
+    chipset: string;
+    ram: string;
+    storage: string;
+    rear_camera: string;
+    front_camera: string;
+    battery: string;
+    charging: string;
+    weight: string;
+    os: string;
+  };
+}
+
+export interface BrandFile {
+  brand: string;
+  country: string;
+  phones: LocalPhone[];
+}

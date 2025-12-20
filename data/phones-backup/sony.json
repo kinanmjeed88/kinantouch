@@ -1,0 +1,35 @@
+{
+  "brand": "Sony",
+  "country": "Japan",
+  "phones": [
+    {
+      "id": "xperia-1-vi",
+      "name": "Sony Xperia 1 VI",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Textured Glass",
+        "protection": "Gorilla Glass Victus 2",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.5 inch",
+          "type": "OLED",
+          "resolution": "FHD+",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Snapdragon 8 Gen 3",
+        "ram": "12GB",
+        "storage": "256GB / 512GB",
+        "rear_camera": "48MP + 12MP + 12MP",
+        "front_camera": "12MP",
+        "battery": "5000mAh",
+        "charging": "30W wired",
+        "weight": "192g",
+        "os": "Android"
+      }
+    }
+  ]
+}

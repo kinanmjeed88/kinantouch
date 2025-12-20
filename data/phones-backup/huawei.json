@@ -1,0 +1,35 @@
+{
+  "brand": "Huawei",
+  "country": "China",
+  "phones": [
+    {
+      "id": "mate-60-pro",
+      "name": "Huawei Mate 60 Pro",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass",
+        "protection": "Kunlun Glass",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.82 inch",
+          "type": "OLED",
+          "resolution": "FHD+",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Kirin 9000S",
+        "ram": "12GB",
+        "storage": "256GB / 512GB",
+        "rear_camera": "50MP + 12MP + 48MP",
+        "front_camera": "13MP",
+        "battery": "5000mAh",
+        "charging": "88W wired",
+        "weight": "225g",
+        "os": "HarmonyOS"
+      }
+    }
+  ]
+}

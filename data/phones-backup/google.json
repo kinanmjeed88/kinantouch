@@ -1,0 +1,64 @@
+{
+  "brand": "Google",
+  "country": "USA",
+  "phones": [
+    {
+      "id": "pixel-8",
+      "name": "Google Pixel 8",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass",
+        "protection": "Gorilla Glass Victus",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.2 inch",
+          "type": "OLED",
+          "resolution": "FHD+",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Google Tensor G3",
+        "ram": "8GB",
+        "storage": "128GB / 256GB",
+        "rear_camera": "50MP + 12MP",
+        "front_camera": "10.5MP",
+        "battery": "4575mAh",
+        "charging": "27W wired / wireless",
+        "weight": "187g",
+        "os": "Android"
+      }
+    },
+    {
+      "id": "pixel-8-pro",
+      "name": "Google Pixel 8 Pro",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Matte Glass",
+        "protection": "Gorilla Glass Victus 2",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.7 inch",
+          "type": "LTPO OLED",
+          "resolution": "QHD+",
+          "refresh_rate": "1–120Hz"
+        },
+        "chipset": "Google Tensor G3",
+        "ram": "12GB",
+        "storage": "128GB / 256GB / 512GB",
+        "rear_camera": "50MP + 48MP + 48MP",
+        "front_camera": "10.5MP",
+        "battery": "5050mAh",
+        "charging": "30W wired / wireless",
+        "weight": "213g",
+        "os": "Android"
+      }
+    }
+  ]
+}

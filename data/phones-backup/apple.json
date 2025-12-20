@@ -1,0 +1,64 @@
+{
+  "brand": "Apple",
+  "country": "USA",
+  "phones": [
+    {
+      "id": "iphone-15",
+      "name": "iPhone 15",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Color-infused Glass",
+        "protection": "Ceramic Shield",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.1 inch",
+          "type": "OLED",
+          "resolution": "Super Retina XDR",
+          "refresh_rate": "60Hz"
+        },
+        "chipset": "Apple A16 Bionic",
+        "ram": "6GB",
+        "storage": "128GB / 256GB / 512GB",
+        "rear_camera": "48MP + 12MP",
+        "front_camera": "12MP",
+        "battery": "3349mAh",
+        "charging": "USB-C wired / MagSafe wireless",
+        "weight": "171g",
+        "os": "iOS"
+      }
+    },
+    {
+      "id": "iphone-15-pro-max",
+      "name": "iPhone 15 Pro Max",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Titanium",
+        "back": "Textured Glass",
+        "protection": "Ceramic Shield",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.7 inch",
+          "type": "OLED",
+          "resolution": "Super Retina XDR",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Apple A17 Pro",
+        "ram": "8GB",
+        "storage": "256GB / 512GB / 1TB",
+        "rear_camera": "48MP + 12MP + 12MP",
+        "front_camera": "12MP",
+        "battery": "4422mAh",
+        "charging": "USB-C wired / MagSafe wireless",
+        "weight": "221g",
+        "os": "iOS"
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "brand": "Oppo",
+  "country": "China",
+  "phones": [
+    {
+      "id": "find-x7-ultra",
+      "name": "Oppo Find X7 Ultra",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Ceramic / Vegan Leather",
+        "protection": "Gorilla Glass Victus 2",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.82 inch",
+          "type": "LTPO AMOLED",
+          "resolution": "QHD+",
+          "refresh_rate": "1–120Hz"
+        },
+        "chipset": "Snapdragon 8 Gen 3",
+        "ram": "16GB",
+        "storage": "512GB",
+        "rear_camera": "50MP + 50MP + 50MP + 50MP",
+        "front_camera": "32MP",
+        "battery": "5000mAh",
+        "charging": "100W wired / 50W wireless",
+        "weight": "221g",
+        "os": "Android"
+      }
+    }
+  ]
+}

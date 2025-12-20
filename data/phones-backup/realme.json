@@ -1,0 +1,35 @@
+{
+  "brand": "Realme",
+  "country": "China",
+  "phones": [
+    {
+      "id": "realme-gt-5-pro",
+      "name": "Realme GT 5 Pro",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass / Vegan Leather",
+        "protection": "Gorilla Glass",
+        "water_resistance": "IP64"
+      },
+      "specs": {
+        "display": {
+          "size": "6.78 inch",
+          "type": "AMOLED",
+          "resolution": "QHD+",
+          "refresh_rate": "144Hz"
+        },
+        "chipset": "Snapdragon 8 Gen 3",
+        "ram": "16GB",
+        "storage": "512GB",
+        "rear_camera": "50MP + 8MP + 50MP",
+        "front_camera": "32MP",
+        "battery": "5400mAh",
+        "charging": "100W wired",
+        "weight": "218g",
+        "os": "Android"
+      }
+    }
+  ]
+}
