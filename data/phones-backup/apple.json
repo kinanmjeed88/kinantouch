@@ -1,11 +1,41 @@
+
 {
   "brand": "Apple",
   "country": "USA",
   "phones": [
     {
-      "id": "iphone-15",
-      "name": "iPhone 15",
-      "release_year": 2024,
+      "id": "iphone-17-pro-max",
+      "name": "iPhone 17 Pro Max",
+      "release_year": 2025,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Titanium Alloy",
+        "back": "Textured Matte Glass",
+        "protection": "Ceramic Shield 3",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.9 inch",
+          "type": "LTPO OLED",
+          "resolution": "Super Retina XDR",
+          "refresh_rate": "1–120Hz ProMotion"
+        },
+        "chipset": "Apple A19 Pro (2nm)",
+        "ram": "12GB",
+        "storage": "256GB / 512GB / 1TB",
+        "rear_camera": "48MP (Main) + 48MP (UW) + 48MP (Tele 5x)",
+        "front_camera": "24MP",
+        "battery": "4800mAh",
+        "charging": "USB-C / MagSafe",
+        "weight": "220g",
+        "os": "iOS 19"
+      }
+    },
+    {
+      "id": "iphone-17",
+      "name": "iPhone 17",
+      "release_year": 2025,
       "category": "Flagship",
       "manufacturing": {
         "frame": "Aluminum",
@@ -15,20 +45,20 @@
       },
       "specs": {
         "display": {
-          "size": "6.1 inch",
-          "type": "OLED",
+          "size": "6.3 inch",
+          "type": "LTPO OLED",
           "resolution": "Super Retina XDR",
-          "refresh_rate": "60Hz"
+          "refresh_rate": "120Hz ProMotion"
         },
-        "chipset": "Apple A16 Bionic",
-        "ram": "6GB",
+        "chipset": "Apple A19",
+        "ram": "8GB",
         "storage": "128GB / 256GB / 512GB",
         "rear_camera": "48MP + 12MP",
-        "front_camera": "12MP",
-        "battery": "3349mAh",
-        "charging": "USB-C wired / MagSafe wireless",
-        "weight": "171g",
-        "os": "iOS"
+        "front_camera": "24MP",
+        "battery": "3500mAh",
+        "charging": "USB-C / MagSafe",
+        "weight": "170g",
+        "os": "iOS 19"
       }
     },
     {

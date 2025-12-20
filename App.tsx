@@ -35,19 +35,6 @@ const CACHE_KEYS = {
   PHONE_NEWS: 'techtouch_phones_strict_v2'
 };
 
-const BRAND_COLORS: Record<string, string> = {
-  SAMSUNG: '#3b82f6',
-  APPLE: '#94a3b8',
-  GOOGLE: '#f43f5e',
-  XIAOMI: '#f97316',
-  HUAWEI: '#ef4444',
-  ONEPLUS: '#ef4444',
-  OPPO: '#22c55e',
-  VIVO: '#3b82f6',
-  REALME: '#eab308',
-  SONY: '#64748b',
-};
-
 const SPEC_ORDER = [
   'network', 'launch', 'body', 'display', 'platform', 
   'memory', 'main_camera', 'selfie_camera', 'sound', 
@@ -95,9 +82,10 @@ ${MASTER_RULES}
 // 🟡 أوامر الهواتف (للذاكرة فقط - هواتف قديمة)
 const PHONES_MEMORY_PROMPT = `
 ${MASTER_RULES}
-هذا الطلب خاص بهاتف قديم (2023 وما قبل).
+هذا الطلب خاص بهاتف (سواء قديم أو 2025).
 مهمتك:
-- عرض مواصفات عامة ودقيقة من ذاكرتك.
+- عرض مواصفات عامة ودقيقة.
+- بالنسبة لهواتف 2025 (مثل S25/iPhone 17)، استخدم أحدث التسريبات المؤكدة.
 - لا تذكر السعر نهائياً.
 المخرجات المطلوبة JSON حصراً:
 { "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة", "specifications": { "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "battery": "..." }, "official_link": "", "pros": [], "cons": [] }
@@ -107,7 +95,7 @@ ${MASTER_RULES}
 const COMPARISON_ANALYSIS_PROMPT = `
 ${MASTER_RULES}
 هذا الطلب خاص بقسم "المقارنة".
-لديك بيانات هاتفين (إما من ملفات أو ذاكرة).
+لديك بيانات هاتفين.
 مهمتك:
 - كتابة خلاصة وصفية ومنطقية.
 - الصيغة الإلزامية: "الهاتفان يقدمان أداءً قويًا، ولكن يتفوق {الهاتف A} في {الميزة}، بينما يتميز {الهاتف B} بـ {الميزة الأخرى}."
@@ -123,8 +111,34 @@ ${MASTER_RULES}
 المخرجات JSON: { "title": "الاسم", "summary": ["وصف"], "official_link": "الرابط" }
 `;
 
+// 🟣 أوامر الإحصائيات الذكية
+const STATS_AI_PROMPT = `
+${MASTER_RULES}
+هذا الطلب خاص بقسم "الإحصائيات الذكية".
+المستخدم سيطرح سؤالاً أو عدة أسئلة في جملة واحدة (مثلاً: "عدد سكان العالم ونسبة الماء واليابسة").
+مهمتك:
+1. تحليل الجملة وتقسيمها إلى مواضيع منفصلة إذا لزم الأمر.
+2. لكل موضوع، قم بتوليد بيانات إحصائية تقديرية دقيقة (استناداً لمعلوماتك العامة).
+3. حدد نوع المخطط المناسب (pie للنسب المئوية، bar للمقارنات الكمية).
+
+المخرجات JSON حصراً بالتنسيق التالي:
+{
+  "main_insight": "جملة تلخيصية عامة للإجابة بالعربية",
+  "charts": [
+    {
+      "title": "عنوان المخطط الأول",
+      "description": "شرح بسيط",
+      "chart_type": "pie" OR "bar",
+      "data": [
+        { "label": "اسم العنصر", "value": 70, "displayValue": "70%", "color": "#HEX" },
+        { "label": "اسم العنصر", "value": 30, "displayValue": "30%", "color": "#HEX" }
+      ]
+    }
+  ]
+}
+`;
+
 // --- LOCAL DB LOGIC ---
-// Force cast to BrandFile[] to avoid strict type mismatch with inferred JSON types
 const allBrandFiles: BrandFile[] = [
   samsungData, appleData, googleData, xiaomiData, huaweiData, 
   oneplusData, oppoData, vivoData, realmeData, sonyData
@@ -134,7 +148,6 @@ const getAllLocalPhones = (): LocalPhone[] => {
   return allBrandFiles.flatMap(brand => brand.phones);
 };
 
-// Map LocalPhone JSON format to PhoneNewsItem format used by UI
 const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
   let displayStr = "";
   if (local.specs.display.main && local.specs.display.cover) {
@@ -163,16 +176,11 @@ const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
   };
 };
 
-// --- Helper Functions for Search ---
 const normalize = (text: string) => {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/[^a-z0-9]+/g, "") // Remove spaces for strict matching
     .trim();
-};
-
-const tokenize = (text: string) => {
-  return normalize(text).split(" ").filter(Boolean);
 };
 
 const App: React.FC = () => {
@@ -280,25 +288,27 @@ const App: React.FC = () => {
 
   // --- Search Logic ---
   const searchPhonesInLocalDB = (query: string): LocalPhone[] => {
-    const queryTokens = tokenize(query);
-    if (queryTokens.length === 0) return [];
+    const normalizedQuery = normalize(query);
+    if (!normalizedQuery) return [];
 
+    // Precise matching first for IDs (e.g. "galaxys25")
+    // Then partial matching for name
     return localPhonesDB.filter(phone => {
-      const phoneText = normalize(
-        [
-          phone.name,
-          phone.id,
-          phone.category
-        ].join(" ")
-      );
-
-      return queryTokens.some(token => phoneText.includes(token));
+       const normId = normalize(phone.id);
+       const normName = normalize(phone.name);
+       return normId.includes(normalizedQuery) || normName.includes(normalizedQuery);
+    }).sort((a, b) => {
+        // Prioritize closer match length (e.g. S25 over S25 Ultra if query is "S25")
+        const qLen = normalizedQuery.length;
+        const aDiff = Math.abs(normalize(a.name).length - qLen);
+        const bDiff = Math.abs(normalize(b.name).length - qLen);
+        return aDiff - bDiff;
     });
   };
 
   const findPhoneInLocalDB = (query: string): LocalPhone | undefined => {
-     // Fallback for single strict match (used in comparison)
-     return searchPhonesInLocalDB(query)[0];
+     const matches = searchPhonesInLocalDB(query);
+     return matches.length > 0 ? matches[0] : undefined;
   };
 
   const handlePhoneSearch = async () => {
@@ -307,43 +317,23 @@ const App: React.FC = () => {
     setPhoneSearchResult(null);
     setError(null);
 
-    // 1. Check Local Files (2024-2025) using fuzzy/token logic
     const localMatches = searchPhonesInLocalDB(phoneSearchQuery);
 
     if (localMatches.length > 0) {
-      // Display results in the list view (phoneNews)
       setPhoneNews(localMatches.map(mapLocalToDisplay));
-      // Switch to list view effectively by setting search result to null?
-      // No, UI logic: if phoneSearchResult is set, it shows detail. 
-      // If user wants list of results, we should populate phoneNews and clear phoneSearchResult.
       setPhoneSearchResult(null);
-      setCurrentPage(1); // Reset pagination for search results
+      setCurrentPage(1);
       setSearchLoading(false);
       return;
     }
 
-    // 2. If not found locally, Ask AI strict question
+    // AI Fallback for truly missing phones
     try {
-      const checkPrompt = `
-        User asked for phone: "${phoneSearchQuery}".
-        Task:
-        1. Identify the phone's release year.
-        2. If release year >= 2024: Return JSON { "status": "MODERN_NOT_FOUND" }.
-        3. If release year <= 2023: Return JSON { "status": "OLD", "data": { ... specs from memory ... } }.
-        4. If unknown/fake: Return JSON { "status": "UNKNOWN" }.
-        
-        Use the exact structure from PHONES_MEMORY_PROMPT for "data" if status is OLD.
-        DO NOT include price.
-      `;
-      
-      const result = await callGroqAPI(checkPrompt, PHONES_MEMORY_PROMPT);
-
-      if (result.status === "OLD" && result.data) {
-        setPhoneSearchResult(result.data);
-      } else if (result.status === "MODERN_NOT_FOUND") {
-        setError("هذا الهاتف حديث ولكنه غير متوفر في قاعدة بيانات Techtouch الحالية.");
+      const result = await callGroqAPI(`User asked for phone: "${phoneSearchQuery}". Return specs.`, PHONES_MEMORY_PROMPT);
+      if (result && result.phone_name) {
+        setPhoneSearchResult(result);
       } else {
-        setError("لم يتم العثور على نتائج مطابقة.");
+        setError("لم يتم العثور على نتائج.");
       }
     } catch (e: any) {
       setError("لا تتوفر بيانات حالياً.");
@@ -358,7 +348,6 @@ const App: React.FC = () => {
     setError(null);
     setComparisonResult(null);
 
-    // Get Data for both phones (using best match)
     const p1Local = findPhoneInLocalDB(phone1);
     const p2Local = findPhoneInLocalDB(phone2);
 
@@ -366,14 +355,14 @@ const App: React.FC = () => {
     let p2Data: any = p2Local ? mapLocalToDisplay(p2Local) : null;
 
     try {
-      // If any phone is missing from local DB, ask AI if it's old
+      // AI Fallback if local DB misses a phone
       if (!p1Data) {
-         const r = await callGroqAPI(`Phone: ${phone1}. If >= 2024 return {status:"MODERN_MISSING"}, else return {status:"OLD", data: ...specs}`, PHONES_MEMORY_PROMPT);
-         if (r.status === "OLD") p1Data = r.data;
+         const r = await callGroqAPI(`Phone: ${phone1}`, PHONES_MEMORY_PROMPT);
+         if (r.phone_name) p1Data = r;
       }
       if (!p2Data) {
-         const r = await callGroqAPI(`Phone: ${phone2}. If >= 2024 return {status:"MODERN_MISSING"}, else return {status:"OLD", data: ...specs}`, PHONES_MEMORY_PROMPT);
-         if (r.status === "OLD") p2Data = r.data;
+         const r = await callGroqAPI(`Phone: ${phone2}`, PHONES_MEMORY_PROMPT);
+         if (r.phone_name) p2Data = r;
       }
 
       if (!p1Data || !p2Data) {
@@ -382,7 +371,6 @@ const App: React.FC = () => {
         return;
       }
 
-      // Now we have data for both. Let AI write the verdict based on THIS data only.
       const comparisonInput = JSON.stringify({ phone1: p1Data, phone2: p2Data });
       const verdictResult = await callGroqAPI(`Compare strictly based on this data: ${comparisonInput}`, COMPARISON_ANALYSIS_PROMPT);
 
@@ -442,7 +430,6 @@ const App: React.FC = () => {
             setAiNews(mappedAI);
         }
       } else if (type === 'phone-news') {
-        // FOR PHONE NEWS: SHOW ALL PHONES FROM DB sorted by release year (desc) then ID
         const allPhones = [...localPhonesDB].sort((a, b) => b.release_year - a.release_year);
         const mappedPhones = allPhones.map(mapLocalToDisplay);
         saveToCache(cacheKey, { smartphones: mappedPhones });
@@ -482,64 +469,26 @@ const App: React.FC = () => {
   };
 
   const handleStatsRequest = async () => {
-     // Activate Real Statistics Logic
+     if (!statsQuery.trim()) return;
      setStatsLoading(true);
      setStatsResult(null);
 
-     // Simulate processing delay for better UX
-     setTimeout(() => {
-        try {
-          // Default: Calculate Brand Distribution if query is empty or generic
-          // Or filter by brand if query matches a brand name
-          
-          let filteredPhones = localPhonesDB;
-          let title = "توزيع الشركات";
-          let desc = "نسبة الهواتف لكل شركة في قاعدة البيانات (موديلات 2024-2025)";
-
-          if (statsQuery.trim()) {
-            const token = normalize(statsQuery);
-            const matches = localPhonesDB.filter(p => normalize(p.id).includes(token) || normalize(p.name).includes(token));
-            if (matches.length > 0) {
-               // If searching for a brand/model, show stats about it?
-               // For simplicity, let's keep showing the full distribution but maybe highlight?
-               // Let's implement Brand Share logic as the primary feature requested "Activate Stats"
-            }
-          }
-
-          const brandCounts: Record<string, number> = {};
-          filteredPhones.forEach(phone => {
-            const brand = phone.id.split('-')[0].toUpperCase();
-            brandCounts[brand] = (brandCounts[brand] || 0) + 1;
-          });
-
-          const total = filteredPhones.length;
-          const chartData = Object.entries(brandCounts).map(([brand, count]) => ({
-            label: brand,
-            value: (count / total) * 100,
-            displayValue: `${count} هواتف`,
-            color: BRAND_COLORS[brand] || '#94a3b8'
-          })).sort((a,b) => b.value - a.value);
-
-          setStatsResult({
-             title: title,
-             description: desc,
-             chart_type: 'bar',
-             data: chartData,
-             insight: `إجمالي الهواتف المسجلة: ${total}`
-          });
-          
-        } catch (e) {
-          setError("حدث خطأ أثناء حساب الإحصائيات");
-        } finally {
-          setStatsLoading(false);
-        }
-     }, 600);
+     try {
+       const result = await callGroqAPI(statsQuery, STATS_AI_PROMPT);
+       if (result && result.charts && Array.isArray(result.charts)) {
+         setStatsResult(result);
+       } else {
+         setError("لم أتمكن من توليد إحصائيات لهذا السؤال.");
+       }
+     } catch (e) {
+       setError("حدث خطأ أثناء معالجة السؤال.");
+     } finally {
+       setStatsLoading(false);
+     }
   };
 
-  // Helper for single line title style
   const titleStyle = "font-black text-white leading-none mb-3 whitespace-nowrap overflow-hidden text-[clamp(1rem,4vw,1.25rem)]";
   
-  // Reusable Share Toolbar
   const ShareToolbar = ({ title, text, url }: { title: string, text: string, url: string }) => {
     const fullText = `${title}\n\n${text}\n\n🔗 ${url || 'techtouch-hub'}`;
     const handleShare = (platform: 'copy' | 'tg' | 'fb' | 'insta') => {
@@ -558,7 +507,6 @@ const App: React.FC = () => {
     );
   };
 
-  // Pagination Logic
   const indexOfLastPhone = currentPage * itemsPerPage;
   const indexOfFirstPhone = indexOfLastPhone - itemsPerPage;
   const currentPhones = phoneNews.slice(indexOfFirstPhone, indexOfLastPhone);
@@ -570,13 +518,11 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right pb-24" dir="rtl">
       
-      {/* Background Orbs */}
       <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-600 rounded-full blur-[140px] -translate-y-1/2 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-600 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/4"></div>
       </div>
       
-      {/* Error Toast */}
       {error && (
         <div className="fixed top-20 left-4 right-4 z-[100] bg-rose-500/95 text-white p-4 rounded-2xl shadow-xl backdrop-blur-md animate-fade-in border border-rose-400/50 flex flex-col gap-2">
             <div className="flex items-start gap-3">
@@ -587,10 +533,8 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content Area */}
       <div className="relative z-10 max-w-lg mx-auto px-4 min-h-screen flex flex-col">
         
-        {/* Header */}
         <header className="pt-10 pb-4 flex flex-col items-center justify-center sticky top-0 z-40 bg-[#0f172a]/80 backdrop-blur-xl border-b border-slate-800/50 -mx-4 px-4 transition-all">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 bg-slate-800 rounded-xl border border-white/10 shadow-lg overflow-hidden shrink-0">
@@ -609,7 +553,6 @@ const App: React.FC = () => {
 
         <main className="flex-grow py-6 animate-fade-in">
           
-          {/* HOME TAB */}
           {activeTab === 'home' && (
              <div className="space-y-4 pb-4">
                 {telegramChannels.map((ch, i) => <ChannelCard key={ch.id} channel={ch} index={i} />)}
@@ -617,7 +560,6 @@ const App: React.FC = () => {
              </div>
           )}
           
-          {/* INFO TAB */}
           {activeTab === 'info' && (
             <div className="space-y-4 animate-fade-in">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
@@ -638,7 +580,6 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {/* TOOLS TAB */}
           {activeTab === 'tools' && activeToolView === 'main' && (
             <div className="grid grid-cols-2 gap-3 animate-fade-in">
                <button onClick={() => fetchToolData('ai-news')} className="col-span-2 group p-6 bg-slate-800/40 border border-violet-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
@@ -667,22 +608,20 @@ const App: React.FC = () => {
                    <div className="flex items-center gap-4">
                      <div className="w-10 h-10 bg-pink-500/20 rounded-xl flex items-center justify-center text-pink-400"><BarChart3 className="w-6 h-6" /></div>
                      <div className="text-right w-full overflow-hidden">
-                        <h3 className="font-bold text-lg text-white truncate w-full">إحصائيات</h3>
-                        <p className="text-xs text-slate-400 truncate w-full">رسوم بيانية وتحليلات السوق</p>
+                        <h3 className="font-bold text-lg text-white truncate w-full">إحصائيات ذكية</h3>
+                        <p className="text-xs text-slate-400 truncate w-full">تحليل بياني بالذكاء الاصطناعي</p>
                      </div>
                    </div>
                </button>
             </div>
           )}
 
-          {/* Sub-Tools Views */}
           {activeTab === 'tools' && activeToolView !== 'main' && (
              <div className="space-y-4 animate-slide-up pb-8">
                 <button onClick={() => { setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setAiSearchResult(null); }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
                    <ChevronLeft className="w-5 h-5" /> <span className="text-sm font-bold">رجوع</span>
                 </button>
 
-                {/* AI News View */}
                 {activeToolView === 'ai-news' && (
                   <div className="space-y-4">
                      <div className="flex gap-2">
@@ -730,7 +669,6 @@ const App: React.FC = () => {
                   </div>
                 )}
                 
-                {/* Phone Search & News View */}
                 {activeToolView === 'phone-news' && (
                   <div className="space-y-4">
                      <div className="flex gap-2">
@@ -783,7 +721,6 @@ const App: React.FC = () => {
                               </div>
                            ))}
 
-                           {/* Pagination Controls */}
                            {totalPages > 1 && (
                               <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-700/50">
                                  <button onClick={prevPage} disabled={currentPage === 1} className="p-2 rounded-xl bg-slate-800 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"><ChevronRight className="w-5 h-5"/></button>
@@ -796,7 +733,6 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                {/* Comparison View */}
                 {activeToolView === 'comparison' && (
                    <div className="space-y-4">
                       <div className="bg-slate-800/40 p-5 rounded-2xl space-y-3 border border-slate-700/50">
@@ -833,27 +769,38 @@ const App: React.FC = () => {
                    </div>
                 )}
 
-                {/* Stats View */}
                 {activeToolView === 'stats' && (
                    <div className="space-y-4">
                       <div className="flex gap-2">
-                        <input value={statsQuery} onChange={e=>setStatsQuery(e.target.value)} placeholder="أكثر الهواتف مبيعا..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm outline-none" />
+                        <input value={statsQuery} onChange={e=>setStatsQuery(e.target.value)} placeholder="مثال: عدد سكان العالم ونسبة الماء..." className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 text-sm outline-none" />
                         <button onClick={handleStatsRequest} className="bg-pink-500 text-white p-3 rounded-xl">{statsLoading ? <Loader2 className="animate-spin w-5 h-5"/> : <PieChart className="w-5 h-5"/>}</button>
                       </div>
+                      
                       {statsResult && (
-                         <div className="bg-slate-800/40 p-4 rounded-2xl border border-pink-500/20">
-                            <h3 className="font-bold text-white mb-4 truncate">{statsResult.title}</h3>
-                            <p className="text-xs text-slate-400 mb-4">{statsResult.description}</p>
-                            {statsResult.data.map((d,i)=>(
-                               <div key={i} className="mb-3">
-                                  <div className="flex justify-between text-xs mb-1"><span className="text-slate-300 truncate max-w-[70%]">{d.label}</span><span className="text-pink-400 font-bold">{d.displayValue}</span></div>
-                                  <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div style={{width:`${d.value}%`, backgroundColor:d.color}} className="h-full rounded-full"/></div>
-                               </div>
-                            ))}
-                            <div className="mt-4 pt-4 border-t border-slate-700/50">
-                               <p className="text-xs text-center text-slate-500">{statsResult.insight}</p>
+                         <div className="space-y-4 animate-fade-in">
+                            <div className="bg-slate-800/40 p-3 rounded-xl border border-pink-500/10">
+                               <p className="text-sm font-bold text-pink-300 text-center">{statsResult.main_insight}</p>
                             </div>
-                            <ShareToolbar title={statsResult.title} text={statsResult.description} url="" />
+                            
+                            {statsResult.charts.map((chart, chartIndex) => (
+                              <div key={chartIndex} className="bg-slate-800/40 p-4 rounded-2xl border border-pink-500/20 shadow-lg">
+                                  <h3 className="font-bold text-white mb-2 truncate">{chart.title}</h3>
+                                  <p className="text-xs text-slate-400 mb-4">{chart.description}</p>
+                                  
+                                  {chart.data.map((d,i)=>(
+                                    <div key={i} className="mb-3">
+                                        <div className="flex justify-between text-xs mb-1">
+                                          <span className="text-slate-300 truncate max-w-[70%]">{d.label}</span>
+                                          <span className="text-pink-400 font-bold">{d.displayValue}</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-900 rounded-full overflow-hidden">
+                                          <div style={{width: `${Math.min(d.value, 100)}%`, backgroundColor: d.color || '#ec4899'}} className="h-full rounded-full transition-all duration-1000"/>
+                                        </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            ))}
+                            <ShareToolbar title="إحصائيات Techtouch" text={statsResult.main_insight} url="" />
                          </div>
                       )}
                    </div>
@@ -864,7 +811,6 @@ const App: React.FC = () => {
         </main>
       </div>
 
-      {/* --- BOTTOM NAVIGATION BAR --- */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#0f172a]/95 backdrop-blur-xl border-t border-slate-800 pb-safe z-50 h-[80px] px-6 shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
         <div className="flex justify-between items-center h-full max-w-lg mx-auto">
            <button onClick={() => { setActiveTab('home'); setActiveToolView('main'); }} className={`flex flex-col items-center justify-center gap-1.5 w-16 transition-all duration-300 ${activeTab === 'home' ? 'text-sky-400 -translate-y-1' : 'text-slate-500 hover:text-slate-300'}`}>
@@ -879,7 +825,6 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Install Prompt Banner */}
       {showInstallBanner && (
         <div className="fixed bottom-[90px] left-4 right-4 z-[100] animate-slide-up">
           <div className="bg-gradient-to-r from-sky-900/90 to-slate-900/90 border border-sky-500/30 backdrop-blur-md p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3">

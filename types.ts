@@ -47,18 +47,22 @@ export interface PhoneComparisonResult {
   verdict: string;
 }
 
-export interface StatsResult {
+// Updated to support multiple charts per query
+export interface StatsChart {
   title: string;
   description: string;
-  total_samples?: string;
-  chart_type: 'bar' | 'list';
+  chart_type: 'bar' | 'pie' | 'list';
   data: {
     label: string;
-    value: number; // Percentage 0-100
-    displayValue: string; // e.g., "50M Units" or "25%"
+    value: number; // Percentage 0-100 or raw value
+    displayValue: string; // e.g., "50M" or "25%"
     color?: string;
   }[];
-  insight: string;
+}
+
+export interface StatsResult {
+  main_insight: string;
+  charts: StatsChart[];
 }
 
 // Interfaces for Local Database
