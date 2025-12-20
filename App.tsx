@@ -5,7 +5,7 @@ import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
 import { 
   Home, Info, 
-  Wrench, Cpu, Smartphone, Loader2, ChevronLeft, 
+  Wrench, Cpu, Smartphone, Loader2, ChevronLeft, ChevronRight,
   AlertCircle, Send,
   Download, X, Search,
   BarChart3, PieChart,
@@ -15,7 +15,7 @@ import {
 import { TelegramIcon } from './components/Icons'; 
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
 
-// Importing Local Data (Strict Source for 2024-2025)
+// Importing Local Data (Strict Source for 2024-2025) using Relative Paths
 import samsungData from './data/phones-backup/samsung.json';
 import appleData from './data/phones-backup/apple.json';
 import googleData from './data/phones-backup/google.json';
@@ -33,6 +33,19 @@ type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 const CACHE_KEYS = {
   AI_NEWS: 'techtouch_ai_strict_v2',
   PHONE_NEWS: 'techtouch_phones_strict_v2'
+};
+
+const BRAND_COLORS: Record<string, string> = {
+  SAMSUNG: '#3b82f6',
+  APPLE: '#94a3b8',
+  GOOGLE: '#f43f5e',
+  XIAOMI: '#f97316',
+  HUAWEI: '#ef4444',
+  ONEPLUS: '#ef4444',
+  OPPO: '#22c55e',
+  VIVO: '#3b82f6',
+  REALME: '#eab308',
+  SONY: '#64748b',
 };
 
 const SPEC_ORDER = [
@@ -172,6 +185,10 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [phone1, setPhone1] = useState('');
   const [phone2, setPhone2] = useState('');
   const [comparisonResult, setComparisonResult] = useState<PhoneComparisonResult | null>(null);
@@ -296,6 +313,11 @@ const App: React.FC = () => {
     if (localMatches.length > 0) {
       // Display results in the list view (phoneNews)
       setPhoneNews(localMatches.map(mapLocalToDisplay));
+      // Switch to list view effectively by setting search result to null?
+      // No, UI logic: if phoneSearchResult is set, it shows detail. 
+      // If user wants list of results, we should populate phoneNews and clear phoneSearchResult.
+      setPhoneSearchResult(null);
+      setCurrentPage(1); // Reset pagination for search results
       setSearchLoading(false);
       return;
     }
@@ -396,7 +418,10 @@ const App: React.FC = () => {
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
     if (cached) {
       if (type === 'ai-news') setAiNews(cached.ai_news || []);
-      else if (type === 'phone-news') setPhoneNews(cached.smartphones || []);
+      else if (type === 'phone-news') {
+        setPhoneNews(cached.smartphones || []);
+        setCurrentPage(1);
+      }
       setLoading(false);
       return;
     }
@@ -417,11 +442,12 @@ const App: React.FC = () => {
             setAiNews(mappedAI);
         }
       } else if (type === 'phone-news') {
-        // FOR PHONE NEWS: Show a random selection from LOCAL DB to ensure no fake news
-        const shuffled = [...localPhonesDB].sort(() => 0.5 - Math.random()).slice(0, 5);
-        const mappedPhones = shuffled.map(mapLocalToDisplay);
+        // FOR PHONE NEWS: SHOW ALL PHONES FROM DB sorted by release year (desc) then ID
+        const allPhones = [...localPhonesDB].sort((a, b) => b.release_year - a.release_year);
+        const mappedPhones = allPhones.map(mapLocalToDisplay);
         saveToCache(cacheKey, { smartphones: mappedPhones });
         setPhoneNews(mappedPhones);
+        setCurrentPage(1);
       }
     } catch (err: any) {
       setError(err.message || "لا تتوفر بيانات.");
@@ -456,22 +482,58 @@ const App: React.FC = () => {
   };
 
   const handleStatsRequest = async () => {
-     if (!statsQuery.trim()) return;
+     // Activate Real Statistics Logic
      setStatsLoading(true);
      setStatsResult(null);
-     
-     // Placeholder logic since focus is on phone DBs, but ensures variables are used
-     setTimeout(() => { 
-       setStatsLoading(false); 
-       const mockResult: StatsResult = {
-          title: "إحصائيات السوق",
-          description: "هذه الميزة قيد التحديث لربطها بقاعدة البيانات المحلية.",
-          chart_type: 'bar',
-          data: [{ label: "جاري العمل", value: 100, displayValue: "100%", color: "#38bdf8" }],
-          insight: "يرجى المحاولة لاحقاً."
-       };
-       setStatsResult(mockResult);
-     }, 1000);
+
+     // Simulate processing delay for better UX
+     setTimeout(() => {
+        try {
+          // Default: Calculate Brand Distribution if query is empty or generic
+          // Or filter by brand if query matches a brand name
+          
+          let filteredPhones = localPhonesDB;
+          let title = "توزيع الشركات";
+          let desc = "نسبة الهواتف لكل شركة في قاعدة البيانات (موديلات 2024-2025)";
+
+          if (statsQuery.trim()) {
+            const token = normalize(statsQuery);
+            const matches = localPhonesDB.filter(p => normalize(p.id).includes(token) || normalize(p.name).includes(token));
+            if (matches.length > 0) {
+               // If searching for a brand/model, show stats about it?
+               // For simplicity, let's keep showing the full distribution but maybe highlight?
+               // Let's implement Brand Share logic as the primary feature requested "Activate Stats"
+            }
+          }
+
+          const brandCounts: Record<string, number> = {};
+          filteredPhones.forEach(phone => {
+            const brand = phone.id.split('-')[0].toUpperCase();
+            brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+          });
+
+          const total = filteredPhones.length;
+          const chartData = Object.entries(brandCounts).map(([brand, count]) => ({
+            label: brand,
+            value: (count / total) * 100,
+            displayValue: `${count} هواتف`,
+            color: BRAND_COLORS[brand] || '#94a3b8'
+          })).sort((a,b) => b.value - a.value);
+
+          setStatsResult({
+             title: title,
+             description: desc,
+             chart_type: 'bar',
+             data: chartData,
+             insight: `إجمالي الهواتف المسجلة: ${total}`
+          });
+          
+        } catch (e) {
+          setError("حدث خطأ أثناء حساب الإحصائيات");
+        } finally {
+          setStatsLoading(false);
+        }
+     }, 600);
   };
 
   // Helper for single line title style
@@ -495,6 +557,15 @@ const App: React.FC = () => {
       </div>
     );
   };
+
+  // Pagination Logic
+  const indexOfLastPhone = currentPage * itemsPerPage;
+  const indexOfFirstPhone = indexOfLastPhone - itemsPerPage;
+  const currentPhones = phoneNews.slice(indexOfFirstPhone, indexOfLastPhone);
+  const totalPages = Math.ceil(phoneNews.length / itemsPerPage);
+
+  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right pb-24" dir="rtl">
@@ -700,7 +771,7 @@ const App: React.FC = () => {
                         </div>
                      ) : (
                         <div className="space-y-3">
-                           {phoneNews.map((phone, idx) => (
+                           {currentPhones.map((phone, idx) => (
                               <div key={idx} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-all cursor-pointer group" onClick={() => setPhoneSearchResult(phone)}>
                                  <div className="flex justify-between items-center mb-2 overflow-hidden">
                                     <h3 className="font-bold text-white text-base">{phone.phone_name}</h3>
@@ -711,6 +782,15 @@ const App: React.FC = () => {
                                  </div>
                               </div>
                            ))}
+
+                           {/* Pagination Controls */}
+                           {totalPages > 1 && (
+                              <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-700/50">
+                                 <button onClick={prevPage} disabled={currentPage === 1} className="p-2 rounded-xl bg-slate-800 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"><ChevronRight className="w-5 h-5"/></button>
+                                 <span className="text-xs font-bold text-slate-400">صفحة {currentPage} من {totalPages}</span>
+                                 <button onClick={nextPage} disabled={currentPage === totalPages} className="p-2 rounded-xl bg-slate-800 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"><ChevronLeft className="w-5 h-5"/></button>
+                              </div>
+                           )}
                         </div>
                      )}
                   </div>
@@ -770,6 +850,9 @@ const App: React.FC = () => {
                                   <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div style={{width:`${d.value}%`, backgroundColor:d.color}} className="h-full rounded-full"/></div>
                                </div>
                             ))}
+                            <div className="mt-4 pt-4 border-t border-slate-700/50">
+                               <p className="text-xs text-center text-slate-500">{statsResult.insight}</p>
+                            </div>
                             <ShareToolbar title={statsResult.title} text={statsResult.description} url="" />
                          </div>
                       )}
