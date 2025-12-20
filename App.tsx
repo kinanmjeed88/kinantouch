@@ -10,7 +10,7 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal, CheckCircle2
+  RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
 import { AINewsData, CompanyNews, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
