@@ -15,12 +15,25 @@ export interface SocialData {
 }
 
 export interface AINewsItem {
-  tool_name?: string;
   title: string;
   summary: string[];
-  date?: string;
+  date: string;
   official_link: string;
-  source?: string; // Added source field
+}
+
+export interface AICategoryData {
+  id: string;
+  name: string;
+  last_updated: number; // Timestamp
+  items: AINewsItem[];
+}
+
+export interface AINewsFeed {
+  openai: AICategoryData;
+  google: AICategoryData;
+  meta: AICategoryData;
+  microsoft: AICategoryData;
+  anthropic: AICategoryData;
 }
 
 export interface PhoneNewsItem {
