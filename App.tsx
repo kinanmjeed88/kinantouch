@@ -154,6 +154,28 @@ const normalize = (text: string) => {
   return text.toLowerCase().trim();
 };
 
+const AdUnit = () => {
+  useEffect(() => {
+    try {
+      (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+      (window as any).adsbygoogle.push({});
+    } catch (e) {
+      console.error("AdSense Error:", e);
+    }
+  }, []);
+
+  return (
+    <div className="w-full flex justify-center my-8 overflow-hidden min-h-[100px]" aria-label="Advertisement">
+        <ins className="adsbygoogle"
+             style={{display: 'block', width: '100%'}}
+             data-ad-client="ca-pub-XXXXXXXXXXXX"
+             data-ad-slot="1234567890"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [imageError, setImageError] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -590,6 +612,9 @@ const App: React.FC = () => {
                     <p>باستخدامك للموقع فإنك توافق على سياسة الخصوصية هذه، ونحتفظ بحق تحديثها عند الحاجة.</p>
                  </div>
               </div>
+
+              {/* Google AdSense Unit */}
+              <AdUnit />
 
               {/* Footer Links */}
               <div className="text-center pt-4 pb-8 space-y-4">
