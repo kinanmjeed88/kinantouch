@@ -31,9 +31,8 @@ type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-news' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  // Changed key to force refresh on new version
-  AI_NEWS: 'techtouch_ai_static_v1', 
-  PHONE_NEWS: 'techtouch_phones_strict_v3'
+  AI_NEWS: 'techtouch_ai_static_v2', 
+  PHONE_NEWS: 'techtouch_phones_strict_v4'
 };
 
 const SPEC_ORDER = [
@@ -66,13 +65,15 @@ const MASTER_RULES = `
 `;
 
 // 🟡 أوامر الهواتف (للبحث فقط في حال عدم التوفر محلياً)
+// تم توحيد المفاتيح لتطابق Local DB
 const PHONES_MEMORY_PROMPT = `
 ${MASTER_RULES}
 هذا الطلب خاص بهاتف.
-مهمتك: عرض مواصفات عامة ودقيقة. لهواتف 2025 استخدم أحدث التسريبات المؤكدة.
-لا تذكر السعر.
+مهمتك: عرض مواصفات عامة ودقيقة.
+يجب استخدام المفاتيح التالية حصراً في specifications:
+display, platform, memory, main_camera, selfie_camera, battery, body, sound, comms, misc
 المخرجات JSON:
-{ "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة", "specifications": { ... }, "official_link": "", "pros": [], "cons": [] }
+{ "phone_name": "الاسم", "brand": "الشركة", "release_date": "السنة", "specifications": { "display": "...", "platform": "...", "memory": "...", "main_camera": "...", "battery": "...", "body": "..." }, "official_link": "", "pros": [], "cons": [] }
 `;
 
 // 🔵 أوامر المقارنة
@@ -87,19 +88,13 @@ ${MASTER_RULES}
 const STATS_AI_PROMPT = `
 ${MASTER_RULES}
 أنت خبير إحصائي دقيق جداً.
-المستخدم سيطرح سؤالاً (قد يكون معقداً أو يحتوي تواريخ مستقبلية).
-خطوات المعالجة الصارمة:
-1. **التحقق الزمني**: تحقق من التاريخ في السؤال (مثلاً 2028). إذا كان في المستقبل، يجب أن توضح في "description" أن هذه "توقعات مستقبلية".
-2. **التحليل**: قسم السؤال إذا كان يحتوي على شقين.
-3. **الدقة**: لا تخترع أرقاماً عشوائية. استخدم تقديرات منطقية من مصادر موثوقة.
-4. **التصور**: اختر المخطط المناسب.
 المخرجات JSON حصراً:
 {
-  "main_insight": "جملة تلخيصية دقيقة جداً ومباشرة بالعربية",
+  "main_insight": "جملة تلخيصية دقيقة",
   "charts": [
     {
-      "title": "العنوان الدقيق",
-      "description": "شرح يوضح السنة والمصدر",
+      "title": "العنوان",
+      "description": "شرح",
       "chart_type": "pie" | "bar",
       "data": [
         { "label": "العنصر", "value": 50, "displayValue": "50%", "color": "#HEX" }
@@ -128,7 +123,6 @@ const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
      displayStr = `${local.specs.display.size || ''} ${local.specs.display.type || ''}, ${local.specs.display.resolution || ''}, ${local.specs.display.refresh_rate || ''}`.replace(/,\s*,/g, ',').trim();
   }
 
-  // تقدير بيانات افتراضية منطقية للبيانات غير الموجودة في ملف JSON لضمان عدم ظهور حقول فارغة
   const defaultNetwork = "5G / 4G LTE / Wi-Fi 6E/7";
   const defaultSound = "Stereo Speakers, High-Res Audio";
   const defaultComms = "Bluetooth 5.3/5.4, NFC, USB Type-C";
@@ -158,10 +152,7 @@ const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {
 };
 
 const normalize = (text: string) => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "")
-    .trim();
+  return text.toLowerCase().trim();
 };
 
 const App: React.FC = () => {
@@ -263,20 +254,24 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Search Logic ---
+  // --- IMPROVED Search Logic ---
+  // البحث عبر الكلمات المفتاحية لضمان العثور على الهاتف حتى لو اختلفت المسافات
+  // مثال: "samsung s25" سيجد "Samsung Galaxy S25"
   const searchPhonesInLocalDB = (query: string): LocalPhone[] => {
-    const normalizedQuery = normalize(query);
-    if (!normalizedQuery) return [];
+    if (!query) return [];
+    
+    // تقسيم البحث إلى كلمات (tokens)
+    const queryParts = normalize(query).split(/\s+/).filter(q => q.length > 0);
+    
+    if (queryParts.length === 0) return [];
 
     return localPhonesDB.filter(phone => {
-       const normId = normalize(phone.id);
-       const normName = normalize(phone.name);
-       return normId.includes(normalizedQuery) || normName.includes(normalizedQuery);
+       const targetText = (normalize(phone.name) + " " + normalize(phone.id));
+       // يجب أن تكون كل كلمة من البحث موجودة في اسم الهاتف
+       return queryParts.every(part => targetText.includes(part));
     }).sort((a, b) => {
-        const qLen = normalizedQuery.length;
-        const aDiff = Math.abs(normalize(a.name).length - qLen);
-        const bDiff = Math.abs(normalize(b.name).length - qLen);
-        return aDiff - bDiff;
+        // ترتيب النتائج: الأقصر اسماً (الأكثر دقة) يظهر أولاً
+        return a.name.length - b.name.length;
     });
   };
 
@@ -294,7 +289,6 @@ const App: React.FC = () => {
     const localMatches = searchPhonesInLocalDB(phoneSearchQuery);
 
     if (localMatches.length > 0) {
-      // Use the improved mapping function to ensure all fields are present
       setPhoneSearchResult(mapLocalToDisplay(localMatches[0]));
       setSearchLoading(false);
       return;
@@ -323,12 +317,10 @@ const App: React.FC = () => {
     const p1Local = findPhoneInLocalDB(phone1);
     const p2Local = findPhoneInLocalDB(phone2);
 
-    // Use mapped data primarily
     let p1Data: any = p1Local ? mapLocalToDisplay(p1Local) : null;
     let p2Data: any = p2Local ? mapLocalToDisplay(p2Local) : null;
 
     try {
-      // Fallback to AI only if not found locally
       if (!p1Data) {
          const r = await callGroqAPI(`Phone: ${phone1}`, PHONES_MEMORY_PROMPT);
          if (r.phone_name) p1Data = r;
@@ -344,25 +336,24 @@ const App: React.FC = () => {
         return;
       }
 
-      // Generate verdict using AI but pass the full local data context
       const comparisonInput = JSON.stringify({ phone1: p1Data, phone2: p2Data });
       let verdict = "كلا الهاتفين متميزان.";
       try {
           const verdictResult = await callGroqAPI(`Compare strictly based on this data: ${comparisonInput}`, COMPARISON_ANALYSIS_PROMPT);
           if (verdictResult.verdict) verdict = verdictResult.verdict;
-      } catch (e) { console.log("AI Verdict failed, showing table only"); }
+      } catch (e) { console.log("AI Verdict failed"); }
 
+      // استخدام ?. للوصول الآمن للبيانات لتجنب الخطأ في حال اختلاف المصدر
       setComparisonResult({
         phone1_name: p1Data.phone_name,
         phone2_name: p2Data.phone_name,
         comparison_points: [
-            { feature: "الشاشة", phone1_val: p1Data.specifications.display, phone2_val: p2Data.specifications.display, winner: 0 },
-            { feature: "المعالج", phone1_val: p1Data.specifications.platform, phone2_val: p2Data.specifications.platform, winner: 0 },
-            { feature: "الذاكرة", phone1_val: p1Data.specifications.memory, phone2_val: p2Data.specifications.memory, winner: 0 },
-            { feature: "الكاميرا", phone1_val: p1Data.specifications.main_camera, phone2_val: p2Data.specifications.main_camera, winner: 0 },
-            { feature: "البطارية", phone1_val: p1Data.specifications.battery, phone2_val: p2Data.specifications.battery, winner: 0 },
-             // Added extra comparison points to prevent "empty" feel
-            { feature: "الهيكل", phone1_val: p1Data.specifications.body, phone2_val: p2Data.specifications.body, winner: 0 }
+            { feature: "الشاشة", phone1_val: p1Data.specifications?.display || "-", phone2_val: p2Data.specifications?.display || "-", winner: 0 },
+            { feature: "المعالج", phone1_val: p1Data.specifications?.platform || "-", phone2_val: p2Data.specifications?.platform || "-", winner: 0 },
+            { feature: "الذاكرة", phone1_val: p1Data.specifications?.memory || "-", phone2_val: p2Data.specifications?.memory || "-", winner: 0 },
+            { feature: "الكاميرا", phone1_val: p1Data.specifications?.main_camera || "-", phone2_val: p2Data.specifications?.main_camera || "-", winner: 0 },
+            { feature: "البطارية", phone1_val: p1Data.specifications?.battery || "-", phone2_val: p2Data.specifications?.battery || "-", winner: 0 },
+            { feature: "الهيكل", phone1_val: p1Data.specifications?.body || "-", phone2_val: p2Data.specifications?.body || "-", winner: 0 }
         ],
         verdict: verdict
       });
@@ -383,7 +374,9 @@ const App: React.FC = () => {
     if (type === 'ai-news') cacheKey = CACHE_KEYS.AI_NEWS;
     else if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
 
+    // FIX: If force is true, we skip the cache check
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
+    
     if (cached) {
       if (type === 'ai-news') setAiNews(cached.ai_news || []);
       else if (type === 'phone-news') {
@@ -396,10 +389,9 @@ const App: React.FC = () => {
 
     try {
       if (type === 'ai-news') {
-        // --- STATIC FETCH LOGIC FOR GITHUB PAGES ---
-        // Add timestamp to bust browser cache
-        const res = await fetch('./ai-news.json?t=' + Date.now());
-        if (!res.ok) throw new Error("Failed to load news");
+        // إضافة timestamp لإجبار المتصفح على جلب الملف الجديد
+        const res = await fetch(`./ai-news.json?t=${Date.now()}`);
+        if (!res.ok) throw new Error("فشل تحميل الأخبار");
         const data = await res.json();
         
         saveToCache(cacheKey, { ai_news: data });
@@ -407,7 +399,6 @@ const App: React.FC = () => {
 
       } else if (type === 'phone-news') {
         const allPhones = [...localPhonesDB].sort((a, b) => b.release_year - a.release_year);
-        // Use the improved mapper here too
         const mappedPhones = allPhones.map(mapLocalToDisplay);
         saveToCache(cacheKey, { smartphones: mappedPhones });
         setPhoneNews(mappedPhones);
