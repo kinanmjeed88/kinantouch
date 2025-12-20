@@ -497,29 +497,27 @@ const App: React.FC = () => {
 
       <div className="relative z-10 max-w-lg mx-auto px-4 min-h-screen flex flex-col">
         
-        {/* Updated Header Layout */}
-        <header className="pt-8 pb-6 flex flex-col items-center justify-center sticky top-0 z-40 bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-800/50 -mx-4 px-4 transition-all mb-4">
-          <div className="flex flex-col items-center gap-3">
-             {/* Profile Image First */}
-             <div className="w-20 h-20 bg-slate-800 rounded-full border-2 border-sky-500/20 shadow-2xl overflow-hidden shrink-0 p-0.5">
-                {profileConfig.image && !imageError ? (
-                  <img src={profileConfig.image} alt="Profile" className="w-full h-full object-cover rounded-full" onError={() => setImageError(true)} />
-                ) : (
-                  <span className="w-full h-full flex items-center justify-center text-xl font-black text-sky-400">{profileConfig.initials}</span>
-                )}
-             </div>
-             {/* Text Stacked Below */}
-             <div className="text-center space-y-1">
-                <h1 className="text-2xl font-black tracking-tighter text-white drop-shadow-md font-sans">Techtouch</h1>
-                <p className="text-xs text-sky-400 font-bold tracking-widest uppercase bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/10">كنان مجيد الصائغ</p>
-             </div>
-          </div>
-        </header>
-
         <main className="flex-grow py-2 animate-fade-in">
           
           {activeTab === 'home' && (
              <div className="space-y-3 pb-4">
+                {/* Header Section - Moved inside Home tab, removed sticky, reduced sizes */}
+                <div className="pt-8 pb-4 flex flex-col items-center justify-center -mx-4 px-4 mb-2">
+                  <div className="flex flex-col items-center gap-2">
+                     <div className="w-16 h-16 bg-slate-800 rounded-full border-2 border-sky-500/20 shadow-xl overflow-hidden shrink-0 p-0.5">
+                        {profileConfig.image && !imageError ? (
+                          <img src={profileConfig.image} alt="Profile" className="w-full h-full object-cover rounded-full" onError={() => setImageError(true)} />
+                        ) : (
+                          <span className="w-full h-full flex items-center justify-center text-lg font-black text-sky-400">{profileConfig.initials}</span>
+                        )}
+                     </div>
+                     <div className="text-center space-y-0.5">
+                        <h1 className="text-xl font-black tracking-tighter text-white drop-shadow-md font-sans">Techtouch</h1>
+                        <p className="text-[10px] text-sky-400 font-bold tracking-widest uppercase bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/10">كنان مجيد الصائغ</p>
+                     </div>
+                  </div>
+                </div>
+
                 {/* Channels Title Section */}
                 <div className="flex items-center gap-2 mb-4 px-2 opacity-80">
                     <div className="h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent flex-1"></div>
@@ -533,7 +531,7 @@ const App: React.FC = () => {
           )}
           
           {activeTab === 'info' && (
-            <div className="space-y-4 animate-fade-in">
+            <div className="space-y-4 animate-fade-in pt-6">
               <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                 <div className="space-y-6 text-right">
                   
@@ -572,7 +570,7 @@ const App: React.FC = () => {
           )}
 
           {activeTab === 'tools' && activeToolView === 'main' && (
-            <div className="grid grid-cols-2 gap-3 animate-fade-in">
+            <div className="grid grid-cols-2 gap-3 animate-fade-in pt-6">
                <button onClick={() => fetchToolData('ai-directory')} className="col-span-2 group p-6 bg-slate-800/40 border border-amber-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
                    <div className="absolute top-0 right-0 p-4 opacity-10"><Command size={80} /></div>
                    <div className="relative z-10 flex flex-col items-start gap-3">
@@ -609,7 +607,7 @@ const App: React.FC = () => {
           )}
 
           {activeTab === 'tools' && activeToolView !== 'main' && (
-             <div className="space-y-4 animate-slide-up pb-8">
+             <div className="space-y-4 animate-slide-up pb-8 pt-6">
                 <button onClick={() => { 
                     setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setToolSearchQuery('');
                 }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
