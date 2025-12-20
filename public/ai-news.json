@@ -3,7 +3,7 @@
   "openai": {
     "id": "openai",
     "name": "OpenAI (GPT)",
-    "last_updated": 1715500000000,
+    "last_updated": 1736640000000,
     "items": [
       {
         "title": "إطلاق نموذج o1 بقدرات استدلال فائقة",
@@ -70,7 +70,7 @@
   "google": {
     "id": "google",
     "name": "Google (Gemini)",
-    "last_updated": 1715500000000,
+    "last_updated": 1736640000000,
     "items": [
       {
         "title": "إطلاق Gemini 1.5 Pro للعامة",
@@ -137,7 +137,7 @@
   "meta": {
     "id": "meta",
     "name": "Meta AI (Llama)",
-    "last_updated": 1715500000000,
+    "last_updated": 1736640000000,
     "items": [
       {
         "title": "Llama 3.2: نماذج متعددة الوسائط",
@@ -204,7 +204,7 @@
   "microsoft": {
     "id": "microsoft",
     "name": "Microsoft (Copilot)",
-    "last_updated": 1715500000000,
+    "last_updated": 1736640000000,
     "items": [
       {
         "title": "Copilot+ PC: حقبة جديدة من الحواسيب",
@@ -271,7 +271,7 @@
   "anthropic": {
     "id": "anthropic",
     "name": "Anthropic (Claude)",
-    "last_updated": 1715500000000,
+    "last_updated": 1736640000000,
     "items": [
       {
         "title": "Claude 3.5 Sonnet: المعيار الجديد",
