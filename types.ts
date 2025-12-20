@@ -14,28 +14,6 @@ export interface SocialData {
   url: string;
 }
 
-export interface NewsItem {
-  id: string;
-  title: string;
-  summary: string; // Changed to string for easier normalized handling, or keep array if needed. Let's stick to string for normalized summaries.
-  date: string;
-  url: string;
-  category?: 'research' | 'release' | 'update' | 'safety' | 'other';
-}
-
-export interface CompanyNews {
-  id: string;
-  name: string;
-  logo_key: 'openai' | 'google' | 'meta' | 'microsoft' | 'anthropic' | 'other';
-  last_updated: string; // ISO 8601 String for easier comparison
-  items: NewsItem[];
-}
-
-export interface AINewsData {
-  generated_at: string;
-  companies: CompanyNews[];
-}
-
 export interface AITool {
   id: string;
   name: string;
@@ -45,10 +23,6 @@ export interface AITool {
   description: string[];
   free_note?: string;
   official_url: string;
-}
-
-export interface AIToolsData {
-  tools: AITool[];
 }
 
 export interface PhoneNewsItem {

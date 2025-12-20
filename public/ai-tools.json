@@ -50,6 +50,38 @@
       "official_url": "https://claude.ai"
     },
     {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "category": "Open Source Models",
+      "country": "China",
+      "company": "DeepSeek",
+      "description": [
+        "نماذج لغوية متقدمة مفتوحة المصدر.",
+        "تركز على الاستدلال والبرمجة.",
+        "مستخدمة على نطاق واسع.",
+        "مناسبة للمطورين.",
+        "تدعم المجتمع المفتوح."
+      ],
+      "free_note": "مفتوحة المصدر ومجانية.",
+      "official_url": "https://chat.deepseek.com"
+    },
+    {
+      "id": "kimi",
+      "name": "Kimi",
+      "category": "Conversational AI",
+      "country": "China",
+      "company": "Moonshot AI",
+      "description": [
+        "مساعد ذكاء اصطناعي للمحادثة وفهم النصوص.",
+        "يدعم مستندات طويلة وتحليلها.",
+        "شائع في السوق الصيني.",
+        "مناسب للطلاب والمحترفين.",
+        "يتميز بسرعة الاستجابة."
+      ],
+      "free_note": "يتوفر استخدام مجاني.",
+      "official_url": "https://kimi.moonshot.cn"
+    },
+    {
       "id": "copilot",
       "name": "Microsoft Copilot",
       "category": "Productivity",
@@ -223,6 +255,36 @@
       "official_url": "https://github.com/features/copilot"
     },
     {
+      "id": "cursor",
+      "name": "Cursor",
+      "category": "Coding Assistants",
+      "country": "USA",
+      "company": "Cursor",
+      "description": [
+        "محرر أكواد مدعوم بالذكاء الاصطناعي.",
+        "يساعد في كتابة الكود.",
+        "يدعم مشاريع كاملة.",
+        "مناسب للمطورين.",
+        "سريع وخفيف."
+      ],
+      "official_url": "https://cursor.sh"
+    },
+    {
+      "id": "manus",
+      "name": "Manus",
+      "category": "Productivity",
+      "country": "Global",
+      "company": "Manus",
+      "description": [
+        "أداة إنتاجية مدعومة بالذكاء الاصطناعي.",
+        "تساعد في تنظيم العمل.",
+        "مناسبة للفرق.",
+        "تتكامل مع أدوات أخرى.",
+        "تركز على تبسيط المهام."
+      ],
+      "official_url": "https://manus.ai"
+    },
+    {
       "id": "leonardo",
       "name": "Leonardo.ai",
       "category": "Image Generation",
@@ -239,7 +301,7 @@
       "official_url": "https://leonardo.ai"
     },
     {
-      "id": "sunu",
+      "id": "suno",
       "name": "Suno",
       "category": "Music Generation",
       "country": "USA",
@@ -285,6 +347,21 @@
       ],
       "free_note": "خطة مجانية سخية جداً.",
       "official_url": "https://lumalabs.ai/dream-machine"
+    },
+    {
+      "id": "veo",
+      "name": "Veo",
+      "category": "Video Generation",
+      "country": "USA",
+      "company": "Google",
+      "description": [
+        "منصة لتوليد الفيديو عالي الجودة.",
+        "تفهم الأوامر السينمائية.",
+        "منافس قوي في المجال.",
+        "مناسبة لصناع المحتوى.",
+        "مدعومة بتقنيات Google."
+      ],
+      "official_url": "https://deepmind.google"
     },
     {
       "id": "meta-ai",
@@ -445,22 +522,6 @@
       "official_url": "https://chat.mistral.ai"
     },
     {
-      "id": "deepseek",
-      "name": "DeepSeek",
-      "category": "Coding & Chat",
-      "country": "China",
-      "company": "DeepSeek",
-      "description": [
-        "نموذج قوي جداً في البرمجة (Coder).",
-        "مفتوح المصدر ومنافس للنماذج الكبرى.",
-        "دعم ممتاز للغة الصينية والإنجليزية.",
-        "نافذة سياق كبيرة.",
-        "مجاني للاستخدام البحثي."
-      ],
-      "free_note": "مجاني ومفتوح المصدر.",
-      "official_url": "https://chat.deepseek.com"
-    },
-    {
       "id": "qwen",
       "name": "Qwen (Tongyi Qianwen)",
       "category": "Conversational AI",
@@ -617,6 +678,22 @@
       ],
       "free_note": "تجربة مجانية محدودة.",
       "official_url": "https://replicate.com"
+    },
+    {
+      "id": "replit-ai",
+      "name": "Replit AI",
+      "category": "Coding Assistants",
+      "country": "USA",
+      "company": "Replit",
+      "description": [
+        "مساعد برمجي داخل Replit.",
+        "يساعد في إنشاء التطبيقات.",
+        "يدعم التعلم.",
+        "مناسب للمبتدئين.",
+        "مدمج مع المنصة."
+      ],
+      "free_note": "يتوفر استخدام مجاني.",
+      "official_url": "https://replit.com"
     },
     {
       "id": "zapier",
@@ -777,6 +854,52 @@
       ],
       "free_note": "مجاني لعدد محدد من الصفحات.",
       "official_url": "https://www.chatpdf.com"
+    },
+    {
+      "id": "baichuan",
+      "name": "Baichuan",
+      "category": "Open Source Models",
+      "country": "China",
+      "company": "Baichuan AI",
+      "description": [
+        "نماذج لغوية صينية متقدمة.",
+        "مفتوحة المصدر.",
+        "مستخدمة في البحث.",
+        "مناسبة للمطورين.",
+        "تدعم اللغة الصينية."
+      ],
+      "free_note": "مفتوحة المصدر.",
+      "official_url": "https://www.baichuan-ai.com"
+    },
+    {
+      "id": "sensechat",
+      "name": "SenseChat",
+      "category": "Conversational AI",
+      "country": "China",
+      "company": "SenseTime",
+      "description": [
+        "مساعد محادثة يعتمد على الرؤية.",
+        "يدعم النصوص والصور.",
+        "مستخدم في حلول الأعمال.",
+        "مناسب للشركات.",
+        "مدعوم بتقنيات SenseTime."
+      ],
+      "official_url": "https://chat.sensetime.com"
+    },
+    {
+      "id": "iflytek-voice",
+      "name": "iFlytek Voice",
+      "category": "Audio & Voice",
+      "country": "China",
+      "company": "iFlytek",
+      "description": [
+        "أدوات تحويل النص إلى صوت.",
+        "تدعم اللغة الصينية بدقة.",
+        "مستخدمة في التعليم.",
+        "مناسبة للأعمال.",
+        "تشتهر بجودة الصوت."
+      ],
+      "official_url": "https://www.iflytek.com"
     },
     {
       "id": "viggle",

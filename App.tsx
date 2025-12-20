@@ -5,15 +5,15 @@ import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
 import { 
   Home, Info, 
-  Wrench, Cpu, Smartphone, Loader2, ChevronLeft, ChevronRight,
+  Wrench, Smartphone, Loader2, ChevronLeft, ChevronRight,
   AlertCircle, Send,
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye, RefreshCw, Globe, Sparkles, MessageSquare, Zap, Terminal, Command
+  RotateCcw, Eye, Command
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
-import { AINewsData, CompanyNews, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool } from './types';
+import { PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool } from './types';
 
 // Importing Local Data - Using relative paths
 import samsungData from './data/phones-backup/samsung.json';
@@ -28,11 +28,9 @@ import realmeData from './data/phones-backup/realme.json';
 import sonyData from './data/phones-backup/sony.json';
 
 type TabType = 'home' | 'info' | 'tools';
-type ToolView = 'main' | 'ai-news-categories' | 'ai-feed' | 'ai-directory' | 'comparison' | 'phone-news' | 'stats';
+type ToolView = 'main' | 'ai-directory' | 'comparison' | 'phone-news' | 'stats';
 
 const CACHE_KEYS = {
-  AI_NEWS: 'techtouch_ai_data_v2', 
-  AI_LAST_VIEW: 'techtouch_ai_view_timestamps',
   AI_TOOLS: 'techtouch_ai_tools_v1',
   PHONE_NEWS: 'techtouch_phones_strict_v4'
 };
@@ -160,14 +158,11 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [activeToolView, setActiveToolView] = useState<ToolView>('main');
   
-  // New State for Array-based AI Data
-  const [aiData, setAiData] = useState<AINewsData | null>(null);
-  const [selectedCompany, setSelectedCompany] = useState<CompanyNews | null>(null);
-  const [lastViewed, setLastViewed] = useState<Record<string, string>>({}); // Store ISO strings
-  
   // AI Tools Directory State
   const [aiTools, setAiTools] = useState<AITool[]>([]);
   const [toolSearchQuery, setToolSearchQuery] = useState('');
+  const [toolPage, setToolPage] = useState(1);
+  const toolsPerPage = 20;
   
   const [phoneNews, setPhoneNews] = useState<PhoneNewsItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -194,14 +189,6 @@ const App: React.FC = () => {
   const localPhonesDB = useMemo(() => getAllLocalPhones(), []);
 
   useEffect(() => {
-    // Load last viewed timestamps
-    const viewed = localStorage.getItem(CACHE_KEYS.AI_LAST_VIEW);
-    if (viewed) {
-      try {
-        setLastViewed(JSON.parse(viewed));
-      } catch(e) { console.error("Error parsing view history"); }
-    }
-
     const handler = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -226,35 +213,14 @@ const App: React.FC = () => {
     if (!cached) return null;
     try {
       const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 6 hours for AI news, 24h for phones, 24h for tools
-      const validity = key === CACHE_KEYS.AI_NEWS ? 6 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+      // Cache valid for 24h
+      const validity = 24 * 60 * 60 * 1000;
       return (Date.now() - timestamp < validity) ? data : null;
     } catch (e) { return null; }
   };
 
   const saveToCache = (key: string, data: any) => {
     localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
-  };
-
-  // Update view timestamp when opening a company feed
-  const handleOpenCompany = (company: CompanyNews) => {
-    const nowISO = new Date().toISOString();
-    const newViewed = { ...lastViewed, [company.id]: nowISO };
-    setLastViewed(newViewed);
-    localStorage.setItem(CACHE_KEYS.AI_LAST_VIEW, JSON.stringify(newViewed));
-    setSelectedCompany(company);
-    setActiveToolView('ai-feed');
-  };
-
-  // Logic: Green dot if server updated time > user last viewed time
-  const hasNewUpdates = (company: CompanyNews) => {
-    const lastViewISO = lastViewed[company.id];
-    if (!lastViewISO) return true; // Never viewed -> New
-    
-    const lastViewDate = new Date(lastViewISO);
-    const updateDate = new Date(company.last_updated);
-    
-    return updateDate > lastViewDate;
   };
 
   const callGroqAPI = async (userContent: string, systemInstruction: string) => {
@@ -399,35 +365,25 @@ const App: React.FC = () => {
     setActiveToolView(type);
     
     let cacheKey = '';
-    if (type === 'ai-news-categories') cacheKey = CACHE_KEYS.AI_NEWS;
-    else if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
+    if (type === 'phone-news') cacheKey = CACHE_KEYS.PHONE_NEWS;
     else if (type === 'ai-directory') cacheKey = CACHE_KEYS.AI_TOOLS;
 
     const cached = (!force && cacheKey) ? getCachedData(cacheKey) : null;
     
     if (cached) {
-      if (type === 'ai-news-categories') setAiData(cached.ai_data || null);
-      else if (type === 'phone-news') {
+      if (type === 'phone-news') {
         setPhoneNews(cached.smartphones || []);
         setCurrentPage(1);
       } else if (type === 'ai-directory') {
         setAiTools(cached.tools || []);
+        setToolPage(1);
       }
       setLoading(false);
       return;
     }
 
     try {
-      if (type === 'ai-news-categories') {
-        // Fetch fresh JSON with timestamp
-        const res = await fetch(`./ai-news.json?t=${Date.now()}`);
-        if (!res.ok) throw new Error("فشل تحميل الأخبار");
-        const data = await res.json();
-        
-        saveToCache(cacheKey, { ai_data: data });
-        setAiData(data);
-
-      } else if (type === 'phone-news') {
+      if (type === 'phone-news') {
         const allPhones = [...localPhonesDB].sort((a, b) => b.release_year - a.release_year);
         const mappedPhones = allPhones.map(mapLocalToDisplay);
         saveToCache(cacheKey, { smartphones: mappedPhones });
@@ -439,6 +395,7 @@ const App: React.FC = () => {
         const data = await res.json();
         saveToCache(cacheKey, { tools: data.tools });
         setAiTools(data.tools);
+        setToolPage(1);
       }
     } catch (err: any) {
       setError(err.message || "لا تتوفر بيانات.");
@@ -468,12 +425,23 @@ const App: React.FC = () => {
 
   // AI Tools Filtering
   const filteredTools = aiTools.filter(tool => 
-    tool.name.toLowerCase().includes(toolSearchQuery.toLowerCase())
+    tool.name.toLowerCase().includes(toolSearchQuery.toLowerCase()) || 
+    tool.description.some(d => d.includes(toolSearchQuery)) ||
+    tool.category.toLowerCase().includes(toolSearchQuery.toLowerCase())
   );
   
   const toolSuggestions = toolSearchQuery.length > 0 
-    ? aiTools.filter(tool => tool.name.toLowerCase().includes(toolSearchQuery.toLowerCase())).slice(0, 5) 
+    ? aiTools.filter(tool => tool.name.toLowerCase().includes(toolSearchQuery.toLowerCase()) || tool.description.some(d => d.includes(toolSearchQuery))).slice(0, 5) 
     : [];
+
+  // Pagination for Tools
+  const indexOfLastTool = toolPage * toolsPerPage;
+  const indexOfFirstTool = indexOfLastTool - toolsPerPage;
+  const currentTools = filteredTools.slice(indexOfFirstTool, indexOfLastTool);
+  const totalToolPages = Math.ceil(filteredTools.length / toolsPerPage);
+
+  const nextToolPage = () => setToolPage(prev => Math.min(prev + 1, totalToolPages));
+  const prevToolPage = () => setToolPage(prev => Math.max(prev - 1, 1));
 
   const titleStyle = "font-black text-white leading-none mb-3 whitespace-nowrap overflow-hidden text-[clamp(1rem,4vw,1.25rem)]";
   
@@ -481,16 +449,21 @@ const App: React.FC = () => {
     const fullText = `${title}\n\n${text}\n\n🔗 ${url || 'techtouch-hub'}`;
     const handleShare = (platform: 'copy' | 'tg' | 'fb' | 'insta') => {
       if (platform === 'copy') { navigator.clipboard.writeText(fullText); alert('تم نسخ المحتوى!'); }
-      else if (platform === 'tg') window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(fullText)}`, '_blank');
-      else if (platform === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+      else if (platform === 'tg') window.open(`https://t.me/share/url?url=${encodeURIComponent(url || 'https://t.me/techtouch7')}&text=${encodeURIComponent(fullText)}`, '_blank');
+      else if (platform === 'fb') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url || 'https://t.me/techtouch7')}`, '_blank');
       else if (platform === 'insta') { navigator.clipboard.writeText(fullText); alert('تم نسخ النص للانستجرام'); window.open('https://instagram.com', '_blank'); }
     };
     return (
-      <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-slate-700/30">
-        <button onClick={() => handleShare('copy')} className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600 text-slate-300 transition-colors" title="نسخ"><Copy className="w-4 h-4" /></button>
-        <button onClick={() => handleShare('tg')} className="p-2 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 transition-colors" title="تيليكرام"><TelegramIcon className="w-4 h-4" /></button>
-        <button onClick={() => handleShare('fb')} className="p-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 transition-colors" title="فيسبوك"><Facebook className="w-4 h-4" /></button>
-        <button onClick={() => handleShare('insta')} className="p-2 rounded-lg bg-pink-600/20 hover:bg-pink-600/30 text-pink-400 transition-colors" title="انستجرام"><Instagram className="w-4 h-4" /></button>
+      <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-slate-700/30">
+        <button onClick={() => handleShare('copy')} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-600 text-slate-300 text-xs font-bold transition-colors">
+            <Copy className="w-3.5 h-3.5" />
+            <span>نسخ كامل المحتوى</span>
+        </button>
+        <div className="flex gap-2">
+            <button onClick={() => handleShare('tg')} className="p-2 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 transition-colors" title="تيليكرام"><TelegramIcon className="w-4 h-4" /></button>
+            <button onClick={() => handleShare('fb')} className="p-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 transition-colors" title="فيسبوك"><Facebook className="w-4 h-4" /></button>
+            <button onClick={() => handleShare('insta')} className="p-2 rounded-lg bg-pink-600/20 hover:bg-pink-600/30 text-pink-400 transition-colors" title="انستجرام"><Instagram className="w-4 h-4" /></button>
+        </div>
       </div>
     );
   };
@@ -502,28 +475,6 @@ const App: React.FC = () => {
 
   const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
   const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
-
-  const getCategoryIcon = (key: string) => {
-    switch (key) {
-      case 'openai': return <Sparkles className="w-7 h-7" />;
-      case 'google': return <Globe className="w-7 h-7" />;
-      case 'meta': return <Zap className="w-7 h-7" />;
-      case 'microsoft': return <Terminal className="w-7 h-7" />;
-      case 'anthropic': return <MessageSquare className="w-7 h-7" />;
-      default: return <Cpu className="w-7 h-7" />;
-    }
-  };
-
-  const getCategoryColor = (key: string) => {
-    switch (key) {
-      case 'openai': return 'bg-emerald-500/10 text-emerald-400';
-      case 'google': return 'bg-blue-500/10 text-blue-400';
-      case 'meta': return 'bg-sky-500/10 text-sky-400';
-      case 'microsoft': return 'bg-indigo-500/10 text-indigo-400';
-      case 'anthropic': return 'bg-amber-500/10 text-amber-400';
-      default: return 'bg-slate-700/30 text-slate-300';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white selection:bg-sky-500/30 font-sans text-right pb-24" dir="rtl">
@@ -587,7 +538,18 @@ const App: React.FC = () => {
                      <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات.</p>
                      <p className="text-yellow-400 font-bold">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات.</p>
                   </div>
-                  {/* ... rest of info tab content ... */}
+                  
+                  <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-600/30 text-sm space-y-4">
+                      <h4 className="font-bold text-sky-400 border-b border-slate-700 pb-2">طرق البحث المتاحة في قنوات المناقشات:</h4>
+                      <ol className="list-decimal list-inside space-y-2 text-slate-300">
+                          <li>ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</li>
+                          <li>اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).</li>
+                          <li>استخدم أمر البحث بكتابة كلمة "بحث" متبوع باسم التطبيق (مثلاً: بحث ياسين).</li>
+                          <li>للاعلان في القناة تواصل من خلال البوت.</li>
+                      </ol>
+                      <p className="text-rose-400 font-bold text-xs pt-2">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا.</p>
+                  </div>
+
                 </div>
               </div>
                {/* ... footer ... */}
@@ -600,24 +562,13 @@ const App: React.FC = () => {
 
           {activeTab === 'tools' && activeToolView === 'main' && (
             <div className="grid grid-cols-2 gap-3 animate-fade-in">
-               <button onClick={() => fetchToolData('ai-news-categories')} className="col-span-2 group p-6 bg-slate-800/40 border border-violet-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
-                  <div className="absolute top-0 right-0 p-4 opacity-10"><Cpu size={80} /></div>
-                  <div className="relative z-10 flex flex-col items-start gap-2">
-                     <div className="w-10 h-10 bg-violet-500/20 rounded-xl flex items-center justify-center text-violet-400"><Cpu className="w-6 h-6" /></div>
+               <button onClick={() => fetchToolData('ai-directory')} className="col-span-2 group p-6 bg-slate-800/40 border border-amber-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                   <div className="absolute top-0 right-0 p-4 opacity-10"><Command size={80} /></div>
+                   <div className="relative z-10 flex flex-col items-start gap-3">
+                     <div className="w-12 h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400"><Command className="w-7 h-7" /></div>
                      <div className="text-right w-full">
-                        <h3 className="font-bold text-lg text-white truncate w-full">أخبار AI</h3>
-                        <p className="text-xs text-slate-400 truncate w-full">شركات الذكاء الاصطناعي (تحديث كل 6 ساعات)</p>
-                     </div>
-                  </div>
-               </button>
-
-               {/* New AI Tools Directory Button */}
-               <button onClick={() => fetchToolData('ai-directory')} className="col-span-2 group p-5 bg-slate-800/40 border border-amber-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
-                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-400"><Command className="w-6 h-6" /></div>
-                     <div className="text-right w-full overflow-hidden">
-                        <h3 className="font-bold text-lg text-white truncate w-full">دليل أدوات AI</h3>
-                        <p className="text-xs text-slate-400 truncate w-full">أكثر من 50 أداة مصنفة (بحث فوري)</p>
+                        <h3 className="font-bold text-xl text-white truncate w-full">دليل أدوات AI</h3>
+                        <p className="text-sm text-slate-400 truncate w-full">أكثر من 50 أداة (بحث فوري)</p>
                      </div>
                    </div>
                </button>
@@ -649,12 +600,7 @@ const App: React.FC = () => {
           {activeTab === 'tools' && activeToolView !== 'main' && (
              <div className="space-y-4 animate-slide-up pb-8">
                 <button onClick={() => { 
-                    if (activeToolView === 'ai-feed') {
-                        setActiveToolView('ai-news-categories');
-                        setSelectedCompany(null);
-                    } else {
-                        setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setToolSearchQuery('');
-                    }
+                    setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setToolSearchQuery('');
                 }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
                    <ChevronLeft className="w-5 h-5" /> <span className="text-sm font-bold">رجوع</span>
                 </button>
@@ -669,12 +615,15 @@ const App: React.FC = () => {
                             <input 
                                type="text" 
                                value={toolSearchQuery}
-                               onChange={(e) => setToolSearchQuery(e.target.value)}
+                               onChange={(e) => {
+                                   setToolSearchQuery(e.target.value);
+                                   setToolPage(1); // Reset to first page on search
+                               }}
                                placeholder="ابحث عن أداة ذكاء اصطناعي..."
                                className="bg-transparent border-none outline-none text-white w-full text-sm placeholder:text-slate-500"
                             />
                             {toolSearchQuery && (
-                                <button onClick={() => setToolSearchQuery('')} className="p-1 hover:bg-slate-700 rounded-full text-slate-400"><X className="w-4 h-4" /></button>
+                                <button onClick={() => { setToolSearchQuery(''); setToolPage(1); }} className="p-1 hover:bg-slate-700 rounded-full text-slate-400"><X className="w-4 h-4" /></button>
                             )}
                          </div>
 
@@ -684,7 +633,7 @@ const App: React.FC = () => {
                                {toolSuggestions.map(tool => (
                                   <button 
                                     key={tool.id}
-                                    onClick={() => setToolSearchQuery(tool.name)}
+                                    onClick={() => { setToolSearchQuery(tool.name); setToolPage(1); }}
                                     className="w-full text-right px-4 py-3 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white border-b border-slate-700/30 last:border-0 transition-colors flex items-center justify-between group"
                                   >
                                      <span>{tool.name}</span>
@@ -697,8 +646,8 @@ const App: React.FC = () => {
 
                       {/* Tools Grid */}
                       <div className="grid gap-4">
-                         {filteredTools.length > 0 ? (
-                            filteredTools.map(tool => (
+                         {currentTools.length > 0 ? (
+                            currentTools.map(tool => (
                                <div key={tool.id} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 hover:border-amber-500/30 transition-all group relative overflow-hidden">
                                    <div className="flex justify-between items-start mb-3">
                                       <div>
@@ -729,10 +678,16 @@ const App: React.FC = () => {
                                       </div>
                                    )}
 
-                                   <a href={tool.official_url} target="_blank" className="flex items-center justify-center gap-2 w-full bg-slate-700/50 hover:bg-amber-600 hover:text-white text-slate-300 font-bold py-2.5 rounded-xl transition-all text-sm group-hover:shadow-lg group-hover:shadow-amber-900/20">
+                                   <a href={tool.official_url} target="_blank" className="flex items-center justify-center gap-2 w-full bg-slate-700/50 hover:bg-amber-600 hover:text-white text-slate-300 font-bold py-2.5 rounded-xl transition-all text-sm group-hover:shadow-lg group-hover:shadow-amber-900/20 mb-2">
                                       <span>زيارة الموقع الرسمي</span>
                                       <ExternalLink className="w-4 h-4" />
                                    </a>
+                                   
+                                   <ShareToolbar 
+                                      title={tool.name} 
+                                      text={`${tool.description.join('\n')}\n\n${tool.official_url}`} 
+                                      url={tool.official_url} 
+                                   />
                                </div>
                             ))
                          ) : (
@@ -741,79 +696,15 @@ const App: React.FC = () => {
                             </div>
                          )}
                       </div>
-                   </div>
-                )}
-
-                {/* NEW: AI Categories Grid */}
-                {activeToolView === 'ai-news-categories' && (
-                  <div className="space-y-4">
-                     <div className="flex gap-2 items-center justify-between">
-                         <h3 className="text-lg font-bold text-violet-400 px-2">شركات الذكاء الاصطناعي</h3>
-                         <button onClick={() => fetchToolData('ai-news-categories', true)} className="bg-violet-600 hover:bg-violet-500 text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-violet-900/20 gap-2 text-xs font-bold px-3">
-                           {loading ? <Loader2 className="animate-spin w-4 h-4"/> : <RefreshCw className="w-4 h-4"/>}
-                           تحديث
-                         </button>
-                     </div>
-
-                     {loading && !aiData && <div className="text-center py-10"><Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-500" /></div>}
-
-                     {aiData && (
-                         <div className="grid grid-cols-2 gap-3">
-                             {aiData.companies.map((company) => (
-                                 <button 
-                                    key={company.id} 
-                                    onClick={() => handleOpenCompany(company)}
-                                    className="group relative p-5 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:bg-slate-800/60 hover:border-violet-500/30 transition-all flex flex-col items-center gap-3"
-                                 >
-                                     {hasNewUpdates(company) && (
-                                         <span className="absolute top-3 right-3 w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.6)] animate-pulse"></span>
-                                     )}
-                                     
-                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${getCategoryColor(company.logo_key)}`}>
-                                         {getCategoryIcon(company.logo_key)}
-                                     </div>
-                                     <h3 className="font-bold text-sm text-slate-200 group-hover:text-white">{company.name}</h3>
-                                     <p className="text-[10px] text-slate-500">{company.items.length} خبر جديد</p>
-                                 </button>
-                             ))}
-                         </div>
-                     )}
-                  </div>
-                )}
-
-                {/* NEW: AI Feed for Selected Company */}
-                {activeToolView === 'ai-feed' && selectedCompany && (
-                   <div className="space-y-4">
-                       <h2 className="text-xl font-black text-white px-2 border-r-4 border-violet-500 mr-1 flex items-center gap-2">
-                           {getCategoryIcon(selectedCompany.logo_key)}
-                           {selectedCompany.name}
-                       </h2>
-                       <p className="text-xs text-slate-400 px-2 mb-4">آخر 10 تحديثات من المصادر الرسمية</p>
-                       
-                       <div className="space-y-4">
-                           {selectedCompany.items.map((news) => (
-                              <div key={news.id} className="bg-slate-800/40 border border-slate-700/50 hover:border-violet-500/30 rounded-2xl p-5 shadow-sm transition-all relative overflow-hidden">
-                                  {/* Type Tag */}
-                                  <div className="absolute top-0 left-0 bg-slate-700/30 px-3 py-1 rounded-br-xl text-[10px] text-slate-400 uppercase tracking-widest font-bold border-b border-r border-slate-700/30">
-                                     {news.category || 'news'}
-                                  </div>
-
-                                  <div className="flex justify-between items-start mb-2 mt-2">
-                                    <span className="text-[10px] bg-slate-700/50 text-slate-300 px-2 py-0.5 rounded">{selectedCompany.name}</span>
-                                    <span className="text-[10px] text-slate-500">{news.date}</span>
-                                  </div>
-                                  <h3 className={titleStyle}>{news.title}</h3>
-                                  <p className="text-xs text-slate-300 leading-relaxed mb-4 border-b border-slate-700/30 pb-4">
-                                      {news.summary}
-                                  </p>
-                                  <a href={news.url} target="_blank" className="flex items-center justify-center gap-2 w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all mb-1 text-sm shadow-lg shadow-violet-900/20">
-                                    <span>اقرأ المصدر الرسمي</span>
-                                    <ExternalLink className="w-4 h-4" />
-                                  </a>
-                                  <ShareToolbar title={news.title} text={news.summary} url={news.url} />
-                              </div>
-                           ))}
-                       </div>
+                      
+                      {/* Pagination Controls */}
+                      {totalToolPages > 1 && (
+                          <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-700/50">
+                             <button onClick={prevToolPage} disabled={toolPage === 1} className="p-2 rounded-xl bg-slate-800 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"><ChevronRight className="w-5 h-5"/></button>
+                             <span className="text-xs font-bold text-slate-400">صفحة {toolPage} من {totalToolPages}</span>
+                             <button onClick={nextToolPage} disabled={toolPage === totalToolPages} className="p-2 rounded-xl bg-slate-800 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"><ChevronLeft className="w-5 h-5"/></button>
+                          </div>
+                      )}
                    </div>
                 )}
                 
