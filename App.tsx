@@ -531,41 +531,75 @@ const App: React.FC = () => {
           )}
           
           {activeTab === 'info' && (
-            <div className="space-y-4 animate-fade-in pt-6">
-              <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
-                <div className="space-y-6 text-right">
-                  
-                  <div className="flex flex-col gap-4">
-                     <h3 className="text-lg font-bold text-sky-400 text-center">بخصوص بوت الطلبات على التيليكرام</h3>
-                     <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-sky-500/25 group border border-white/10">
-                       <Send className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
-                       <span>الدخول لبوت الطلبات</span>
-                     </a>
-                  </div>
-                   <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 text-sm space-y-3 leading-relaxed text-slate-300">
-                     <p>✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط.</p>
-                     <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات.</p>
-                     <p className="text-yellow-400 font-bold">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات.</p>
-                  </div>
-                  
-                  <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-600/30 text-sm space-y-4">
-                      <h4 className="font-bold text-sky-400 border-b border-slate-700 pb-2">طرق البحث المتاحة في قنوات المناقشات:</h4>
-                      <ol className="list-decimal list-inside space-y-2 text-slate-300">
-                          <li>ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</li>
-                          <li>اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).</li>
-                          <li>استخدم أمر البحث بكتابة كلمة "بحث" متبوع باسم التطبيق (مثلاً: بحث ياسين).</li>
-                          <li>للاعلان في القناة تواصل من خلال البوت.</li>
-                      </ol>
-                      <p className="text-rose-400 font-bold text-xs pt-2">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا.</p>
-                  </div>
+            <div className="space-y-6 animate-fade-in pt-6 pb-8">
+              
+              {/* Bot Section */}
+              <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl backdrop-blur-md space-y-6 text-right">
+                <div className="flex flex-col gap-4">
+                    <h3 className="text-lg font-bold text-sky-400 text-center">بخصوص بوت الطلبات على التيليكرام</h3>
+                    <a href="https://t.me/techtouchAI_bot" target="_blank" className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-sky-500/25 group border border-white/10">
+                      <Send className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                      <span>الدخول لبوت الطلبات</span>
+                    </a>
+                </div>
 
+                <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 text-sm space-y-3 leading-relaxed text-slate-300">
+                    <p>✪ ارسل اسم التطبيق مع صورته او رابط التطبيق من متجر بلي فقط .</p>
+                    <p>✪ لاتطلب كود تطبيقات مدفوعة ولا اكستريم ذني كل مايتوفر جديد مباشر انشر انته فقط تابع القنوات .</p>
+                    <p className="text-yellow-400 font-bold mt-2 pt-2 border-t border-slate-700/50">البوت مخصص للطلبات مو للدردشة عندك مشكلة او سؤال اكتب بالتعليقات</p>
                 </div>
               </div>
-               {/* ... footer ... */}
-               <div className="text-center pb-8 pt-6 space-y-2">
-                 <p className="text-slate-400 text-sm font-bold">في النهاية دمتم برعاية الله</p>
-                 <p className="text-slate-600 text-[10px] font-medium">{footerData.text} <a href={footerData.url} className="text-sky-500 hover:underline">@kinanmjeed</a></p>
+
+              {/* Search Methods Section */}
+              <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl backdrop-blur-md space-y-4 text-right">
+                <h4 className="font-bold text-sky-400 border-b border-slate-700 pb-2">طرق البحث المتاحة في قنوات المناقشات في التيليكرام:</h4>
+                <ol className="list-decimal list-inside space-y-2 text-slate-300 text-sm leading-relaxed">
+                    <li>ابحث بالقناة من خلال زر البحث 🔍 واكتب اسم التطبيق بشكل صحيح.</li>
+                    <li>اكتب اسم التطبيق في التعليقات (داخل قنوات المناقشة) بإسم مضبوط (مثلاً: كاب كات).</li>
+                    <li>استخدم أمر البحث بكتابة كلمة "بحث" متبوع باسم التطبيق (مثلاً: بحث ياسين).</li>
+                    <li>للاعلان في القناة تواصل من خلال البوت</li>
+                </ol>
+                <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg mt-4">
+                  <p className="text-rose-400 font-bold text-xs leading-relaxed">تنبيه: حظر البوت يؤدي لحظر تلقائي لحسابك ولا يمكن استقبال اي طلب حتى لو قمت بإزالة الحظر لاحقا</p>
+                </div>
               </div>
+
+              {/* Footer Greeting */}
+              <div className="text-center py-4">
+                 <p className="text-slate-400 text-sm font-bold">في النهاية دمتم برعاية الله</p>
+              </div>
+
+              {/* About Us Section */}
+              <div id="about-us" className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl backdrop-blur-md space-y-4 text-right scroll-mt-24">
+                <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-2">من نحن</h3>
+                <div className="text-slate-300 text-sm leading-7 space-y-2">
+                   <p>أنا كنان مجيد الصائغ، من مواليد 1988، مهتم بالأخبار والمعلومات التقنية والذكاء الاصطناعي.</p>
+                   <p>أعمل على نشر المحتوى التقني، وأدوات وتقنيات الذكاء الاصطناعي، والتطبيقات المعدلة، والتطبيقات الرياضية، وتطبيقات الأفلام والخدمات.</p>
+                   <p>يهدف موقع TechTouch إلى تقديم محتوى تقني مبسّط ومفيد للمستخدم العربي.</p>
+                </div>
+              </div>
+
+              {/* Privacy Policy Section */}
+              <div id="privacy-policy" className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-xl backdrop-blur-md space-y-4 text-right scroll-mt-24">
+                 <h3 className="text-lg font-bold text-white border-b border-slate-700/50 pb-2">سياسة الخصوصية</h3>
+                 <div className="text-slate-300 text-sm leading-7 space-y-2">
+                    <p>نحن في موقع TechTouch نحترم خصوصية زوّارنا ونسعى لحمايتها.</p>
+                    <p>يستخدم الموقع خدمات Google Analytics لجمع معلومات غير شخصية مثل عدد الزيارات والصفحات التي يتم تصفحها بهدف تحسين تجربة المستخدم.</p>
+                    <p>كما قد نستخدم Google AdSense لعرض الإعلانات، حيث تعتمد Google على ملفات تعريف الارتباط (Cookies).</p>
+                    <p>يمكن للمستخدم تعطيل ملفات تعريف الارتباط من خلال إعدادات المتصفح.</p>
+                    <p>باستخدامك للموقع فإنك توافق على سياسة الخصوصية هذه، ونحتفظ بحق تحديثها عند الحاجة.</p>
+                 </div>
+              </div>
+
+              {/* Footer Links */}
+              <div className="text-center pt-4 pb-8 space-y-4">
+                <div className="flex justify-center gap-6 text-xs text-slate-500">
+                   <a href="#about-us" className="hover:text-sky-400 transition-colors">من نحن</a>
+                   <a href="#privacy-policy" className="hover:text-sky-400 transition-colors">سياسة الخصوصية</a>
+                </div>
+                <p className="text-slate-600 text-[10px] font-medium">{footerData.text} <a href={footerData.url} className="text-sky-500 hover:underline">@kinanmjeed</a></p>
+              </div>
+
             </div>
           )}
 
