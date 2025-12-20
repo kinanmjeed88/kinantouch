@@ -26,7 +26,7 @@ import oppoData from './data/phones-backup/oppo.json';
 import vivoData from './data/phones-backup/vivo.json';
 import realmeData from './data/phones-backup/realme.json';
 import sonyData from './data/phones-backup/sony.json';
-import tecnoData from './data/phones-backup/tecno.json'; // Assuming this might exist or we handle error if not
+import tecnoData from './data/phones-backup/tecno.json'; 
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-directory' | 'comparison' | 'phone-news' | 'stats';
@@ -497,26 +497,36 @@ const App: React.FC = () => {
 
       <div className="relative z-10 max-w-lg mx-auto px-4 min-h-screen flex flex-col">
         
-        <header className="pt-10 pb-4 flex flex-col items-center justify-center sticky top-0 z-40 bg-[#0f172a]/80 backdrop-blur-xl border-b border-slate-800/50 -mx-4 px-4 transition-all">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-slate-800 rounded-xl border border-white/10 shadow-lg overflow-hidden shrink-0">
+        {/* Updated Header Layout */}
+        <header className="pt-8 pb-6 flex flex-col items-center justify-center sticky top-0 z-40 bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-800/50 -mx-4 px-4 transition-all mb-4">
+          <div className="flex flex-col items-center gap-3">
+             {/* Profile Image First */}
+             <div className="w-20 h-20 bg-slate-800 rounded-full border-2 border-sky-500/20 shadow-2xl overflow-hidden shrink-0 p-0.5">
                 {profileConfig.image && !imageError ? (
-                  <img src={profileConfig.image} alt="Profile" className="w-full h-full object-cover" onError={() => setImageError(true)} />
+                  <img src={profileConfig.image} alt="Profile" className="w-full h-full object-cover rounded-full" onError={() => setImageError(true)} />
                 ) : (
-                  <span className="w-full h-full flex items-center justify-center text-sm font-black text-sky-400">{profileConfig.initials}</span>
+                  <span className="w-full h-full flex items-center justify-center text-xl font-black text-sky-400">{profileConfig.initials}</span>
                 )}
              </div>
-             <div>
-                <h1 className="text-xl font-black tracking-tight leading-none text-white">Techtouch</h1>
-                <p className="text-[10px] text-sky-400 font-bold tracking-widest uppercase mt-0.5">كنان مجيد</p>
+             {/* Text Stacked Below */}
+             <div className="text-center space-y-1">
+                <h1 className="text-2xl font-black tracking-tighter text-white drop-shadow-md font-sans">Techtouch</h1>
+                <p className="text-xs text-sky-400 font-bold tracking-widest uppercase bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/10">كنان مجيد الصائغ</p>
              </div>
           </div>
         </header>
 
-        <main className="flex-grow py-6 animate-fade-in">
+        <main className="flex-grow py-2 animate-fade-in">
           
           {activeTab === 'home' && (
-             <div className="space-y-4 pb-4">
+             <div className="space-y-3 pb-4">
+                {/* Channels Title Section */}
+                <div className="flex items-center gap-2 mb-4 px-2 opacity-80">
+                    <div className="h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent flex-1"></div>
+                    <span className="text-xs font-bold text-slate-400">قنواتي على التيليكرام</span>
+                    <div className="h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent flex-1"></div>
+                </div>
+
                 {telegramChannels.map((ch, i) => <ChannelCard key={ch.id} channel={ch} index={i} />)}
                 <SocialLinks links={socialLinks} />
              </div>

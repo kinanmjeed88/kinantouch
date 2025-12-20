@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useRef, useEffect, useState } from 'react';
 import { ChannelData } from '../types';
 import { TelegramIcon, AIIcon } from './Icons';
 import { ArrowLeft, FolderOpen } from 'lucide-react';
@@ -9,44 +10,72 @@ interface ChannelCardProps {
 }
 
 export const ChannelCard: React.FC<ChannelCardProps> = ({ channel, index }) => {
+  const textRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+
   let bgClass = "bg-sky-500/10";
-  let iconClass = "w-8 h-8 drop-shadow-md";
+  let iconClass = "w-6 h-6 drop-shadow-md";
 
   if (channel.iconType === 'ai') {
     bgClass = "bg-violet-500/10";
-    iconClass = "w-7 h-7 text-violet-400";
+    iconClass = "w-6 h-6 text-violet-400";
   } else if (channel.isFolder) {
     bgClass = "bg-amber-500/10";
   }
+
+  useEffect(() => {
+    const measure = () => {
+      if (textRef.current && containerRef.current) {
+        if (textRef.current.scrollWidth > containerRef.current.clientWidth) {
+          setShouldAnimate(true);
+        } else {
+          setShouldAnimate(false);
+        }
+      }
+    };
+    
+    // Initial check and on resize
+    const timeout = setTimeout(measure, 100);
+    window.addEventListener('resize', measure);
+    
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('resize', measure);
+    };
+  }, [channel.description]);
 
   return (
     <a
       href={channel.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative flex items-center p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl mb-4 transition-all duration-300 hover:bg-slate-700/60 hover:scale-[1.02] hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/10 animate-slide-up overflow-hidden"
+      className="group relative flex items-center p-3 bg-slate-800/40 border border-slate-700/50 rounded-xl mb-3 transition-all duration-300 hover:bg-slate-700/60 hover:scale-[1.01] hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/10 animate-slide-up overflow-hidden"
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      {/* Icon Container */}
-      <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${bgClass} z-10`}>
+      {/* Icon Container - Reduced size */}
+      <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center shadow-inner ${bgClass} z-10`}>
         {channel.iconType === 'ai' ? (
           <AIIcon className={iconClass} />
         ) : channel.isFolder ? (
-           <FolderOpen className="w-7 h-7 text-amber-500" />
+           <FolderOpen className="w-5 h-5 text-amber-500" />
         ) : (
            <TelegramIcon className={iconClass} />
         )}
       </div>
 
       {/* Text Content */}
-      <div className="flex-grow mr-4 text-right overflow-hidden relative z-10">
-        <h3 className="text-base font-bold text-slate-100 group-hover:text-sky-400 transition-colors">
+      <div className="flex-grow mr-3 text-right overflow-hidden relative z-10 w-full min-w-0">
+        <h3 className="text-sm font-bold text-slate-100 group-hover:text-sky-400 transition-colors truncate">
           {channel.name}
         </h3>
         
-        {/* Scrolling Description Container */}
-        <div className="w-full overflow-hidden h-5 relative mt-0.5">
-           <div className="absolute whitespace-nowrap animate-marquee w-auto text-xs text-slate-400 group-hover:text-slate-300">
+        {/* Conditional Scrolling Description Container */}
+        <div className="w-full overflow-hidden h-4 relative mt-0.5" ref={containerRef}>
+           <div 
+             ref={textRef}
+             className={`whitespace-nowrap text-[10px] text-slate-400 group-hover:text-slate-300 absolute right-0 ${shouldAnimate ? 'animate-marquee pl-4' : ''}`}
+           >
               {channel.description}
            </div>
         </div>
@@ -54,11 +83,11 @@ export const ChannelCard: React.FC<ChannelCardProps> = ({ channel, index }) => {
 
       {/* Action Arrow */}
       <div className="flex-shrink-0 opacity-50 group-hover:opacity-100 group-hover:-translate-x-1 transition-all duration-300 z-10">
-        <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-sky-400" />
+        <ArrowLeft className="w-4 h-4 text-slate-400 group-hover:text-sky-400" />
       </div>
       
       {/* Glossy Effect */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
     </a>
   );
 };
