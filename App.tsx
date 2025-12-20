@@ -26,6 +26,7 @@ import oppoData from './data/phones-backup/oppo.json';
 import vivoData from './data/phones-backup/vivo.json';
 import realmeData from './data/phones-backup/realme.json';
 import sonyData from './data/phones-backup/sony.json';
+import tecnoData from './data/phones-backup/tecno.json'; // Assuming this might exist or we handle error if not
 
 type TabType = 'home' | 'info' | 'tools';
 type ToolView = 'main' | 'ai-directory' | 'comparison' | 'phone-news' | 'stats';
@@ -106,11 +107,11 @@ ${MASTER_RULES}
 // --- LOCAL DB LOGIC ---
 const allBrandFiles: BrandFile[] = [
   samsungData, appleData, googleData, xiaomiData, huaweiData, 
-  oneplusData, oppoData, vivoData, realmeData, sonyData
-] as unknown as BrandFile[];
+  oneplusData, oppoData, vivoData, realmeData, sonyData, tecnoData
+].filter(Boolean) as unknown as BrandFile[];
 
 const getAllLocalPhones = (): LocalPhone[] => {
-  return allBrandFiles.flatMap(brand => brand.phones);
+  return allBrandFiles.flatMap(brand => brand.phones || []);
 };
 
 const mapLocalToDisplay = (local: LocalPhone): PhoneNewsItem => {

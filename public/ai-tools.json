@@ -18,6 +18,22 @@
       "official_url": "https://chat.openai.com"
     },
     {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "category": "Open Source Models",
+      "country": "China",
+      "company": "DeepSeek",
+      "description": [
+        "نماذج لغوية متقدمة مفتوحة المصدر.",
+        "تركز على الاستدلال والبرمجة.",
+        "مستخدمة على نطاق واسع.",
+        "مناسبة للمطورين.",
+        "تدعم المجتمع المفتوح."
+      ],
+      "free_note": "مفتوحة المصدر ومجانية.",
+      "official_url": "https://chat.deepseek.com"
+    },
+    {
       "id": "gemini",
       "name": "Gemini",
       "category": "Conversational AI",
@@ -50,22 +66,6 @@
       "official_url": "https://claude.ai"
     },
     {
-      "id": "deepseek",
-      "name": "DeepSeek",
-      "category": "Open Source Models",
-      "country": "China",
-      "company": "DeepSeek",
-      "description": [
-        "نماذج لغوية متقدمة مفتوحة المصدر.",
-        "تركز على الاستدلال والبرمجة.",
-        "مستخدمة على نطاق واسع.",
-        "مناسبة للمطورين.",
-        "تدعم المجتمع المفتوح."
-      ],
-      "free_note": "مفتوحة المصدر ومجانية.",
-      "official_url": "https://chat.deepseek.com"
-    },
-    {
       "id": "kimi",
       "name": "Kimi",
       "category": "Conversational AI",
@@ -80,6 +80,36 @@
       ],
       "free_note": "يتوفر استخدام مجاني.",
       "official_url": "https://kimi.moonshot.cn"
+    },
+    {
+      "id": "manus",
+      "name": "Manus",
+      "category": "Productivity",
+      "country": "Global",
+      "company": "Manus",
+      "description": [
+        "أداة إنتاجية مدعومة بالذكاء الاصطناعي.",
+        "تساعد في تنظيم العمل.",
+        "مناسبة للفرق.",
+        "تتكامل مع أدوات أخرى.",
+        "تركز على تبسيط المهام."
+      ],
+      "official_url": "https://manus.ai"
+    },
+    {
+      "id": "grok",
+      "name": "Grok",
+      "category": "Conversational AI",
+      "country": "USA",
+      "company": "xAI",
+      "description": [
+        "مساعد محادثة ذكي.",
+        "مدمج مع منصة X.",
+        "يقدم إجابات آنية.",
+        "مناسب لمتابعة الأخبار.",
+        "يعتمد على نماذج xAI."
+      ],
+      "official_url": "https://x.ai"
     },
     {
       "id": "copilot",
@@ -160,20 +190,65 @@
       "official_url": "https://openai.com/sora"
     },
     {
+      "id": "veo",
+      "name": "Veo",
+      "category": "Video Generation",
+      "country": "USA",
+      "company": "Google",
+      "description": [
+        "منصة لتوليد الفيديو عالي الجودة.",
+        "تفهم الأوامر السينمائية.",
+        "منافس قوي في المجال.",
+        "مناسبة لصناع المحتوى.",
+        "مدعومة بتقنيات Google."
+      ],
+      "official_url": "https://deepmind.google"
+    },
+    {
       "id": "runway",
-      "name": "Runway Gen-3",
+      "name": "Runway",
       "category": "Video Generation",
       "country": "USA",
       "company": "Runway",
       "description": [
-        "أدوات احترافية لتحرير وتوليد الفيديو.",
-        "تحكم دقيق في حركة العناصر.",
-        "مستخدم في الإنتاج السينمائي.",
-        "يدعم تحويل الصورة إلى فيديو.",
-        "تحديثات مستمرة للنماذج."
+        "منصة لتوليد وتحرير الفيديو.",
+        "تعتمد على الذكاء الاصطناعي.",
+        "مستخدمة في الإبداع.",
+        "مناسبة لصناع المحتوى.",
+        "تدعم أدوات متقدمة."
       ],
-      "free_note": "تجربة مجانية محدودة بالثواني.",
       "official_url": "https://runwayml.com"
+    },
+    {
+      "id": "pika",
+      "name": "Pika",
+      "category": "Video Generation",
+      "country": "USA",
+      "company": "Pika Labs",
+      "description": [
+        "أداة لتوليد الفيديو من النص.",
+        "سريعة وسهلة الاستخدام.",
+        "شائعة على وسائل التواصل.",
+        "مناسبة للمبدعين.",
+        "تركز على الفيديو القصير."
+      ],
+      "official_url": "https://pika.art"
+    },
+    {
+      "id": "mistral",
+      "name": "Mistral",
+      "category": "Open Source Models",
+      "country": "Europe",
+      "company": "Mistral AI",
+      "description": [
+        "نماذج لغوية عالية الكفاءة.",
+        "مفتوحة المصدر.",
+        "مستخدمة في البحث.",
+        "مناسبة للمطورين.",
+        "تشتهر بالخفة والأداء."
+      ],
+      "free_note": "مفتوحة المصدر.",
+      "official_url": "https://mistral.ai"
     },
     {
       "id": "elevenlabs",
@@ -182,13 +257,13 @@
       "country": "USA",
       "company": "ElevenLabs",
       "description": [
-        "أفضل أداة لتوليد الصوت البشري (TTS).",
-        "دعم ممتاز للغة العربية.",
-        "استنساخ الأصوات بدقة عالية.",
-        "دبلجة الفيديو تلقائياً.",
-        "نبرات صوت عاطفية وواقعية."
+        "أداة لتوليد الأصوات بالذكاء الاصطناعي.",
+        "تحاكي أصوات بشرية واقعية.",
+        "مستخدمة في السرد الصوتي.",
+        "مناسبة للمبدعين.",
+        "تدعم لغات متعددة."
       ],
-      "free_note": "خطة مجانية بحدود أحرف شهرية.",
+      "free_note": "يتوفر استخدام مجاني محدود.",
       "official_url": "https://elevenlabs.io"
     },
     {
@@ -270,21 +345,6 @@
       "official_url": "https://cursor.sh"
     },
     {
-      "id": "manus",
-      "name": "Manus",
-      "category": "Productivity",
-      "country": "Global",
-      "company": "Manus",
-      "description": [
-        "أداة إنتاجية مدعومة بالذكاء الاصطناعي.",
-        "تساعد في تنظيم العمل.",
-        "مناسبة للفرق.",
-        "تتكامل مع أدوات أخرى.",
-        "تركز على تبسيط المهام."
-      ],
-      "official_url": "https://manus.ai"
-    },
-    {
       "id": "leonardo",
       "name": "Leonardo.ai",
       "category": "Image Generation",
@@ -349,21 +409,6 @@
       "official_url": "https://lumalabs.ai/dream-machine"
     },
     {
-      "id": "veo",
-      "name": "Veo",
-      "category": "Video Generation",
-      "country": "USA",
-      "company": "Google",
-      "description": [
-        "منصة لتوليد الفيديو عالي الجودة.",
-        "تفهم الأوامر السينمائية.",
-        "منافس قوي في المجال.",
-        "مناسبة لصناع المحتوى.",
-        "مدعومة بتقنيات Google."
-      ],
-      "official_url": "https://deepmind.google"
-    },
-    {
       "id": "meta-ai",
       "name": "Meta AI",
       "category": "Conversational AI",
@@ -378,21 +423,6 @@
       ],
       "free_note": "مجاني بالكامل داخل التطبيقات.",
       "official_url": "https://www.meta.ai"
-    },
-    {
-      "id": "grok",
-      "name": "Grok",
-      "category": "Conversational AI",
-      "country": "USA",
-      "company": "xAI (Elon Musk)",
-      "description": [
-        "ذكاء اصطناعي بأسلوب ساخر ومرح.",
-        "وصول فوري لبيانات منصة X (Twitter).",
-        "أقل قيوداً في الإجابات.",
-        "تحليل الأخبار في الوقت الفعلي.",
-        "متاح لمشتركي Premium."
-      ],
-      "official_url": "https://grok.x.ai"
     },
     {
       "id": "adobe-firefly",
@@ -506,22 +536,6 @@
       "official_url": "https://poe.com"
     },
     {
-      "id": "mistral",
-      "name": "Mistral Le Chat",
-      "category": "Conversational AI",
-      "country": "France",
-      "company": "Mistral AI",
-      "description": [
-        "منافس أوروبي قوي لـ OpenAI.",
-        "نماذج مفتوحة المصدر وعالية الكفاءة.",
-        "أداء ممتاز في البرمجة والمنطق.",
-        "احترام خصوصية البيانات.",
-        "خفيف وسريع."
-      ],
-      "free_note": "متاح للتجربة مجاناً.",
-      "official_url": "https://chat.mistral.ai"
-    },
-    {
       "id": "qwen",
       "name": "Qwen (Tongyi Qianwen)",
       "category": "Conversational AI",
@@ -568,22 +582,6 @@
       ],
       "free_note": "نقاط مجانية يومية.",
       "official_url": "https://klingai.com"
-    },
-    {
-      "id": "pika",
-      "name": "Pika Art",
-      "category": "Video Generation",
-      "country": "USA",
-      "company": "Pika Labs",
-      "description": [
-        "متخصص في تحريك الصور والانميشن.",
-        "أدوات تعديل الفيديو (Inpainting).",
-        "تغيير ملابس الشخصيات في الفيديو.",
-        "يعمل عبر الديسكورد والويب.",
-        "مجتمع إبداعي نشط."
-      ],
-      "free_note": "رصيد مبدئي مجاني.",
-      "official_url": "https://pika.art"
     },
     {
       "id": "gamma",
@@ -870,6 +868,21 @@
       ],
       "free_note": "مفتوحة المصدر.",
       "official_url": "https://www.baichuan-ai.com"
+    },
+    {
+      "id": "tongyi",
+      "name": "Tongyi Qianwen",
+      "category": "Conversational AI",
+      "country": "China",
+      "company": "Alibaba",
+      "description": [
+        "مساعد محادثة ذكي.",
+        "مدمج مع خدمات Alibaba.",
+        "يدعم الإنتاجية.",
+        "مناسب للأعمال.",
+        "شائع في الصين."
+      ],
+      "official_url": "https://tongyi.aliyun.com"
     },
     {
       "id": "sensechat",

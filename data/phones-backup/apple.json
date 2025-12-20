@@ -9,9 +9,9 @@
       "release_year": 2025,
       "category": "Flagship",
       "manufacturing": {
-        "frame": "Titanium Alloy",
+        "frame": "Titanium Grade 5",
         "back": "Textured Matte Glass",
-        "protection": "Ceramic Shield 3",
+        "protection": "Ceramic Shield 4",
         "water_resistance": "IP68"
       },
       "specs": {
@@ -23,12 +23,70 @@
         },
         "chipset": "Apple A19 Pro (2nm)",
         "ram": "12GB",
-        "storage": "256GB / 512GB / 1TB",
-        "rear_camera": "48MP (Main) + 48MP (UW) + 48MP (Tele 5x)",
+        "storage": "256GB / 512GB / 1TB / 2TB",
+        "rear_camera": "48MP (Wide) + 48MP (Tele 5x) + 48MP (Ultrawide)",
         "front_camera": "24MP",
         "battery": "4800mAh",
+        "charging": "USB-C / MagSafe 25W",
+        "weight": "225g",
+        "os": "iOS 19"
+      }
+    },
+    {
+      "id": "iphone-17-pro",
+      "name": "iPhone 17 Pro",
+      "release_year": 2025,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Titanium Grade 5",
+        "back": "Textured Matte Glass",
+        "protection": "Ceramic Shield 4",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.3 inch",
+          "type": "LTPO OLED",
+          "resolution": "Super Retina XDR",
+          "refresh_rate": "1–120Hz ProMotion"
+        },
+        "chipset": "Apple A19 Pro",
+        "ram": "12GB",
+        "storage": "256GB / 512GB / 1TB",
+        "rear_camera": "48MP + 48MP + 48MP",
+        "front_camera": "24MP",
+        "battery": "3600mAh",
         "charging": "USB-C / MagSafe",
-        "weight": "220g",
+        "weight": "195g",
+        "os": "iOS 19"
+      }
+    },
+    {
+      "id": "iphone-17-air",
+      "name": "iPhone 17 Air",
+      "release_year": 2025,
+      "category": "Premium Slim",
+      "manufacturing": {
+        "frame": "Aluminum / Titanium Alloy",
+        "back": "Ultra-thin Glass",
+        "protection": "Ceramic Shield",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.6 inch",
+          "type": "OLED",
+          "resolution": "Super Retina XDR",
+          "refresh_rate": "120Hz ProMotion"
+        },
+        "chipset": "Apple A19",
+        "ram": "8GB",
+        "storage": "128GB / 256GB / 512GB",
+        "rear_camera": "48MP (Single Main)",
+        "front_camera": "24MP",
+        "battery": "3500mAh",
+        "charging": "USB-C / MagSafe",
+        "weight": "160g",
         "os": "iOS 19"
       }
     },
@@ -38,14 +96,14 @@
       "release_year": 2025,
       "category": "Flagship",
       "manufacturing": {
-        "frame": "Aluminum",
+        "frame": "Aerospace-grade Aluminum",
         "back": "Color-infused Glass",
         "protection": "Ceramic Shield",
         "water_resistance": "IP68"
       },
       "specs": {
         "display": {
-          "size": "6.3 inch",
+          "size": "6.1 inch",
           "type": "LTPO OLED",
           "resolution": "Super Retina XDR",
           "refresh_rate": "120Hz ProMotion"
@@ -54,21 +112,79 @@
         "ram": "8GB",
         "storage": "128GB / 256GB / 512GB",
         "rear_camera": "48MP + 12MP",
-        "front_camera": "24MP",
-        "battery": "3500mAh",
-        "charging": "USB-C / MagSafe",
-        "weight": "170g",
+        "front_camera": "12MP",
+        "battery": "3400mAh",
+        "charging": "USB-C",
+        "weight": "172g",
         "os": "iOS 19"
       }
     },
     {
-      "id": "iphone-15-pro-max",
-      "name": "iPhone 15 Pro Max",
+      "id": "iphone-16-pro-max",
+      "name": "iPhone 16 Pro Max",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Titanium Grade 5",
+        "back": "Matte Glass",
+        "protection": "Ceramic Shield",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.9 inch",
+          "type": "LTPO OLED",
+          "resolution": "2868 x 1320",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Apple A18 Pro",
+        "ram": "8GB",
+        "storage": "256GB / 512GB / 1TB",
+        "rear_camera": "48MP (Main) + 48MP (UW) + 12MP (5x Tele)",
+        "front_camera": "12MP",
+        "battery": "4685mAh",
+        "charging": "25W MagSafe / USB-C",
+        "weight": "227g",
+        "os": "iOS 18"
+      }
+    },
+    {
+      "id": "iphone-16-pro",
+      "name": "iPhone 16 Pro",
       "release_year": 2024,
       "category": "Flagship",
       "manufacturing": {
         "frame": "Titanium",
-        "back": "Textured Glass",
+        "back": "Glass",
+        "protection": "Ceramic Shield",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.3 inch",
+          "type": "LTPO OLED",
+          "resolution": "2622 x 1206",
+          "refresh_rate": "120Hz"
+        },
+        "chipset": "Apple A18 Pro",
+        "ram": "8GB",
+        "storage": "128GB / 256GB / 512GB / 1TB",
+        "rear_camera": "48MP + 48MP + 12MP",
+        "front_camera": "12MP",
+        "battery": "3582mAh",
+        "charging": "25W MagSafe",
+        "weight": "199g",
+        "os": "iOS 18"
+      }
+    },
+    {
+      "id": "iphone-16-plus",
+      "name": "iPhone 16 Plus",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Color-infused Glass",
         "protection": "Ceramic Shield",
         "water_resistance": "IP68"
       },
@@ -76,18 +192,76 @@
         "display": {
           "size": "6.7 inch",
           "type": "OLED",
-          "resolution": "Super Retina XDR",
-          "refresh_rate": "120Hz"
+          "resolution": "2796 x 1290",
+          "refresh_rate": "60Hz"
         },
-        "chipset": "Apple A17 Pro",
+        "chipset": "Apple A18",
         "ram": "8GB",
-        "storage": "256GB / 512GB / 1TB",
-        "rear_camera": "48MP + 12MP + 12MP",
+        "storage": "128GB / 256GB / 512GB",
+        "rear_camera": "48MP + 12MP",
         "front_camera": "12MP",
-        "battery": "4422mAh",
-        "charging": "USB-C wired / MagSafe wireless",
-        "weight": "221g",
-        "os": "iOS"
+        "battery": "4674mAh",
+        "charging": "25W MagSafe",
+        "weight": "199g",
+        "os": "iOS 18"
+      }
+    },
+    {
+      "id": "iphone-16",
+      "name": "iPhone 16",
+      "release_year": 2024,
+      "category": "Flagship",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass",
+        "protection": "Ceramic Shield",
+        "water_resistance": "IP68"
+      },
+      "specs": {
+        "display": {
+          "size": "6.1 inch",
+          "type": "OLED",
+          "resolution": "2556 x 1179",
+          "refresh_rate": "60Hz"
+        },
+        "chipset": "Apple A18",
+        "ram": "8GB",
+        "storage": "128GB / 256GB / 512GB",
+        "rear_camera": "48MP + 12MP",
+        "front_camera": "12MP",
+        "battery": "3561mAh",
+        "charging": "25W MagSafe",
+        "weight": "170g",
+        "os": "iOS 18"
+      }
+    },
+    {
+      "id": "iphone-16e",
+      "name": "iPhone 16e",
+      "release_year": 2025,
+      "category": "Mid-Range",
+      "manufacturing": {
+        "frame": "Aluminum",
+        "back": "Glass",
+        "protection": "Ceramic Shield",
+        "water_resistance": "IP67"
+      },
+      "specs": {
+        "display": {
+          "size": "6.1 inch",
+          "type": "OLED",
+          "resolution": "Super Retina XDR",
+          "refresh_rate": "60Hz"
+        },
+        "chipset": "Apple A18",
+        "ram": "8GB",
+        "storage": "128GB / 256GB",
+        "rear_camera": "48MP (Single)",
+        "front_camera": "12MP",
+        "battery": "3300mAh",
+        "charging": "USB-C / MagSafe",
+        "weight": "165g",
+        "os": "iOS 18"
       }
     }
   ]
