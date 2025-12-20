@@ -10,7 +10,7 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye, Command
+  RotateCcw, Eye, Command, AlertTriangle
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
 import { PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool } from './types';
@@ -570,39 +570,47 @@ const App: React.FC = () => {
           )}
 
           {activeTab === 'tools' && activeToolView === 'main' && (
-            <div className="grid grid-cols-2 gap-3 animate-fade-in pt-6">
-               <button onClick={() => fetchToolData('ai-directory')} className="col-span-2 group p-6 bg-slate-800/40 border border-amber-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
-                   <div className="absolute top-0 right-0 p-4 opacity-10"><Command size={80} /></div>
-                   <div className="relative z-10 flex flex-col items-start gap-3">
-                     <div className="w-12 h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400"><Command className="w-7 h-7" /></div>
-                     <div className="text-right w-full">
-                        <h3 className="font-bold text-xl text-white truncate w-full">دليل أدوات AI</h3>
-                        <p className="text-sm text-slate-400 truncate w-full">أكثر من 50 أداة (بحث فوري)</p>
-                     </div>
-                   </div>
-               </button>
+            <div className="animate-fade-in pt-6">
+               <div className="flex justify-center mb-4">
+                  <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full flex items-center gap-2 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                     <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                     <span className="text-xs font-bold text-amber-400">قسم تجريبي</span>
+                  </div>
+               </div>
+               <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => fetchToolData('ai-directory')} className="col-span-2 group p-6 bg-slate-800/40 border border-amber-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                      <div className="absolute top-0 right-0 p-4 opacity-10"><Command size={80} /></div>
+                      <div className="relative z-10 flex flex-col items-start gap-3">
+                        <div className="w-12 h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center text-amber-400"><Command className="w-7 h-7" /></div>
+                        <div className="text-right w-full">
+                           <h3 className="font-bold text-xl text-white truncate w-full">دليل أدوات AI</h3>
+                           <p className="text-sm text-slate-400 truncate w-full">أكثر من 50 أداة (بحث فوري)</p>
+                        </div>
+                      </div>
+                  </button>
 
-               <button onClick={() => fetchToolData('phone-news')} className="group p-5 bg-slate-800/40 border border-sky-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
-                  <div className="flex flex-col items-start gap-3">
-                     <div className="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center text-sky-400"><Smartphone className="w-5 h-5" /></div>
-                     <div className="w-full text-right"><h3 className="font-bold text-base text-white truncate w-full">الهواتف</h3><p className="text-[10px] text-slate-400 truncate w-full">قاعدة بيانات موثوقة</p></div>
-                  </div>
-               </button>
-               <button onClick={() => setActiveToolView('comparison')} className="group p-5 bg-slate-800/40 border border-emerald-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
-                  <div className="flex flex-col items-start gap-3">
-                     <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400"><LayoutGrid className="w-5 h-5" /></div>
-                     <div className="w-full text-right"><h3 className="font-bold text-base text-white truncate w-full">مقارنة</h3><p className="text-[10px] text-slate-400 truncate w-full">مقارنة شاملة</p></div>
-                  </div>
-               </button>
-               <button onClick={() => setActiveToolView('stats')} className="col-span-2 group p-5 bg-slate-800/40 border border-pink-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
-                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 bg-pink-500/20 rounded-xl flex items-center justify-center text-pink-400"><BarChart3 className="w-6 h-6" /></div>
-                     <div className="text-right w-full overflow-hidden">
-                        <h3 className="font-bold text-lg text-white truncate w-full">إحصائيات ذكية</h3>
-                        <p className="text-xs text-slate-400 truncate w-full">تحليل بياني مدقق زمنياً</p>
+                  <button onClick={() => fetchToolData('phone-news')} className="group p-5 bg-slate-800/40 border border-sky-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                     <div className="flex flex-col items-start gap-3">
+                        <div className="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center text-sky-400"><Smartphone className="w-5 h-5" /></div>
+                        <div className="w-full text-right"><h3 className="font-bold text-base text-white truncate w-full">الهواتف</h3><p className="text-[10px] text-slate-400 truncate w-full">قاعدة بيانات موثوقة</p></div>
                      </div>
-                   </div>
-               </button>
+                  </button>
+                  <button onClick={() => setActiveToolView('comparison')} className="group p-5 bg-slate-800/40 border border-emerald-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                     <div className="flex flex-col items-start gap-3">
+                        <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400"><LayoutGrid className="w-5 h-5" /></div>
+                        <div className="w-full text-right"><h3 className="font-bold text-base text-white truncate w-full">مقارنة</h3><p className="text-[10px] text-slate-400 truncate w-full">مقارنة شاملة</p></div>
+                     </div>
+                  </button>
+                  <button onClick={() => setActiveToolView('stats')} className="col-span-2 group p-5 bg-slate-800/40 border border-pink-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-pink-500/20 rounded-xl flex items-center justify-center text-pink-400"><BarChart3 className="w-6 h-6" /></div>
+                        <div className="text-right w-full overflow-hidden">
+                           <h3 className="font-bold text-lg text-white truncate w-full">إحصائيات ذكية</h3>
+                           <p className="text-xs text-slate-400 truncate w-full">تحليل بياني مدقق زمنياً</p>
+                        </div>
+                      </div>
+                  </button>
+               </div>
             </div>
           )}
 
