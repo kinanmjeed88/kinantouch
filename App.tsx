@@ -15,7 +15,7 @@ import {
 import { TelegramIcon } from './components/Icons'; 
 import { AINewsItem, PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone } from './types';
 
-// Importing Local Data
+// Importing Local Data - Using relative paths to avoid resolution errors
 import samsungData from './data/phones-backup/samsung.json';
 import appleData from './data/phones-backup/apple.json';
 import googleData from './data/phones-backup/google.json';
@@ -196,9 +196,7 @@ const App: React.FC = () => {
   const [phoneSearchResult, setPhoneSearchResult] = useState<PhoneNewsItem | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const [aiSearchQuery, setAiSearchQuery] = useState('');
-  const [aiSearchResult, setAiSearchResult] = useState<AINewsItem | null>(null);
-  const [aiSearchLoading, setAiSearchLoading] = useState(false);
+  // Removed unused AI search state variables to fix build errors
 
   const [statsQuery, setStatsQuery] = useState('');
   const [statsResult, setStatsResult] = useState<StatsResult | null>(null);
@@ -651,7 +649,7 @@ const App: React.FC = () => {
 
           {activeTab === 'tools' && activeToolView !== 'main' && (
              <div className="space-y-4 animate-slide-up pb-8">
-                <button onClick={() => { setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setAiSearchResult(null); }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
+                <button onClick={() => { setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
                    <ChevronLeft className="w-5 h-5" /> <span className="text-sm font-bold">رجوع</span>
                 </button>
 
