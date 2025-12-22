@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'techtouch-root-fix-v3';
+const CACHE_NAME = 'techtouch-root-fix-v4';
 const urlsToCache = [
   './',
   './index.html',

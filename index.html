@@ -138,8 +138,22 @@
 
     <div id="root"></div>
 
+    <!-- Correct absolute path to the entry file -->
     <script type="module" src="/index.tsx"></script>
+    
     <script>
+      // UNREGISTER old service workers to fix caching issues when moving to root
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('Unregistered old Service Worker');
+          }
+        });
+      }
+
+      /* 
+      // Temporarily disabled Service Worker registration to ensure clean slate
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js')
@@ -151,6 +165,7 @@
             });
         });
       }
+      */
     </script>
   </body>
 </html>
