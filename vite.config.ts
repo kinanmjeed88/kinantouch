@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react()],
-    base: '/kinantouch/', 
+    base: '/', 
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./', import.meta.url))
