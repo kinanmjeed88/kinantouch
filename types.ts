@@ -25,6 +25,13 @@ export interface AITool {
   official_url: string;
 }
 
+export interface ArticleItem {
+  id: number;
+  title: string;
+  content: string;
+  date?: string;
+}
+
 export interface PhoneNewsItem {
   phone_name: string;
   brand: string;

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { telegramChannels, footerData, profileConfig, socialLinks } from './data/content';
+import { articlesData } from './data/articles'; // Import articles data
 import { ChannelCard } from './components/ChannelCard';
 import { SocialLinks } from './components/SocialLinks';
 import { 
@@ -13,7 +14,7 @@ import {
   RotateCcw, Eye, Command, AlertTriangle, BookOpen
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
-import { PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool } from './types';
+import { PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool, ArticleItem } from './types';
 
 // Importing Local Data - Using relative paths
 import samsungData from './data/phones-backup/samsung.json';
@@ -103,88 +104,6 @@ ${MASTER_RULES}
   ]
 }
 `;
-
-const ARTICLES_DATA = [
-  {
-    id: 1,
-    title: "كيف تختار الهاتف المناسب لك؟ دليل عملي حسب الاستخدام",
-    content: `أصبح اختيار الهاتف الذكي المناسب أمرًا محيّرًا للكثير من المستخدمين، خاصة مع كثرة الخيارات وتنوّع المواصفات والأسعار. لذلك من المهم أن تختار هاتفك بناءً على استخدامك الفعلي، وليس بناءً على الإعلانات أو الاسم التجاري فقط.
-
-أولًا: حدّد استخدامك الأساسي
-قبل أي شيء، اسأل نفسك: كيف أستخدم الهاتف؟
-• للألعاب: تحتاج إلى معالج قوي، شاشة بتردد عالٍ، وبطارية كبيرة.
-• للتصوير: ركّز على جودة الكاميرا والمعالجة البرمجية وليس عدد الميجابكسل فقط.
-• للاستخدام اليومي: هاتف متوازن بمعالج متوسط وبطارية جيدة سيكون كافيًا.
-• للعمل والدراسة: الشاشة الواضحة، البطارية الطويلة، وسلاسة الأداء هي الأهم.
-
-ثانيًا: أهم العوامل عند الاختيار
-• المعالج: هو عقل الهاتف، وكلما كان أحدث وأقوى كان الأداء أفضل.
-• الشاشة: انتبه للحجم، الدقة، ونوع اللوحة (AMOLED أفضل للراحة).
-• البطارية: السعة مهمة، لكن كفاءة المعالج لا تقل أهمية.
-• الكاميرا: الجودة تعتمد على المستشعر والمعالجة وليس الأرقام فقط.
-• السعر: اختر ما يناسب ميزانيتك ولا تدفع مقابل ميزات لن تستخدمها.
-
-ثالثًا: أخطاء شائعة يجب تجنّبها
-• شراء هاتف مرتفع السعر دون حاجة فعلية
-• التركيز على الاسم التجاري فقط
-• تجاهل الدعم والتحديثات
-• إهمال تجربة الاستخدام اليومية
-
-الخلاصة
-الهاتف المناسب هو الذي يخدم احتياجك اليومي ويقدّم أفضل قيمة مقابل السعر. لا تبحث عن “أفضل هاتف”، بل عن أفضل هاتف لك.`
-  },
-  {
-    id: 2,
-    title: "مخاطر الذكاء الاصطناعي المستقبلية: التزييف العميق للصور والفيديو",
-    content: `يشهد الذكاء الاصطناعي تطورًا سريعًا، ومن أبرز تطبيقاته الحديثة تقنيات التزييف العميق (Deepfake)، والتي تتيح إنشاء صور وفيديوهات تبدو واقعية لكنها غير حقيقية.
-
-ما هو التزييف العميق؟
-التزييف العميق هو استخدام الذكاء الاصطناعي لتوليد أو تعديل صور وفيديوهات لأشخاص بطريقة تجعلها تبدو حقيقية، رغم أنها مفبركة.
-
-المخاطر المحتملة
-• تشويه السمعة: استخدام صور أو فيديوهات مزيفة للإساءة للأشخاص.
-• الاحتيال: استغلال التزييف في خداع الأفراد أو الشركات.
-• التضليل الإعلامي: نشر أخبار أو مقاطع مزيفة تؤثر على الرأي العام.
-• انتهاك الخصوصية: استخدام صور أشخاص دون إذنهم.
-
-كيف يمكن التقليل من هذه المخاطر؟
-• رفع الوعي التقني لدى المستخدمين
-• التحقق من المصادر قبل تصديق أي محتوى
-• تطوير قوانين تحمي الأفراد
-• دور المنصات في كشف المحتوى المفبرك
-
-الخلاصة
-الذكاء الاصطناعي أداة قوية، لكن استخدامها دون وعي أو ضوابط قد يسبب أضرارًا كبيرة. الحل ليس في إيقاف التطور، بل في الاستخدام المسؤول.`
-  },
-  {
-    id: 3,
-    title: "كيف تختار اشتراك الذكاء الاصطناعي المناسب لك؟",
-    content: `توفّر العديد من منصات الذكاء الاصطناعي اشتراكات مجانية ومدفوعة، لكن اختيار الاشتراك المناسب يعتمد على احتياجك الفعلي.
-
-الفرق بين المجاني والمدفوع
-• المجاني: مناسب للتجربة والاستخدام الخفيف.
-• المدفوع: يقدّم أداء أفضل، ميزات إضافية، وحدود استخدام أعلى.
-
-حسب نوع المستخدم
-• الطالب: غالبًا النسخة المجانية كافية.
-• صانع المحتوى: الاشتراك المدفوع يوفر سرعة وجودة أفضل.
-• المبرمج: يحتاج اشتراكًا يتيح أدوات متقدمة.
-• المستخدم العادي: لا يحتاج اشتراكًا مدفوعًا دائمًا.
-
-متى تحتاج اشتراكًا مدفوعًا؟
-• إذا كنت تستخدم الأداة يوميًا
-• إذا كان العمل يعتمد عليها
-• إذا كنت تحتاج ميزات متقدمة
-
-نصائح لتجنب الهدر
-• جرّب النسخة المجانية أولًا
-• لا تشترك إلا بعد التأكد من الفائدة
-• ألغِ الاشتراك غير المستخدم
-
-الخلاصة
-الاشتراك المناسب هو الذي يلبّي احتياجك دون تكلفة زائدة. لا تدفع إلا عندما تحتاج فعلًا.`
-  }
-];
 
 // --- LOCAL DB LOGIC ---
 const allBrandFiles: BrandFile[] = [
@@ -288,7 +207,7 @@ const App: React.FC = () => {
   const [statsResult, setStatsResult] = useState<StatsResult | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  const [selectedArticle, setSelectedArticle] = useState<typeof ARTICLES_DATA[0] | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<ArticleItem | null>(null);
 
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -721,6 +640,15 @@ const App: React.FC = () => {
                   </div>
                </div>
                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setActiveToolView('articles')} className="col-span-2 group p-5 bg-slate-800/40 border border-indigo-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                      <div className="flex flex-col items-start gap-3">
+                        <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400"><BookOpen className="w-5 h-5" /></div>
+                        <div className="w-full text-right">
+                           <h3 className="font-bold text-lg text-white truncate w-full">مقالات تقنية</h3>
+                           <p className="text-xs text-slate-400 truncate w-full">دليلك التقني والمعلوماتي</p>
+                        </div>
+                      </div>
+                  </button>
                   <button onClick={() => fetchToolData('ai-directory')} className="col-span-2 group p-6 bg-slate-800/40 border border-amber-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
                       <div className="absolute top-0 right-0 p-4 opacity-10"><Command size={80} /></div>
                       <div className="relative z-10 flex flex-col items-start gap-3">
@@ -744,21 +672,12 @@ const App: React.FC = () => {
                         <div className="w-full text-right"><h3 className="font-bold text-base text-white truncate w-full">مقارنة</h3><p className="text-[10px] text-slate-400 truncate w-full">مقارنة شاملة</p></div>
                      </div>
                   </button>
-                  <button onClick={() => setActiveToolView('stats')} className="group p-5 bg-slate-800/40 border border-pink-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
+                  <button onClick={() => setActiveToolView('stats')} className="col-span-2 group p-5 bg-slate-800/40 border border-pink-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
                       <div className="flex flex-col items-start gap-3">
                         <div className="w-10 h-10 bg-pink-500/20 rounded-xl flex items-center justify-center text-pink-400"><BarChart3 className="w-5 h-5" /></div>
                         <div className="w-full text-right">
                            <h3 className="font-bold text-base text-white truncate w-full">إحصائيات</h3>
                            <p className="text-[10px] text-slate-400 truncate w-full">تحليل بياني</p>
-                        </div>
-                      </div>
-                  </button>
-                   <button onClick={() => setActiveToolView('articles')} className="group p-5 bg-slate-800/40 border border-indigo-500/30 rounded-3xl relative overflow-hidden hover:bg-slate-800/60 transition-all">
-                      <div className="flex flex-col items-start gap-3">
-                        <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400"><BookOpen className="w-5 h-5" /></div>
-                        <div className="w-full text-right">
-                           <h3 className="font-bold text-base text-white truncate w-full">مقالات</h3>
-                           <p className="text-[10px] text-slate-400 truncate w-full">دليلك التقني</p>
                         </div>
                       </div>
                   </button>
@@ -769,7 +688,11 @@ const App: React.FC = () => {
           {activeTab === 'tools' && activeToolView !== 'main' && (
              <div className="space-y-4 animate-slide-up pb-8 pt-6">
                 <button onClick={() => { 
-                    setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setToolSearchQuery(''); setSelectedArticle(null);
+                    if (activeToolView === 'articles' && selectedArticle) {
+                        setSelectedArticle(null);
+                    } else {
+                        setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setToolSearchQuery(''); setSelectedArticle(null);
+                    }
                 }} className="flex items-center gap-2 text-slate-400 hover:text-white mb-2">
                    <ChevronLeft className="w-5 h-5" /> <span className="text-sm font-bold">رجوع</span>
                 </button>
@@ -1033,7 +956,7 @@ const App: React.FC = () => {
                        </div>
                     ) : (
                        <div className="space-y-3">
-                          {ARTICLES_DATA.map((article) => (
+                          {articlesData.map((article) => (
                              <div key={article.id} onClick={() => setSelectedArticle(article)} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-all cursor-pointer group flex items-start gap-3">
                                 <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400 shrink-0 mt-0.5"><BookOpen className="w-5 h-5" /></div>
                                 <div className="flex-1">
