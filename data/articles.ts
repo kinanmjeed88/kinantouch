@@ -209,10 +209,9 @@ dns.adguard-dns.com
 5. إدخال أحد الروابط السابقة
 6. حفظ
 
- شرح الإضافة للأندرويد 👇 على تيكتوك
+شرح الإضافة للأندرويد 👇
 https://vm.tiktok.com/ZT6E6RE6u/
-مشاهدة على اليوتيوب 👇
-(https://youtube.com/shorts/4h8XZKzRKWo?si=8cnVPR7dAym528zQ)
+
 🌟 أنظمة الآيفون iOS
 
 طريقة الإضافة:

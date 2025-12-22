@@ -483,29 +483,24 @@ const App: React.FC = () => {
   };
 
   const renderArticleContent = (content: string) => {
-    // Robust regex to capture URLs
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const matches = content.match(urlRegex) || [];
+    // Robust regex to capture URLs OR [Bracketed Text]
+    // Capture group 1: URLs
+    // Capture group 2: Bracketed text
+    const tokenRegex = /((?:https?:\/\/[^\s]+)|(?:\[[^\]]+\]))/g;
     
+    // Find video ID for embedding
     let videoId: string | null = null;
-    let mainLink: string | null = null;
-
-    // 1. Find a YouTube video ID from ANY link in the content
-    for (const url of matches) {
+    const urlMatches = content.match(/(https?:\/\/[^\s]+)/g) || [];
+    for (const url of urlMatches) {
       const id = getYouTubeID(url);
       if (id) {
         videoId = id;
-        break; // Use the first found video
+        break; 
       }
     }
 
-    // 2. Find the *last* URL to be used as the "Visit Link" button (if exists)
-    if (matches.length > 0) {
-      mainLink = matches[matches.length - 1];
-    }
-
-    // Split text to process URLs
-    const parts = content.split(urlRegex);
+    // Split text to process URLs and Bracketed headers
+    const parts = content.split(tokenRegex);
 
     return (
         <div className="space-y-6">
@@ -524,28 +519,34 @@ const App: React.FC = () => {
                 </div>
             )}
             
-            {/* Text Content with "Click Here" Replacement */}
+            {/* Text Content with "Click Here" Replacement and [Header] Highlight */}
             <div className="text-slate-200 text-sm leading-8 whitespace-pre-line text-right font-medium opacity-90">
                 {parts.map((part, i) => {
-                    if (part.match(urlRegex)) {
-                        // Replace raw URL with "Click Here" link
+                    if (!part) return null;
+
+                    // Handle URLs
+                    if (part.match(/^https?:\/\//)) {
                         return (
                             <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-sky-400 font-bold underline hover:text-sky-300 mx-1">
                                 اضغط هنا
                             </a>
                         );
                     }
+
+                    // Handle Bracketed Text [Header]
+                    if (part.match(/^\[.*\]$/)) {
+                        const text = part.slice(1, -1); // Remove brackets
+                        return (
+                            <span key={i} className="block text-sky-400 font-black text-lg mt-6 mb-2 border-r-4 border-sky-500 pr-2 leading-tight">
+                                {text}
+                            </span>
+                        );
+                    }
+
+                    // Regular Text
                     return <span key={i}>{part}</span>;
                 })}
             </div>
-
-            {/* Bottom Call to Action Button */}
-            {mainLink && (
-                 <a href={mainLink} target="_blank" className="flex items-center justify-between bg-slate-700/50 hover:bg-slate-700 p-3 rounded-xl border border-slate-600/50 transition-all group mt-6">
-                     <span className="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">زيارة الرابط المرفق</span>
-                     <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-sky-400 transition-colors" />
-                 </a>
-            )}
         </div>
     );
   };
@@ -1057,8 +1058,8 @@ const App: React.FC = () => {
                              </button>
                           </div>
                           
-                          <div className="mb-6 border-b border-slate-700/50 pb-4 pr-2 pt-2">
-                             <h2 className="font-black text-white text-lg leading-tight mb-2 pl-12">{selectedArticle.title}</h2>
+                          <div className="mb-6 border-b border-slate-700/50 pb-6 pr-4 pl-4 pt-14 bg-slate-900/80 rounded-2xl border border-slate-700/50 shadow-inner">
+                             <h2 className="font-black text-white text-lg leading-tight mb-2">{selectedArticle.title}</h2>
                              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
                                 <span>{selectedArticle.date || 'تاريخ غير محدد'}</span>
                              </div>
