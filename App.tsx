@@ -214,6 +214,20 @@ const App: React.FC = () => {
 
   const localPhonesDB = useMemo(() => getAllLocalPhones(), []);
 
+  // Handle Deep Linking for Articles
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const articleId = params.get('article');
+    if (articleId) {
+      const found = articlesData.find(a => a.id === Number(articleId));
+      if (found) {
+        setActiveTab('tools');
+        setActiveToolView('articles');
+        setSelectedArticle(found);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const handler = (e: any) => {
       e.preventDefault();
@@ -451,38 +465,57 @@ const App: React.FC = () => {
 
   const handleOpenArticle = (article: ArticleItem) => {
     setSelectedArticle(article);
+    // Add history state for cleaner back navigation
+    window.history.pushState({ articleId: article.id }, '', `?article=${article.id}`);
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
+  const handleCloseArticle = () => {
+    setSelectedArticle(null);
+    window.history.pushState({}, '', window.location.pathname);
+  };
+
+  // Helper to extract YouTube ID (handles Shorts, Share links, Embeds)
+  const getYouTubeID = (url: string) => {
+    const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regExp);
+    return (match && match[1]) ? match[1] : null;
+  };
+
   const renderArticleContent = (content: string) => {
+    // Robust regex to capture URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = content.split(urlRegex);
     const matches = content.match(urlRegex) || [];
     
     let videoId: string | null = null;
     let mainLink: string | null = null;
 
-    // Find YouTube video and Main Link
-    if (matches.length > 0) {
-        const ytMatch = matches.find(u => u.includes('youtube.com') || u.includes('youtu.be'));
-        if (ytMatch) {
-            try {
-                const urlObj = new URL(ytMatch);
-                if (urlObj.hostname.includes('youtu.be')) videoId = urlObj.pathname.slice(1);
-                else videoId = urlObj.searchParams.get('v');
-            } catch(e) {}
-        }
-        mainLink = matches[matches.length - 1]; // Use the last link as the main "Visit" link
+    // 1. Find a YouTube video ID from ANY link in the content
+    for (const url of matches) {
+      const id = getYouTubeID(url);
+      if (id) {
+        videoId = id;
+        break; // Use the first found video
+      }
     }
+
+    // 2. Find the *last* URL to be used as the "Visit Link" button (if exists)
+    if (matches.length > 0) {
+      mainLink = matches[matches.length - 1];
+    }
+
+    // Split text to process URLs
+    const parts = content.split(urlRegex);
 
     return (
         <div className="space-y-6">
+            {/* Embed Player */}
             {videoId && (
                 <div className="rounded-xl overflow-hidden shadow-lg border border-slate-700/50 aspect-video w-full">
                     <iframe 
                         width="100%" 
                         height="100%" 
-                        src={`https://www.youtube.com/embed/${videoId}`} 
+                        src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`} 
                         title="YouTube video player" 
                         frameBorder="0" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -491,12 +524,14 @@ const App: React.FC = () => {
                 </div>
             )}
             
+            {/* Text Content with "Click Here" Replacement */}
             <div className="text-slate-200 text-sm leading-8 whitespace-pre-line text-right font-medium opacity-90">
                 {parts.map((part, i) => {
                     if (part.match(urlRegex)) {
+                        // Replace raw URL with "Click Here" link
                         return (
-                            <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-sky-400 underline break-all hover:text-sky-300">
-                                {part}
+                            <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-sky-400 font-bold underline hover:text-sky-300 mx-1">
+                                اضغط هنا
                             </a>
                         );
                     }
@@ -504,6 +539,7 @@ const App: React.FC = () => {
                 })}
             </div>
 
+            {/* Bottom Call to Action Button */}
             {mainLink && (
                  <a href={mainLink} target="_blank" className="flex items-center justify-between bg-slate-700/50 hover:bg-slate-700 p-3 rounded-xl border border-slate-600/50 transition-all group mt-6">
                      <span className="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">زيارة الرابط المرفق</span>
@@ -754,7 +790,7 @@ const App: React.FC = () => {
              <div className="space-y-4 animate-slide-up pb-8 pt-6">
                 <button onClick={() => { 
                     if (activeToolView === 'articles' && selectedArticle) {
-                        setSelectedArticle(null);
+                        handleCloseArticle();
                     } else {
                         setActiveToolView('main'); setPhoneSearchResult(null); setStatsResult(null); setToolSearchQuery(''); setSelectedArticle(null);
                     }
@@ -1009,13 +1045,14 @@ const App: React.FC = () => {
                        <div className="bg-slate-800/60 border border-indigo-500/30 p-5 rounded-3xl animate-slide-up relative shadow-2xl">
                           <div className="absolute top-4 left-4 flex gap-2 z-10">
                              <button onClick={() => {
-                                 const shareText = `${selectedArticle.title}\n\n${selectedArticle.content}`;
-                                 navigator.clipboard.writeText(shareText);
-                                 alert('تم نسخ المقال!');
+                                 // Generate deep link
+                                 const shareUrl = `${window.location.origin}${window.location.pathname}?article=${selectedArticle.id}`;
+                                 navigator.clipboard.writeText(shareUrl);
+                                 alert('تم نسخ رابط المنشور!');
                              }} className="p-1.5 bg-slate-700/50 rounded-full text-slate-300 hover:text-white transition-colors border border-slate-600/30">
                                  <Share2 className="w-4 h-4" />
                              </button>
-                             <button onClick={() => setSelectedArticle(null)} className="p-1.5 bg-slate-700/50 rounded-full text-slate-300 hover:text-white transition-colors border border-slate-600/30">
+                             <button onClick={handleCloseArticle} className="p-1.5 bg-slate-700/50 rounded-full text-slate-300 hover:text-white transition-colors border border-slate-600/30">
                                  <X className="w-4 h-4" />
                              </button>
                           </div>

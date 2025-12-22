@@ -210,7 +210,7 @@ dns.adguard-dns.com
 6. حفظ
 
 شرح الإضافة للأندرويد 👇
-(https://youtube.com/shorts/4h8XZKzRKWo?si=8cnVPR7dAym528zQ)
+https://vm.tiktok.com/ZT6E6RE6u/
 
 🌟 أنظمة الآيفون iOS
 
