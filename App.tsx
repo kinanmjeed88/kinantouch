@@ -11,7 +11,7 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye, Command, AlertTriangle, BookOpen, Share2, Link as LinkIcon
+  RotateCcw, Eye, Command, AlertTriangle, BookOpen, Share2
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
 import { PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool, ArticleItem } from './types';
@@ -451,7 +451,7 @@ const App: React.FC = () => {
 
   const handleOpenArticle = (article: ArticleItem) => {
     setSelectedArticle(article);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   const renderArticleContent = (content: string) => {
@@ -505,9 +505,9 @@ const App: React.FC = () => {
             </div>
 
             {mainLink && (
-                 <a href={mainLink} target="_blank" className="flex items-center justify-between bg-slate-700/50 hover:bg-slate-700 p-4 rounded-xl border border-slate-600/50 transition-all group mt-6">
-                     <span className="text-sm font-bold text-white group-hover:text-sky-400 transition-colors">زيارة الرابط المرفق</span>
-                     <ExternalLink className="w-5 h-5 text-slate-400 group-hover:text-sky-400 transition-colors" />
+                 <a href={mainLink} target="_blank" className="flex items-center justify-between bg-slate-700/50 hover:bg-slate-700 p-3 rounded-xl border border-slate-600/50 transition-all group mt-6">
+                     <span className="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">زيارة الرابط المرفق</span>
+                     <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-sky-400 transition-colors" />
                  </a>
             )}
         </div>
