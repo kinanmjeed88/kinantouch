@@ -1,5 +1,6 @@
 
-// This script ensures any existing service worker is unregistered
+// PWA IS DISABLED
+// This script ensures any existing service worker is unregistered to fix loading issues
 self.addEventListener('install', () => {
     self.skipWaiting();
 });
