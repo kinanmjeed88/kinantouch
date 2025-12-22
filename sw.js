@@ -1,16 +1,9 @@
-
-// PWA DISABLED
-// This script forces the service worker to unregister itself if it still exists on a client.
+// Service Worker Removed
+// This script ensures any existing service worker is unregistered
 self.addEventListener('install', () => {
-  self.skipWaiting();
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', () => {
-  self.registration.unregister()
-    .then(() => {
-      return self.clients.matchAll();
-    })
-    .then((clients) => {
-      clients.forEach(client => client.navigate(client.url));
-    });
+    self.registration.unregister();
 });
