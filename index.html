@@ -19,12 +19,7 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="description" content="TechTouch Links and Channels" />
     
-    <!-- PWA / iOS support -->
-    <link rel="manifest" href="manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="TechTouch">
-    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg">
+    <!-- PWA Removed (No Manifest, No iOS Tags) -->
 
     <title>TechTouch | كنان الصائغ</title>
     
@@ -77,7 +72,7 @@
         background-color: #0f172a;
         color: #ffffff;
         -webkit-tap-highlight-color: transparent;
-        overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile app feel */
+        overscroll-behavior-y: none;
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -118,11 +113,11 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
     "vite": "https://esm.sh/vite@^7.3.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
     "url": "https://esm.sh/url@^0.11.4"
   }
@@ -130,7 +125,7 @@
 </script>
 </head>
   <body>
-    <!-- Splash Screen moved outside root to handle manually -->
+    <!-- Splash Screen -->
     <div id="splash-screen">
       <div class="loader-ring"></div>
       <p style="margin-top: 20px; font-family: 'Cairo', sans-serif; font-weight: 700; color: #38bdf8;">Techtouch Hub</p>
@@ -138,34 +133,20 @@
 
     <div id="root"></div>
 
-    <!-- Correct absolute path to the entry file -->
+    <!-- Main Entry Point -->
     <script type="module" src="/index.tsx"></script>
     
+    <!-- CLEANUP: Force Unregister Service Workers -->
     <script>
-      // UNREGISTER old service workers to fix caching issues when moving to root
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for(let registration of registrations) {
-            registration.unregister();
-            console.log('Unregistered old Service Worker');
+            registration.unregister().then(function(boolean) {
+              console.log('Service Worker unregistered: ', boolean);
+            });
           }
         });
       }
-
-      /* 
-      // Temporarily disabled Service Worker registration to ensure clean slate
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(registration => {
-              console.log('SW registered: ', registration);
-            })
-            .catch(registrationError => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
-      */
     </script>
   </body>
 </html>

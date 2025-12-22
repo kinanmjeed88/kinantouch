@@ -7,7 +7,6 @@ import { fileURLToPath, URL } from 'url';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
-  // البحث عن المفتاح في كافة المسميات المحتملة لضمان استقرار التشغيل
   const apiKey = env.VITE_GROQ_API_KEY || env.API_KEY || env.VITE_API_KEY || process.env.API_KEY || "";
   
   return {
