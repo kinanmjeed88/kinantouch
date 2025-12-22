@@ -11,7 +11,7 @@ import {
   Download, X, Search,
   BarChart3, PieChart,
   LayoutGrid, Copy, Facebook, Instagram, ExternalLink,
-  RotateCcw, Eye, Command, AlertTriangle, BookOpen
+  RotateCcw, Eye, Command, AlertTriangle, BookOpen, Share2, Link as LinkIcon
 } from 'lucide-react';
 import { TelegramIcon } from './components/Icons'; 
 import { PhoneComparisonResult, PhoneNewsItem, StatsResult, BrandFile, LocalPhone, AITool, ArticleItem } from './types';
@@ -447,6 +447,71 @@ const App: React.FC = () => {
      } finally {
        setStatsLoading(false);
      }
+  };
+
+  const handleOpenArticle = (article: ArticleItem) => {
+    setSelectedArticle(article);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderArticleContent = (content: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = content.split(urlRegex);
+    const matches = content.match(urlRegex) || [];
+    
+    let videoId: string | null = null;
+    let mainLink: string | null = null;
+
+    // Find YouTube video and Main Link
+    if (matches.length > 0) {
+        const ytMatch = matches.find(u => u.includes('youtube.com') || u.includes('youtu.be'));
+        if (ytMatch) {
+            try {
+                const urlObj = new URL(ytMatch);
+                if (urlObj.hostname.includes('youtu.be')) videoId = urlObj.pathname.slice(1);
+                else videoId = urlObj.searchParams.get('v');
+            } catch(e) {}
+        }
+        mainLink = matches[matches.length - 1]; // Use the last link as the main "Visit" link
+    }
+
+    return (
+        <div className="space-y-6">
+            {videoId && (
+                <div className="rounded-xl overflow-hidden shadow-lg border border-slate-700/50 aspect-video w-full">
+                    <iframe 
+                        width="100%" 
+                        height="100%" 
+                        src={`https://www.youtube.com/embed/${videoId}`} 
+                        title="YouTube video player" 
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                    ></iframe>
+                </div>
+            )}
+            
+            <div className="text-slate-200 text-sm leading-8 whitespace-pre-line text-right font-medium opacity-90">
+                {parts.map((part, i) => {
+                    if (part.match(urlRegex)) {
+                        return (
+                            <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-sky-400 underline break-all hover:text-sky-300">
+                                {part}
+                            </a>
+                        );
+                    }
+                    return <span key={i}>{part}</span>;
+                })}
+            </div>
+
+            {mainLink && (
+                 <a href={mainLink} target="_blank" className="flex items-center justify-between bg-slate-700/50 hover:bg-slate-700 p-4 rounded-xl border border-slate-600/50 transition-all group mt-6">
+                     <span className="text-sm font-bold text-white group-hover:text-sky-400 transition-colors">زيارة الرابط المرفق</span>
+                     <ExternalLink className="w-5 h-5 text-slate-400 group-hover:text-sky-400 transition-colors" />
+                 </a>
+            )}
+        </div>
+    );
   };
 
   // AI Tools Filtering
@@ -942,28 +1007,41 @@ const App: React.FC = () => {
                   <div className="space-y-4 animate-fade-in">
                     {selectedArticle ? (
                        <div className="bg-slate-800/60 border border-indigo-500/30 p-5 rounded-3xl animate-slide-up relative shadow-2xl">
-                          <button onClick={() => setSelectedArticle(null)} className="absolute top-4 left-4 p-1 bg-slate-700/50 rounded-full text-slate-300 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
-                          
-                          <div className="mb-6 border-b border-slate-700/50 pb-4 pr-2">
-                             <h2 className="font-black text-white text-lg leading-tight mb-2">{selectedArticle.title}</h2>
+                          <div className="absolute top-4 left-4 flex gap-2 z-10">
+                             <button onClick={() => {
+                                 const shareText = `${selectedArticle.title}\n\n${selectedArticle.content}`;
+                                 navigator.clipboard.writeText(shareText);
+                                 alert('تم نسخ المقال!');
+                             }} className="p-1.5 bg-slate-700/50 rounded-full text-slate-300 hover:text-white transition-colors border border-slate-600/30">
+                                 <Share2 className="w-4 h-4" />
+                             </button>
+                             <button onClick={() => setSelectedArticle(null)} className="p-1.5 bg-slate-700/50 rounded-full text-slate-300 hover:text-white transition-colors border border-slate-600/30">
+                                 <X className="w-4 h-4" />
+                             </button>
                           </div>
                           
-                          <div className="text-slate-200 text-sm leading-8 whitespace-pre-line text-right font-medium opacity-90">
-                             {selectedArticle.content}
+                          <div className="mb-6 border-b border-slate-700/50 pb-4 pr-2 pt-2">
+                             <h2 className="font-black text-white text-lg leading-tight mb-2 pl-12">{selectedArticle.title}</h2>
+                             <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold">
+                                <span>{selectedArticle.date || 'تاريخ غير محدد'}</span>
+                             </div>
                           </div>
-
-                          <ShareToolbar title={selectedArticle.title} text={selectedArticle.content} url="" />
+                          
+                          {renderArticleContent(selectedArticle.content)}
                        </div>
                     ) : (
                        <div className="space-y-3">
                           {articlesData.map((article) => (
-                             <div key={article.id} onClick={() => setSelectedArticle(article)} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-all cursor-pointer group flex items-start gap-3">
+                             <div key={article.id} onClick={() => handleOpenArticle(article)} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-all cursor-pointer group flex items-start gap-3 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-l from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400 shrink-0 mt-0.5"><BookOpen className="w-5 h-5" /></div>
-                                <div className="flex-1">
-                                   <h3 className="font-bold text-white text-base leading-snug group-hover:text-indigo-400 transition-colors">{article.title}</h3>
-                                   <div className="flex items-center gap-1 mt-2 text-slate-500 text-[10px] font-bold">
-                                      <span className="bg-slate-900 px-2 py-0.5 rounded">مقال تقني</span>
-                                      <span className="text-indigo-500 flex items-center gap-0.5">اقرأ المزيد <ChevronLeft className="w-3 h-3"/></span>
+                                <div className="flex-1 relative z-10">
+                                   <h3 className="font-bold text-white text-base leading-snug group-hover:text-indigo-400 transition-colors line-clamp-2">{article.title}</h3>
+                                   <div className="flex items-center gap-2 mt-2">
+                                      <span className="text-[10px] text-slate-500 font-bold bg-slate-900/50 px-2 py-0.5 rounded border border-slate-700/50">{article.date || 'جديد'}</span>
+                                      <span className="text-indigo-500 text-[10px] font-bold flex items-center gap-0.5 mr-auto pl-1 group-hover:-translate-x-1 transition-transform">
+                                         اقرأ المزيد <ChevronLeft className="w-3 h-3"/>
+                                      </span>
                                    </div>
                                 </div>
                              </div>
